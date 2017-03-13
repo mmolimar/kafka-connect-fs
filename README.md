@@ -1,4 +1,4 @@
-# Kafka Connect FileSystem Source Connector 
+# Kafka Connect FileSystem Source Connector [![Build Status](https://travis-ci.org/mmolimar/kafka-connect-fs.svg?branch=master)](https://travis-ci.org/mmolimar/kafka-connect-fs.svg?branch=master)[![Coverage Status](https://coveralls.io/repos/github/mmolimar/kafka-connect-fs/badge.svg?branch=master)](https://coveralls.io/github/mmolimar/kafka-connect-fs?branch=master)
 
 Kafka Connect FileSystem is a Source Connector for reading data from any file system which implements 
 ``org.apache.hadoop.fs.FileSystem`` class from [Hadoop-Common](https://github.com/apache/hadoop-common) and writing to Kafka.

@@ -10,6 +10,7 @@
     <name>kafka-connect-fs</name>
 
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kafka.version>0.10.0.0-cp1</kafka.version>
         <confluent.version>3.1.1</confluent.version>
         <hadoop.version>2.7.3</hadoop.version>
@@ -134,6 +135,11 @@
                     </formats>
                     <check/>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.eluder.coveralls</groupId>
+                <artifactId>coveralls-maven-plugin</artifactId>
+                <version>4.3.0</version>
             </plugin>
         </plugins>
         <resources>
