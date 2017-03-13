@@ -1,6 +1,5 @@
 package com.github.mmolimar.kafka.connect.fs.util;
 
-import com.sun.tools.javac.jvm.ClassFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,7 +12,7 @@ public class Version {
     static {
         try {
             Properties props = new Properties();
-            props.load(ClassFile.Version.class.getResourceAsStream("/kafka-connect-fs-version.properties"));
+            props.load(Version.class.getResourceAsStream("/kafka-connect-fs-version.properties"));
             version = props.getProperty("version", version).trim();
         } catch (Exception e) {
             log.warn("Error while loading version:", e);
