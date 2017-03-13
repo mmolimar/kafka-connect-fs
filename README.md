@@ -23,6 +23,7 @@ Kafka Connect FileSystem is a Source Connector for reading data from any file sy
     file.reader.class=com.github.mmolimar.kafka.connect.fs.file.reader.TextFileReader
     file.regexps=^[0-9]*\.txt$
 The ``kafka-connect-fs.properties`` file defines:
+
 1. The connector name.
 2. The class containing the connector.
 3. The number of tasks the connector is allowed to start.
