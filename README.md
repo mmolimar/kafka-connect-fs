@@ -18,6 +18,7 @@ Kafka Connect FileSystem is a Source Connector for reading data from any file sy
     connector.class=com.github.mmolimar.kafka.connect.fs.FsSourceConnector
     tasks.max=1
     fs.uris=file://data,hdfs://localhost:9001/dir
+    topic=mytopic
     policy.class=com.github.mmolimar.kafka.connect.fs.policy.SimplePolicy
     policy.recursive=true
     file.reader.class=com.github.mmolimar.kafka.connect.fs.file.reader.TextFileReader
@@ -27,10 +28,11 @@ The ``kafka-connect-fs.properties`` file defines:
 2. The class containing the connector.
 3. The number of tasks the connector is allowed to start.
 4. Comma-separated URIs of the FS(s).
-5. Policy class to apply.
-6. Flag to activate traversed recursion in subdirectories when listing files.
-7. File reader class to read files from the FS.
-8. Regular expression to filter files from the FS.
+5. Topic in which copy data to.
+6. Policy class to apply.
+7. Flag to activate traversed recursion in subdirectories when listing files.
+8. File reader class to read files from the FS.
+9. Regular expression to filter files from the FS.
 
 In case of using the SleepyPolicy you should configure also:
 ```
