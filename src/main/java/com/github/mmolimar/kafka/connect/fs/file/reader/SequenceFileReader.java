@@ -38,7 +38,6 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
         this.key = (Writable) ReflectionUtils.newInstance(reader.getKeyClass(), fs.getConf());
         this.value = (Writable) ReflectionUtils.newInstance(reader.getValueClass(), fs.getConf());
         this.schema = SchemaBuilder.struct()
-                .name("SEQ")
                 .field(FIELD_KEY, getSchema(key)).field(FIELD_VALUE, getSchema(value)).build();
         this.offset = new SeqOffset(0);
         this.recordIndex = this.hasNextIndex = -1;

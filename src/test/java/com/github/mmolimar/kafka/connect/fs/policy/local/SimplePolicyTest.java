@@ -27,6 +27,7 @@ public class SimplePolicyTest extends LocalPolicyTestBase {
             String uris[] = directories.stream().map(dir -> dir.toString())
                     .toArray(size -> new String[size]);
             put(FsSourceTaskConfig.FS_URIS, String.join(",", uris));
+            put(FsSourceTaskConfig.TOPIC, "topic_test");
             put(FsSourceTaskConfig.POLICY_CLASS, SimplePolicy.class.getName());
             put(FsSourceTaskConfig.FILE_READER_CLASS, TextFileReader.class.getName());
             put(FsSourceTaskConfig.FILE_REGEXP, "^[0-9]*\\.txt$");

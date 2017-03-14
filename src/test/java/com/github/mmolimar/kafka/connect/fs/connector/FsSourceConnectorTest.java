@@ -29,6 +29,7 @@ public class FsSourceConnectorTest {
                     System.getProperty("java.io.tmpdir") + "/dir1",
                     System.getProperty("java.io.tmpdir") + "/dir2",
                     System.getProperty("java.io.tmpdir") + "/dir3"));
+            put(FsSourceTaskConfig.TOPIC, "topic_test");
         }};
         connProps = new HashMap<>(cfg);
     }

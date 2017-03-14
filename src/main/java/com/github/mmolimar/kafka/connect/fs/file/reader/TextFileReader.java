@@ -119,7 +119,6 @@ public class TextFileReader extends AbstractFileReader<String> {
 
     static class TxtToStruct implements ReaderAdapter<String> {
         static final Schema schema = SchemaBuilder.struct()
-                .name("TXT")
                 .field(FIELD_VALUE, SchemaBuilder.STRING_SCHEMA).build();
 
         @Override

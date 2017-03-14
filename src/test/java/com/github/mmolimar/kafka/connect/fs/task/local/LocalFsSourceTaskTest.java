@@ -15,6 +15,7 @@ import java.util.UUID;
 import java.util.stream.IntStream;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class LocalFsSourceTaskTest extends LocalFsSourceTaskTestBase {
 
@@ -32,7 +33,7 @@ public class LocalFsSourceTaskTest extends LocalFsSourceTaskTestBase {
     @Override
     protected void checkRecords(List<SourceRecord> records) {
         records.forEach(record -> {
-            assertNotNull(record.topic());
+            assertTrue(record.topic().equals("topic_test"));
             assertNotNull(record.sourcePartition());
             assertNotNull(record.sourceOffset());
             assertNotNull(record.value());

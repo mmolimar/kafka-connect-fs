@@ -2,13 +2,10 @@ package com.github.mmolimar.kafka.connect.fs.policy.hdfs;
 
 import com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig;
 import com.github.mmolimar.kafka.connect.fs.file.reader.TextFileReader;
-import com.github.mmolimar.kafka.connect.fs.policy.Policy;
-import com.github.mmolimar.kafka.connect.fs.policy.PolicyTestBase;
 import com.github.mmolimar.kafka.connect.fs.policy.SimplePolicy;
 import org.apache.hadoop.fs.Path;
 import org.junit.BeforeClass;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,6 +27,7 @@ public class SimplePolicyTest extends HdfsPolicyTestBase {
             String uris[] = directories.stream().map(dir -> dir.toString())
                     .toArray(size -> new String[size]);
             put(FsSourceTaskConfig.FS_URIS, String.join(",", uris));
+            put(FsSourceTaskConfig.TOPIC, "topic_test");
             put(FsSourceTaskConfig.POLICY_CLASS, SimplePolicy.class.getName());
             put(FsSourceTaskConfig.FILE_READER_CLASS, TextFileReader.class.getName());
             put(FsSourceTaskConfig.FILE_REGEXP, "^[0-9]*\\.txt$");

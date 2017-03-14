@@ -114,7 +114,7 @@ public class FsSourceTask extends SourceTask {
                     }
                 },
                 Collections.singletonMap("offset", offset),
-                struct.schema().name(),
+                config.getTopic(),
                 struct.schema(),
                 struct
         );

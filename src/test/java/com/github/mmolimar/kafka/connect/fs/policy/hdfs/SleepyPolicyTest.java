@@ -34,6 +34,7 @@ public class SleepyPolicyTest extends HdfsPolicyTestBase {
             String uris[] = directories.stream().map(dir -> dir.toString())
                     .toArray(size -> new String[size]);
             put(FsSourceTaskConfig.FS_URIS, String.join(",", uris));
+            put(FsSourceTaskConfig.TOPIC, "topic_test");
             put(FsSourceTaskConfig.POLICY_CLASS, SleepyPolicy.class.getName());
             put(FsSourceTaskConfig.FILE_READER_CLASS, TextFileReader.class.getName());
             put(FsSourceTaskConfig.FILE_REGEXP, "^[0-9]*\\.txt$");
