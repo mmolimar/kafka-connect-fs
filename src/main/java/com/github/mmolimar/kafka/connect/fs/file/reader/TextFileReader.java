@@ -6,6 +6,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
+import org.apache.kafka.connect.errors.ConnectException;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -89,7 +90,7 @@ public class TextFileReader extends AbstractFileReader<String> {
             }
             this.offset.setOffset(reader.getLineNumber());
         } catch (IOException ioe) {
-            throw new RuntimeException(ioe);
+            throw new ConnectException("Error seeking file " + getFilePath(), ioe);
         }
     }
 

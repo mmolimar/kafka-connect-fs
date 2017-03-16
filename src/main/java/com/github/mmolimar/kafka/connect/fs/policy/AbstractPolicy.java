@@ -126,7 +126,7 @@ abstract class AbstractPolicy implements Policy {
                     current = null;
                     return hasNext();
                 } catch (IOException ioe) {
-                    throw new RuntimeException(ioe);
+                    throw new ConnectException(ioe);
                 }
             }
 

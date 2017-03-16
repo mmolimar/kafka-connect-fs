@@ -8,6 +8,7 @@ import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
+import org.apache.kafka.connect.errors.ConnectException;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -82,7 +83,7 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
         } catch (EOFException eofe) {
             return false;
         } catch (IOException ioe) {
-            throw new RuntimeException(ioe);
+            throw new ConnectException(ioe);
         }
     }
 
@@ -106,7 +107,7 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
             hasNext = false;
             this.offset.setOffset(offset.getRecordOffset());
         } catch (IOException ioe) {
-            throw new RuntimeException(ioe);
+            throw new ConnectException("Error seeking file " + getFilePath(), ioe);
         }
     }
 

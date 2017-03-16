@@ -2,11 +2,15 @@ package com.github.mmolimar.kafka.connect.fs.policy;
 
 import com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig;
 import org.apache.kafka.common.config.ConfigException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
 
 public class SleepyPolicy extends AbstractPolicy {
+
+    private static final Logger log = LoggerFactory.getLogger(SleepyPolicy.class);
 
     public static final String SLEEPY_POLICY_SLEEP_MS = FsSourceTaskConfig.POLICY_PREFIX_CUSTOM + "sleep";
     public static final String SLEEPY_POLICY_SLEEP_FRACTION_MS = SLEEPY_POLICY_SLEEP_MS + ".fraction";
@@ -63,7 +67,7 @@ public class SleepyPolicy extends AbstractPolicy {
                     Thread.sleep(sleep / sleepFraction);
                     counter++;
                 } catch (InterruptedException ie) {
-                    throw new RuntimeException(ie);
+                    log.warn("An interrupted exception has ocurred.", ie);
                 }
             }
         }

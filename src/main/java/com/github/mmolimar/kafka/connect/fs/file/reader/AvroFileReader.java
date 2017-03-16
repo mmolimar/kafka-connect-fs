@@ -10,6 +10,7 @@ import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
+import org.apache.kafka.connect.errors.ConnectException;
 
 import java.io.IOException;
 import java.util.Map;
@@ -50,7 +51,7 @@ public class AvroFileReader extends AbstractFileReader<GenericRecord> {
             reader.sync(offset.getRecordOffset());
             this.offset.setOffset(reader.previousSync() - 15);
         } catch (IOException ioe) {
-            throw new RuntimeException(ioe);
+            throw new ConnectException("Error seeking file " + getFilePath(), ioe);
         }
     }
 

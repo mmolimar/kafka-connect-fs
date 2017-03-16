@@ -10,6 +10,7 @@ import org.apache.hadoop.hdfs.DFSInotifyEventInputStream;
 import org.apache.hadoop.hdfs.client.HdfsAdmin;
 import org.apache.hadoop.hdfs.inotify.Event;
 import org.apache.hadoop.hdfs.inotify.EventBatch;
+import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.errors.IllegalWorkerStateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +47,7 @@ public class HdfsFileWatcherPolicy extends AbstractPolicy {
                         HdfsAdmin admin = new HdfsAdmin(fs.getWorkingDirectory().toUri(), fs.getConf());
                         fsEvenStream.put(fs, new EventStreamThread(fs, admin));
                     } catch (IOException ioe) {
-                        throw new RuntimeException(ioe);
+                        throw new ConnectException("Error creating admin for notifications", ioe);
                     }
                 });
     }
@@ -132,7 +133,7 @@ public class HdfsFileWatcherPolicy extends AbstractPolicy {
             }
         }
 
-        public void enqueue(String path) throws IOException {
+        private void enqueue(String path) throws IOException {
             Path filePath = new Path(path);
             if (!fs.exists(filePath) || fs.getFileStatus(filePath) == null) {
                 log.info("Cannot enqueue file {} because does not exist but got an event from the FS", filePath.toString());
