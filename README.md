@@ -37,7 +37,13 @@ The ``kafka-connect-fs.properties`` file defines:
 
 #### Policies ####
 
+##### SimplePolicy #####
+
+Just list files included in the corresponding URI.
+
 ##### SleepyPolicy #####
+
+Simple policy with an custom sleep on each execution.
 
 ```
     policy.custom.sleep=200000
@@ -48,9 +54,28 @@ The ``kafka-connect-fs.properties`` file defines:
 2. Sleep fraction to divide the sleep time to allow interrupt the policy.
 3. Max sleep times allowed (negative to disable).
 
+##### HdfsFileWatcherPolicy (experimental) #####
+
+It uses Hadoop notifications events (since Hadoop 2.6.0) and all create/append/close events will report new files to be ingested.
+Just use it when your URIs start with ``hdfs://``
+
 #### File readers ####
 
+##### AvroFileReader #####
+
+Read files with [AVRO](http://avro.apache.org/) format.
+
+##### SequenceFileReader #####
+
+Read [Sequence files](https://wiki.apache.org/hadoop/SequenceFile).
+
+##### TextFileReader #####
+
+Read plain text files. Each line represents one record.
+
 ##### DelimitedTextFileReader #####
+
+Text file reader using custom tokens to distinguish different columns on each line. 
 
 ```
     file.reader.delimited.header=true
