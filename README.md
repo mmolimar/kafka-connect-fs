@@ -35,7 +35,10 @@ The ``kafka-connect-fs.properties`` file defines:
 8. File reader class to read files from the FS.
 9. Regular expression to filter files from the FS.
 
-In case of using the SleepyPolicy you should configure also:
+#### Policies ####
+
+##### SleepyPolicy #####
+
 ```
     policy.custom.sleep=200000
     policy.custom.sleep.fraction=100
@@ -44,6 +47,17 @@ In case of using the SleepyPolicy you should configure also:
 1. Max sleep time (in ms) to wait to look for files in the FS.
 2. Sleep fraction to divide the sleep time to allow interrupt the policy
 3. Max sleep times allowed (negative to disable)
+
+#### File readers ####
+
+##### DelimitedTextFileReader #####
+
+```
+    file.reader.delimited.header=true
+    file.reader.delimited.token=,
+```
+1. If the file contains header or not (default false)
+2. The token delimiter for columns.
 
 ### Running in development ###
 ```
