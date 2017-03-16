@@ -168,7 +168,8 @@ abstract class AbstractPolicy implements Policy {
     public FileReader offer(FileMetadata metadata, OffsetStorageReader offsetStorageReader) throws IOException {
         Map<String, Object> partition = new HashMap<String, Object>() {{
             put("path", metadata.getPath());
-            put("blocks", metadata.getBlocks().toString());
+            //TODO manage blocks
+            //put("blocks", metadata.getBlocks().toString());
         }};
 
         FileSystem current = fileSystems.stream()
