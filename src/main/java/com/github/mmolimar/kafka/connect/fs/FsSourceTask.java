@@ -24,13 +24,9 @@ import java.util.stream.StreamSupport;
 public class FsSourceTask extends SourceTask {
     private static final Logger log = LoggerFactory.getLogger(FsSourceTask.class);
 
-    private final AtomicBoolean stop;
+    private AtomicBoolean stop;
     private FsSourceTaskConfig config;
     private Policy policy;
-
-    public FsSourceTask() {
-        this.stop = new AtomicBoolean(true);
-    }
 
     @Override
     public String version() {
@@ -62,14 +58,14 @@ public class FsSourceTask extends SourceTask {
             throw new ConnectException("A problem has ocurred reading configuration:" + t.getMessage());
         }
 
-        stop.set(false);
+        stop = new AtomicBoolean(false);
     }
 
     @Override
     public List<SourceRecord> poll() throws InterruptedException {
         log.trace("Polling for new data");
 
-        while (!stop.get() && !policy.hasEnded()) {
+        while (stop != null && !stop.get() && !policy.hasEnded()) {
 
             final List<SourceRecord> results = new ArrayList<>();
             List<FileMetadata> files = filesToProcess();
@@ -122,6 +118,11 @@ public class FsSourceTask extends SourceTask {
 
     @Override
     public void stop() {
-        stop.set(true);
+        if (stop != null) {
+            stop.set(true);
+        }
+        if (policy != null) {
+            policy.interrupt();
+        }
     }
 }

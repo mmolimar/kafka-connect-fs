@@ -30,6 +30,20 @@ public class FileMetadata {
         return String.format("[path = %s, length = %s, blocks = %s]", path, length, blocks);
     }
 
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (!(object instanceof FileMetadata)) return false;
+
+        FileMetadata metadata = (FileMetadata) object;
+        if (this.path.equals(metadata.getPath()) &&
+                this.length == metadata.length &&
+                this.blocks.equals(metadata.getBlocks())) {
+            return true;
+        }
+        return false;
+    }
+
     public static class BlockInfo {
         private long offset;
         private long length;

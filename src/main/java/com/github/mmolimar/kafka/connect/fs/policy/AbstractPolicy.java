@@ -27,11 +27,12 @@ abstract class AbstractPolicy implements Policy {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
+    protected final List<FileSystem> fileSystems;
+    protected final Pattern fileRegexp;
+
     private final FsSourceTaskConfig conf;
-    private final List<FileSystem> fileSystems;
     private final AtomicInteger executions;
     private final boolean recursive;
-    private final Pattern fileRegexp;
     private boolean interrupted;
 
     public AbstractPolicy(FsSourceTaskConfig conf) throws IOException {
