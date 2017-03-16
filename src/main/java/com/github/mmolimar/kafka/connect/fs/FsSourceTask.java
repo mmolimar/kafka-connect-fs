@@ -110,10 +110,10 @@ public class FsSourceTask extends SourceTask {
                 new HashMap<String, Object>() {
                     {
                         put("path", metadata.getPath());
-                        put("blocks", metadata.getBlocks());
+                        put("blocks", metadata.getBlocks().toString());
                     }
                 },
-                Collections.singletonMap("offset", offset),
+                Collections.singletonMap("offset", offset.getRecordOffset()),
                 config.getTopic(),
                 struct.schema(),
                 struct

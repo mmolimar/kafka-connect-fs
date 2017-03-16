@@ -2,7 +2,6 @@ package com.github.mmolimar.kafka.connect.fs.policy;
 
 import com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig;
 import com.github.mmolimar.kafka.connect.fs.file.FileMetadata;
-import com.github.mmolimar.kafka.connect.fs.file.Offset;
 import com.github.mmolimar.kafka.connect.fs.file.reader.FileReader;
 import com.github.mmolimar.kafka.connect.fs.util.ReflectionUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -166,8 +165,10 @@ abstract class AbstractPolicy implements Policy {
 
     @Override
     public FileReader offer(FileMetadata metadata, OffsetStorageReader offsetStorageReader) throws IOException {
-        Map<String, Object> partition = new HashMap<>();
-        partition.put("path", metadata.getPath());
+        Map<String, Object> partition = new HashMap<String, Object>() {{
+            put("path", metadata.getPath());
+            put("blocks", metadata.getBlocks().toString());
+        }};
 
         FileSystem current = fileSystems.stream()
                 .filter(fs -> metadata.getPath().startsWith(fs.getWorkingDirectory().toString()))
@@ -183,7 +184,7 @@ abstract class AbstractPolicy implements Policy {
 
         Map<String, Object> offset = offsetStorageReader.offset(partition);
         if (offset != null && offset.get("offset") != null) {
-            reader.seek((Offset) offset.get("offset"));
+            reader.seek(() -> (Long) offset.get("offset"));
         }
         return reader;
     }

@@ -69,11 +69,11 @@ public abstract class FsSourceTaskTestBase {
 
         EasyMock.expect(offsetStorageReader.offset(EasyMock.anyObject()))
                 .andReturn(new HashMap<String, Object>() {{
-                    put("offset", new TextFileReader.TextOffset(5));
+                    put("offset", 5L);
                 }});
         EasyMock.expect(offsetStorageReader.offset(EasyMock.anyObject()))
                 .andReturn(new HashMap<String, Object>() {{
-                    put("offset", new TextFileReader.TextOffset(5));
+                    put("offset", 5L);
                 }});
 
         EasyMock.checkOrder(taskContext, false);
