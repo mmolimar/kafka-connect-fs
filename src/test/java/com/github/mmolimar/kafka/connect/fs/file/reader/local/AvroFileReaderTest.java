@@ -14,6 +14,7 @@ import org.junit.BeforeClass;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
@@ -32,6 +33,7 @@ public class AvroFileReaderTest extends LocalFileReaderTestBase {
         schema = new Schema.Parser().parse(AvroFileReaderTest.class.getResourceAsStream("/file/reader/schemas/people.avsc"));
         readerClass = AvroFileReader.class;
         dataFile = createDataFile();
+        readerConfig = new HashMap<>();
     }
 
     private static Path createDataFile() throws IOException {

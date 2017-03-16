@@ -10,6 +10,7 @@ import org.apache.kafka.connect.data.Struct;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 public class TextFileReader extends AbstractFileReader<String> {
@@ -23,14 +24,16 @@ public class TextFileReader extends AbstractFileReader<String> {
     private boolean finished = false;
     private LineNumberReader reader;
 
-
-    public TextFileReader(FileSystem fs, Path filePath) throws IOException {
-        super(fs, filePath, new TxtToStruct());
+    public TextFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
+        super(fs, filePath, new TxtToStruct(), config);
         this.fs = fs;
-        //FileSystem.get(conf);
         this.reader = new LineNumberReader(new InputStreamReader(fs.open(filePath)));
         this.filePath = filePath;
         this.offset = new TextOffset(0);
+    }
+
+    @Override
+    protected void configure(Map<String, Object> config) {
     }
 
     @Override
@@ -58,7 +61,7 @@ public class TextFileReader extends AbstractFileReader<String> {
     }
 
     @Override
-    public String nextRecord() {
+    protected String nextRecord() {
         if (!hasNext()) {
             throw new NoSuchElementException("There are no more records in file: " + filePath);
         }
@@ -118,7 +121,7 @@ public class TextFileReader extends AbstractFileReader<String> {
     }
 
     static class TxtToStruct implements ReaderAdapter<String> {
-        static final Schema schema = SchemaBuilder.struct()
+        final Schema schema = SchemaBuilder.struct()
                 .field(FIELD_VALUE, SchemaBuilder.STRING_SCHEMA).build();
 
         @Override

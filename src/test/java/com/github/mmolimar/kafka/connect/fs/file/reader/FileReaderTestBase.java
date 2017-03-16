@@ -28,6 +28,7 @@ public abstract class FileReaderTestBase {
     protected static FileSystem fs;
     protected static URI fsUri;
     protected static Path dataFile;
+    protected static Map<String, Object> readerConfig;
     protected static FileReader reader;
 
     @AfterClass
@@ -38,7 +39,7 @@ public abstract class FileReaderTestBase {
 
     @Before
     public void openReader() throws Throwable {
-        reader = getReader(fs, dataFile);
+        reader = getReader(fs, dataFile, readerConfig);
         assertTrue(reader.getFilePath().equals(dataFile));
     }
 
@@ -54,7 +55,7 @@ public abstract class FileReaderTestBase {
     @Test(expected = IllegalArgumentException.class)
     public void invalidArgs() throws Throwable {
         try {
-            readerClass.getConstructor(FileSystem.class, Path.class).newInstance(null, null);
+            readerClass.getConstructor(FileSystem.class, Path.class, Map.class).newInstance(null, null, null);
         } catch (Exception e) {
             throw e.getCause();
         }
@@ -63,7 +64,7 @@ public abstract class FileReaderTestBase {
     @Test(expected = FileNotFoundException.class)
     public void fileDoesNotExist() throws Throwable {
         Path path = new Path(new Path(fsUri), UUID.randomUUID().toString());
-        getReader(fs, path);
+        getReader(fs, path, readerConfig);
     }
 
     @Test(expected = IOException.class)
@@ -71,7 +72,7 @@ public abstract class FileReaderTestBase {
         File tmp = File.createTempFile("test-", "");
         Path path = new Path(new Path(fsUri), tmp.getName());
         fs.moveFromLocalFile(new Path(tmp.getAbsolutePath()), path);
-        getReader(fs, path);
+        getReader(fs, path, readerConfig);
     }
 
     @Test(expected = IOException.class)
@@ -82,7 +83,7 @@ public abstract class FileReaderTestBase {
         }
         Path path = new Path(new Path(fsUri), tmp.getName());
         fs.moveFromLocalFile(new Path(tmp.getAbsolutePath()), path);
-        getReader(fs, path);
+        getReader(fs, path, readerConfig);
     }
 
     @Test
@@ -142,8 +143,8 @@ public abstract class FileReaderTestBase {
         reader.seek(getOffset(0));
     }
 
-    protected final FileReader getReader(FileSystem fs, Path path) throws Throwable {
-        return ReflectionUtils.makeReader(readerClass, fs, path);
+    protected final FileReader getReader(FileSystem fs, Path path, Map<String, Object> config) throws Throwable {
+        return ReflectionUtils.makeReader(readerClass, fs, path, config);
     }
 
     protected abstract Offset getOffset(long offset);

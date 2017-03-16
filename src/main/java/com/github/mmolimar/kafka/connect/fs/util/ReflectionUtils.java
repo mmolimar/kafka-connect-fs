@@ -10,11 +10,13 @@ import org.apache.hadoop.fs.Path;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
+import java.util.Map;
 
 public class ReflectionUtils {
 
-    public static FileReader makeReader(Class<? extends FileReader> clazz, FileSystem fs, Path path) throws Throwable {
-        return make(clazz, fs, path);
+    public static FileReader makeReader(Class<? extends FileReader> clazz, FileSystem fs,
+                                        Path path, Map<String, Object> config) throws Throwable {
+        return make(clazz, fs, path, config);
     }
 
     public static Policy makePolicy(Class<? extends Policy> clazz, FsSourceTaskConfig conf) throws Throwable {

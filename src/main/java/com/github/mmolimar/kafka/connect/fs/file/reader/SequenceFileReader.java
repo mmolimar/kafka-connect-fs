@@ -11,6 +11,7 @@ import org.apache.kafka.connect.data.Struct;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.SequenceRecord<Writable, Writable>> {
@@ -28,8 +29,8 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
     private long recordIndex, hasNextIndex;
     private boolean hasNext;
 
-    public SequenceFileReader(FileSystem fs, Path filePath) throws IOException {
-        super(fs, filePath, new SeqToStruct());
+    public SequenceFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
+        super(fs, filePath, new SeqToStruct(), config);
 
         this.filePath = filePath;
         this.reader = new SequenceFile.Reader(fs.getConf(),
@@ -42,6 +43,10 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
         this.offset = new SeqOffset(0);
         this.recordIndex = this.hasNextIndex = -1;
         this.hasNext = false;
+    }
+
+    @Override
+    protected void configure(Map<String, Object> config) {
     }
 
     private Schema getSchema(Writable writable) {
@@ -82,7 +87,7 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
     }
 
     @Override
-    public SequenceRecord<Writable, Writable> nextRecord() {
+    protected SequenceRecord<Writable, Writable> nextRecord() {
         if (!hasNext()) {
             throw new NoSuchElementException("There are no more records in file: " + filePath);
         }
@@ -178,10 +183,6 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
             this.value = value;
         }
 
-        @Override
-        public String toString() {
-            return String.format("(%s, %s)", key, value);
-        }
     }
 
 }

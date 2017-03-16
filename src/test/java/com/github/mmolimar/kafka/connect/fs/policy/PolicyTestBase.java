@@ -58,6 +58,12 @@ public abstract class PolicyTestBase {
         taskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS).getConstructor(taskConfig.getClass()).newInstance(null);
     }
 
+    @Test(expected = ConfigException.class)
+    public void invalidConfig() throws Throwable {
+        ReflectionUtils.makePolicy((Class<? extends Policy>) taskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS),
+                new FsSourceTaskConfig(new HashedMap()));
+    }
+
     @Test
     public void checkConfig() throws IOException {
         for (Path dir : directories) {
@@ -66,12 +72,6 @@ public abstract class PolicyTestBase {
             assertEquals("test", fs.getConf().get("fs.default.name"));
         }
         assertTrue(taskConfig.equals(policy.getConf()));
-    }
-
-    @Test(expected = ConfigException.class)
-    public void invalidConfig() throws Throwable {
-        ReflectionUtils.makePolicy((Class<? extends Policy>) taskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS),
-                new FsSourceTaskConfig(new HashedMap()));
     }
 
     @Test

@@ -36,9 +36,6 @@ abstract class AbstractPolicy implements Policy {
     private boolean interrupted;
 
     public AbstractPolicy(FsSourceTaskConfig conf) throws IOException {
-        if (conf == null) {
-            throw new IllegalArgumentException("conf cannot be null");
-        }
         this.fileSystems = new ArrayList<>();
         this.conf = conf;
         this.executions = new AtomicInteger(0);
@@ -179,7 +176,7 @@ abstract class AbstractPolicy implements Policy {
         FileReader reader;
         try {
             reader = ReflectionUtils.makeReader((Class<? extends FileReader>) conf.getClass(FsSourceTaskConfig.FILE_READER_CLASS),
-                    current, new Path(metadata.getPath()));
+                    current, new Path(metadata.getPath()), conf.originals());
         } catch (Throwable t) {
             throw new ConnectException("An error has ocurred when creating reader for file: " + metadata.getPath(), t);
         }

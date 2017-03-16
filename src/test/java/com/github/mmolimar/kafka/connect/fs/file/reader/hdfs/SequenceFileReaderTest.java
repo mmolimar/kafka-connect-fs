@@ -13,6 +13,7 @@ import org.junit.BeforeClass;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
@@ -27,6 +28,7 @@ public class SequenceFileReaderTest extends HdfsFileReaderTestBase {
     public static void setUp() throws IOException {
         readerClass = SequenceFileReader.class;
         dataFile = createDataFile();
+        readerConfig = new HashMap<>();
     }
 
     private static Path createDataFile() throws IOException {

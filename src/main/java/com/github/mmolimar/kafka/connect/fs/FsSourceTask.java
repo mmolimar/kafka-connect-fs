@@ -67,7 +67,7 @@ public class FsSourceTask extends SourceTask {
 
     @Override
     public List<SourceRecord> poll() throws InterruptedException {
-        log.info("Polling for new data");
+        log.trace("Polling for new data");
 
         while (!stop.get() && !policy.hasEnded()) {
 

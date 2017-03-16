@@ -11,6 +11,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
@@ -24,6 +25,7 @@ public class TextFileReaderTest extends HdfsFileReaderTestBase {
     public static void setUp() throws IOException {
         readerClass = TextFileReader.class;
         dataFile = createDataFile();
+        readerConfig = new HashMap<>();
     }
 
     private static Path createDataFile() throws IOException {

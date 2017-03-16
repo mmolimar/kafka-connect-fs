@@ -12,6 +12,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
 
 import java.io.IOException;
+import java.util.Map;
 
 public class AvroFileReader extends AbstractFileReader<GenericRecord> {
 
@@ -19,12 +20,15 @@ public class AvroFileReader extends AbstractFileReader<GenericRecord> {
 
     private final AvroOffset offset;
 
-    public AvroFileReader(FileSystem fs, Path filePath) throws IOException {
-        super(fs, filePath, new AvroToStruct());
+    public AvroFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
+        super(fs, filePath, new AvroToStruct(), config);
 
         AvroFSInput input = new AvroFSInput(FileContext.getFileContext(filePath.toUri()), filePath);
         this.reader = new DataFileReader<>(input, new SpecificDatumReader<>());
         this.offset = new AvroOffset(0);
+    }
+
+    protected void configure(Map<String, Object> config) {
     }
 
     @Override
@@ -32,7 +36,8 @@ public class AvroFileReader extends AbstractFileReader<GenericRecord> {
         return reader.hasNext();
     }
 
-    public GenericRecord nextRecord() {
+    @Override
+    protected GenericRecord nextRecord() {
         GenericRecord record = reader.next();
         this.offset.inc();
 
