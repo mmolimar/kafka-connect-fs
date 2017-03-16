@@ -1,4 +1,4 @@
-# Kafka Connect FileSystem Source Connector [![Build Status](https://travis-ci.org/mmolimar/kafka-connect-fs.svg?branch=master)](https://travis-ci.org/mmolimar/kafka-connect-fs.svg?branch=master)[![Coverage Status](https://coveralls.io/repos/github/mmolimar/kafka-connect-fs/badge.svg?branch=master)](https://coveralls.io/github/mmolimar/kafka-connect-fs?branch=master)
+# Kafka Connect FileSystem Source Connector [![Build Status](https://travis-ci.org/mmolimar/kafka-connect-fs.svg?branch=master)](https://travis-ci.org/mmolimar/kafka-connect-fs)[![Coverage Status](https://coveralls.io/repos/github/mmolimar/kafka-connect-fs/badge.svg?branch=master)](https://coveralls.io/github/mmolimar/kafka-connect-fs?branch=master)
 
 Kafka Connect FileSystem is a Source Connector for reading data from any file system which implements 
 ``org.apache.hadoop.fs.FileSystem`` class from [Hadoop-Common](https://github.com/apache/hadoop-common) and writing to Kafka.
@@ -10,14 +10,14 @@ Kafka Connect FileSystem is a Source Connector for reading data from any file sy
 
 ## Getting started
 
-### Building source jar ###
+### Building source ###
     mvn clean package
 
 ### Config the connector ###
     name=FsSourceConnector
     connector.class=com.github.mmolimar.kafka.connect.fs.FsSourceConnector
     tasks.max=1
-    fs.uris=file://data,hdfs://localhost:9001/dir
+    fs.uris=file:///data,hdfs://localhost:9001/data
     topic=mytopic
     policy.class=com.github.mmolimar.kafka.connect.fs.policy.SimplePolicy
     policy.recursive=true
@@ -28,7 +28,7 @@ The ``kafka-connect-fs.properties`` file defines:
 1. The connector name.
 2. The class containing the connector.
 3. The number of tasks the connector is allowed to start.
-4. Comma-separated URIs of the FS(s).
+4. Comma-separated URIs of the FS(s). They can be URIs pointing directly to a file in the FS.
 5. Topic in which copy data to.
 6. Policy class to apply.
 7. Flag to activate traversed recursion in subdirectories when listing files.
@@ -45,8 +45,8 @@ The ``kafka-connect-fs.properties`` file defines:
     policy.custom.max.executions=-1
 ```
 1. Max sleep time (in ms) to wait to look for files in the FS.
-2. Sleep fraction to divide the sleep time to allow interrupt the policy
-3. Max sleep times allowed (negative to disable)
+2. Sleep fraction to divide the sleep time to allow interrupt the policy.
+3. Max sleep times allowed (negative to disable).
 
 #### File readers ####
 
@@ -56,7 +56,7 @@ The ``kafka-connect-fs.properties`` file defines:
     file.reader.delimited.header=true
     file.reader.delimited.token=,
 ```
-1. If the file contains header or not (default false)
+1. If the file contains header or not (default false).
 2. The token delimiter for columns.
 
 ### Running in development ###
