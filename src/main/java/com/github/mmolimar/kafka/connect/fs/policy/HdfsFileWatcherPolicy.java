@@ -17,10 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class HdfsFileWatcherPolicy extends AbstractPolicy {
@@ -62,7 +59,12 @@ public class HdfsFileWatcherPolicy extends AbstractPolicy {
 
     @Override
     public Iterator<FileMetadata> listFiles(FileSystem fs) throws IOException {
-        return fileQueue.iterator();
+        Set<FileMetadata> files = new HashSet<>();
+        FileMetadata metadata;
+        while ((metadata = fileQueue.poll()) != null) {
+            files.add(metadata);
+        }
+        return files.iterator();
     }
 
     @Override
@@ -136,20 +138,17 @@ public class HdfsFileWatcherPolicy extends AbstractPolicy {
         private void enqueue(String path) throws IOException {
             Path filePath = new Path(path);
             if (!fs.exists(filePath) || fs.getFileStatus(filePath) == null) {
-                log.info("Cannot enqueue file {} because does not exist but got an event from the FS", filePath.toString());
+                log.info("Cannot enqueue file {} because it does not exist but got an event from the FS", filePath.toString());
                 return;
             }
 
             RemoteIterator<LocatedFileStatus> it = fs.listFiles(filePath, false);
             while (it.hasNext()) {
                 LocatedFileStatus status = it.next();
-                if (!status.isFile()) continue;
-                FileMetadata metadata = toMetadata(status);
-                if (!fileQueue.contains(metadata)) {
-                    fileQueue.offer(metadata);
-                }
+                if (!status.isFile() || !fileRegexp.matcher(status.getPath().getName()).find()) continue;
+                fileQueue.offer(toMetadata(status));
             }
         }
     }
-
 }
+

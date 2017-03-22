@@ -1,19 +1,16 @@
 package com.github.mmolimar.kafka.connect.fs.policy.hdfs;
 
 import com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig;
-import com.github.mmolimar.kafka.connect.fs.file.FileMetadata;
 import com.github.mmolimar.kafka.connect.fs.file.reader.TextFileReader;
 import com.github.mmolimar.kafka.connect.fs.policy.HdfsFileWatcherPolicy;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.errors.IllegalWorkerStateException;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import static org.junit.Assert.assertFalse;
@@ -45,7 +42,7 @@ public class HdfsFileWatcherPolicyTest extends HdfsPolicyTestBase {
         taskConfig = new FsSourceTaskConfig(cfg);
     }
 
-    //This does not throw any exception. Just stop watching those nonexistent dirs
+    //This policy does not throw any exception. Just stop watching those nonexistent dirs
     @Test
     @Override
     public void invalidDirectory() throws IOException {
@@ -62,7 +59,7 @@ public class HdfsFileWatcherPolicyTest extends HdfsPolicyTestBase {
         assertTrue(policy.hasEnded());
     }
 
-    //This policy never ends. We have to interrupt it")
+    //This policy never ends. We have to interrupt it
     @Test(expected = IllegalWorkerStateException.class)
     @Override
     public void execPolicyAlreadyEnded() throws IOException {
@@ -71,34 +68,6 @@ public class HdfsFileWatcherPolicyTest extends HdfsPolicyTestBase {
         policy.interrupt();
         assertTrue(policy.hasEnded());
         policy.execute();
-    }
-
-    //TODO
-    //@Ignore(value = "Needs synchronization. Sometimes fails")
-    @Test
-    public void oneFilePerFs() throws IOException {
-        for (Path dir : directories) {
-            fs.createNewFile(new Path(dir, String.valueOf(System.nanoTime() + ".txt")));
-            //this file does not match the regexp
-            fs.createNewFile(new Path(dir, String.valueOf(System.nanoTime())));
-        }
-
-        Iterator<FileMetadata> it = policy.execute();
-    }
-
-    //TODO
-    //@Ignore(value = "Needs synchronization. Sometimes fails")
-    @Test
-    public void recursiveDirectory() throws IOException {
-        for (Path dir : directories) {
-            Path tmpDir = new Path(dir, String.valueOf(System.nanoTime()));
-            fs.mkdirs(tmpDir);
-            fs.createNewFile(new Path(tmpDir, String.valueOf(System.nanoTime() + ".txt")));
-            //this file does not match the regexp
-            fs.createNewFile(new Path(tmpDir, String.valueOf(System.nanoTime())));
-        }
-
-        Iterator<FileMetadata> it = policy.execute();
     }
 
 }

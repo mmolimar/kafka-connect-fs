@@ -103,12 +103,14 @@ public abstract class PolicyTestBase {
     }
 
     @Test
-    public void oneFilePerFs() throws IOException {
+    public void oneFilePerFs() throws IOException, InterruptedException {
         for (Path dir : directories) {
             fs.createNewFile(new Path(dir, String.valueOf(System.nanoTime() + ".txt")));
             //this file does not match the regexp
-            fs.createNewFile(new Path(dir, String.valueOf(System.nanoTime())));
+            fs.createNewFile(new Path(dir, String.valueOf(System.nanoTime()) + ".invalid"));
         }
+        //we wait till FS has registered the files
+        Thread.sleep(500);
 
         Iterator<FileMetadata> it = policy.execute();
         assertTrue(it.hasNext());
@@ -119,14 +121,16 @@ public abstract class PolicyTestBase {
     }
 
     @Test
-    public void recursiveDirectory() throws IOException {
+    public void recursiveDirectory() throws IOException, InterruptedException {
         for (Path dir : directories) {
             Path tmpDir = new Path(dir, String.valueOf(System.nanoTime()));
             fs.mkdirs(tmpDir);
             fs.createNewFile(new Path(tmpDir, String.valueOf(System.nanoTime() + ".txt")));
             //this file does not match the regexp
-            fs.createNewFile(new Path(tmpDir, String.valueOf(System.nanoTime())));
+            fs.createNewFile(new Path(tmpDir, String.valueOf(System.nanoTime()) + ".invalid"));
         }
+        //we wait till FS has registered the files
+        Thread.sleep(500);
 
         Iterator<FileMetadata> it = policy.execute();
         assertTrue(it.hasNext());

@@ -44,6 +44,11 @@ public class FileMetadata {
         return false;
     }
 
+    public int hashCode() {
+        return path == null ? 0 : path.hashCode();
+    }
+
+
     public static class BlockInfo {
         private long offset;
         private long length;
