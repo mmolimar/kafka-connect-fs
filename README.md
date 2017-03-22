@@ -63,15 +63,15 @@ Just use it when your URIs start with ``hdfs://``
 
 ##### AvroFileReader #####
 
-Read files with [AVRO](http://avro.apache.org/) format.
+Read files with [Avro](http://avro.apache.org/) format.
+
+##### ParquetFileReader #####
+
+Read files with [Parquet](https://parquet.apache.org/) format.
 
 ##### SequenceFileReader #####
 
 Read [Sequence files](https://wiki.apache.org/hadoop/SequenceFile).
-
-##### TextFileReader #####
-
-Read plain text files. Each line represents one record.
 
 ##### DelimitedTextFileReader #####
 
@@ -83,6 +83,10 @@ Text file reader using custom tokens to distinguish different columns on each li
 ```
 1. If the file contains header or not (default false).
 2. The token delimiter for columns.
+
+##### TextFileReader #####
+
+Read plain text files. Each line represents one record.
 
 ### Running in development ###
 ```
