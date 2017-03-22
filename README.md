@@ -54,9 +54,9 @@ Simple policy with an custom sleep on each execution.
 2. Sleep fraction to divide the sleep time to allow interrupt the policy.
 3. Max sleep times allowed (negative to disable).
 
-##### HdfsFileWatcherPolicy (experimental) #####
+##### HdfsFileWatcherPolicy #####
 
-It uses Hadoop notifications events (since Hadoop 2.6.0) and all create/append/close events will report new files to be ingested.
+It uses Hadoop notifications events (since Hadoop 2.6.0) and all create/append/close events will be reported as new files to be ingested.
 Just use it when your URIs start with ``hdfs://``
 
 #### File readers ####
