@@ -21,7 +21,7 @@ public abstract class FileReaderTestBase {
     @ClassRule
     public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-    protected static final int NUM_RECORDS = 10;
+    protected static final int NUM_RECORDS = 100;
     protected static final Map<Integer, Long> OFFSETS_BY_INDEX = new HashMap<>();
 
     protected static Class<? extends FileReader> readerClass;

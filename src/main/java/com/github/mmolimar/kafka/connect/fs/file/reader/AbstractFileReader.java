@@ -11,6 +11,7 @@ public abstract class AbstractFileReader<T> implements FileReader {
 
     public static final String FILE_READER_PREFIX_CONF = "file.reader";
 
+    private final FileSystem fs;
     private final Path filePath;
     private ReaderAdapter<T> adapter;
 
@@ -18,6 +19,7 @@ public abstract class AbstractFileReader<T> implements FileReader {
         if (fs == null || filePath == null) {
             throw new IllegalArgumentException("fileSystem and filePath are required");
         }
+        this.fs = fs;
         this.filePath = filePath;
         this.adapter = adapter;
 
@@ -28,6 +30,10 @@ public abstract class AbstractFileReader<T> implements FileReader {
     }
 
     protected abstract void configure(Map<String, Object> config);
+
+    protected FileSystem getFs() {
+        return fs;
+    }
 
     @Override
     public Path getFilePath() {

@@ -22,7 +22,6 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
     private static final String BUFFER_SIZE = "reader.sequencefile.buffer.bytes";
     private static final int DEFAULT_BUFF_SIZE = 4096;
 
-    private final Path filePath;
     private final SequenceFile.Reader reader;
     private final Writable key, value;
     private final Schema schema;
@@ -33,7 +32,6 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
     public SequenceFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
         super(fs, filePath, new SeqToStruct(), config);
 
-        this.filePath = filePath;
         this.reader = new SequenceFile.Reader(fs.getConf(),
                 SequenceFile.Reader.file(filePath),
                 SequenceFile.Reader.bufferSize(fs.getConf().getInt(BUFFER_SIZE, DEFAULT_BUFF_SIZE)));
@@ -90,7 +88,7 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
     @Override
     protected SequenceRecord<Writable, Writable> nextRecord() {
         if (!hasNext()) {
-            throw new NoSuchElementException("There are no more records in file: " + filePath);
+            throw new NoSuchElementException("There are no more records in file: " + getFilePath());
         }
         recordIndex++;
         return new SequenceRecord<Writable, Writable>(schema, key, value);

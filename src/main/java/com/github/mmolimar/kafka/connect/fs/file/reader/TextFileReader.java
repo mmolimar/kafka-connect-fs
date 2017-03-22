@@ -18,8 +18,6 @@ public class TextFileReader extends AbstractFileReader<String> {
 
     public static final String FIELD_VALUE = "value";
 
-    private final FileSystem fs;
-    private final Path filePath;
     private final TextOffset offset;
     private String currentLine;
     private boolean finished = false;
@@ -27,9 +25,7 @@ public class TextFileReader extends AbstractFileReader<String> {
 
     public TextFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
         super(fs, filePath, new TxtToStruct(), config);
-        this.fs = fs;
         this.reader = new LineNumberReader(new InputStreamReader(fs.open(filePath)));
-        this.filePath = filePath;
         this.offset = new TextOffset(0);
     }
 
@@ -64,7 +60,7 @@ public class TextFileReader extends AbstractFileReader<String> {
     @Override
     protected String nextRecord() {
         if (!hasNext()) {
-            throw new NoSuchElementException("There are no more records in file: " + filePath);
+            throw new NoSuchElementException("There are no more records in file: " + getFilePath());
         }
         String aux = currentLine;
         currentLine = null;
@@ -79,7 +75,7 @@ public class TextFileReader extends AbstractFileReader<String> {
         }
         try {
             if (offset.getRecordOffset() < reader.getLineNumber()) {
-                this.reader = new LineNumberReader(new InputStreamReader(fs.open(filePath)));
+                this.reader = new LineNumberReader(new InputStreamReader(getFs().open(getFilePath())));
                 currentLine = null;
             }
             while ((currentLine = reader.readLine()) != null) {
