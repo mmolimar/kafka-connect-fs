@@ -10,14 +10,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class SimplePolicyTest extends HdfsPolicyTestBase {
 
     @BeforeClass
     public static void setUp() throws IOException {
         directories = new ArrayList<Path>() {{
-            add(new Path(fsUri.toString(), String.valueOf(System.nanoTime())));
-            add(new Path(fsUri.toString(), String.valueOf(System.nanoTime())));
+            add(new Path(fsUri.toString(), UUID.randomUUID().toString()));
+            add(new Path(fsUri.toString(), UUID.randomUUID().toString()));
         }};
         for (Path dir : directories) {
             fs.mkdirs(dir);

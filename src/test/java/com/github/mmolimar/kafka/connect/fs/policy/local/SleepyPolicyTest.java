@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -23,8 +24,8 @@ public class SleepyPolicyTest extends LocalPolicyTestBase {
     @BeforeClass
     public static void setUp() throws IOException {
         directories = new ArrayList<Path>() {{
-            add(new Path(fsUri.toString(), String.valueOf(System.nanoTime())));
-            add(new Path(fsUri.toString(), String.valueOf(System.nanoTime())));
+            add(new Path(fsUri.toString(), UUID.randomUUID().toString()));
+            add(new Path(fsUri.toString(), UUID.randomUUID().toString()));
         }};
         for (Path dir : directories) {
             fs.mkdirs(dir);

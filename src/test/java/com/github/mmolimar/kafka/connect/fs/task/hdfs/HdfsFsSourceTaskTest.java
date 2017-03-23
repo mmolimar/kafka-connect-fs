@@ -22,8 +22,8 @@ public class HdfsFsSourceTaskTest extends HdfsFsSourceTaskTestBase {
     @BeforeClass
     public static void setUp() throws IOException {
         directories = new ArrayList<Path>() {{
-            add(new Path(fsUri + String.valueOf(System.nanoTime())));
-            add(new Path(fsUri + String.valueOf(System.nanoTime())));
+            add(new Path(fsUri.toString(), UUID.randomUUID().toString()));
+            add(new Path(fsUri.toString(), UUID.randomUUID().toString()));
         }};
         for (Path dir : directories) {
             fs.mkdirs(dir);
