@@ -2,10 +2,13 @@ package com.github.mmolimar.kafka.connect.fs.task;
 
 import com.github.mmolimar.kafka.connect.fs.FsSourceTask;
 import com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig;
+import com.github.mmolimar.kafka.connect.fs.file.reader.AvroFileReader;
 import com.github.mmolimar.kafka.connect.fs.file.reader.TextFileReader;
+import com.github.mmolimar.kafka.connect.fs.policy.Policy;
 import com.github.mmolimar.kafka.connect.fs.policy.SimplePolicy;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTaskContext;
 import org.apache.kafka.connect.storage.OffsetStorageReader;
@@ -13,12 +16,16 @@ import org.easymock.EasyMock;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 import org.powermock.api.easymock.PowerMock;
+import org.powermock.api.support.membermodification.MemberModifier;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -133,7 +140,49 @@ public abstract class FsSourceTaskTestBase {
         assertNull(task.poll());
     }
 
+    @Test
+    public void nonExistentUri() throws InterruptedException {
+        Map<String, String> props = new HashMap<>(taskConfig);
+        props.put(FsSourceTaskConfig.FS_URIS, new Path(fs.getWorkingDirectory(), UUID.randomUUID().toString()).toString());
+        task.start(props);
+        task.poll();
+    }
+
+    @Test
+    public void exceptionExecutingPolicy() throws InterruptedException, IOException, IllegalAccessException {
+        Map<String, String> props = new HashMap<>(taskConfig);
+        task.start(props);
+
+        Policy policy = EasyMock.createNiceMock(Policy.class);
+        EasyMock.expect(policy.hasEnded()).andReturn(Boolean.FALSE);
+        EasyMock.expect(policy.execute()).andThrow(new ConnectException("Exception from mock"));
+        EasyMock.expect(policy.getURIs()).andReturn(null);
+        EasyMock.checkOrder(policy, false);
+        EasyMock.replay(policy);
+        MemberModifier.field(FsSourceTask.class, "policy").set(task, policy);
+
+        assertEquals(0, task.poll().size());
+    }
+
+    @Test
+    public void exceptionReadingFile() throws InterruptedException, IOException {
+        Map<String, String> props = new HashMap<>(taskConfig);
+        File tmp = File.createTempFile("test-", ".txt");
+        try (PrintWriter writer = new PrintWriter(tmp)) {
+            writer.append("txt");
+        }
+        Path dest = new Path(directories.get(0).toString(), System.nanoTime() + ".txt");
+        fs.moveFromLocalFile(new Path(tmp.getAbsolutePath()), dest);
+        props.put(FsSourceTaskConfig.FILE_READER_CLASS, AvroFileReader.class.getName());
+        task.start(props);
+        assertEquals(0, task.poll().size());
+        task.stop();
+
+        fs.delete(dest, false);
+    }
+
     protected abstract void checkRecords(List<SourceRecord> records);
 
     protected abstract void createDataFile(Path path) throws IOException;
+
 }

@@ -4,7 +4,6 @@ import com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig;
 import com.github.mmolimar.kafka.connect.fs.file.FileMetadata;
 import com.github.mmolimar.kafka.connect.fs.util.ReflectionUtils;
 import org.apache.commons.collections.map.HashedMap;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.common.config.ConfigException;
@@ -65,16 +64,6 @@ public abstract class PolicyTestBase {
     public void invalidConfig() throws Throwable {
         ReflectionUtils.makePolicy((Class<? extends Policy>) taskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS),
                 new FsSourceTaskConfig(new HashedMap()));
-    }
-
-    @Test
-    public void checkConfig() throws IOException {
-        for (Path dir : directories) {
-            FileSystem fs = FileSystem.get(dir.toUri(), new Configuration());
-            assertEquals("test", fs.getConf().get("dfs.data.dir"));
-            assertEquals("test", fs.getConf().get("fs.default.name"));
-        }
-        assertTrue(taskConfig.equals(policy.getConf()));
     }
 
     @Test

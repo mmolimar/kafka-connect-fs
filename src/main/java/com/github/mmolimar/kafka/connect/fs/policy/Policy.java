@@ -20,7 +20,5 @@ public interface Policy extends Closeable {
 
     List<String> getURIs();
 
-    FsSourceTaskConfig getConf();
-
     void interrupt();
 }

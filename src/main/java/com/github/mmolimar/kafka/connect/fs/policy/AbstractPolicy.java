@@ -66,7 +66,7 @@ abstract class AbstractPolicy implements Policy {
                             (String) entry.getValue()));
 
             Path workingDir = new Path(convert(uri));
-            FileSystem fs = FileSystem.get(workingDir.toUri(), fsConfig);
+            FileSystem fs = FileSystem.newInstance(workingDir.toUri(), fsConfig);
             fs.setWorkingDirectory(workingDir);
             this.fileSystems.add(fs);
         }
@@ -98,11 +98,6 @@ abstract class AbstractPolicy implements Policy {
         List<String> uris = new ArrayList<>();
         fileSystems.forEach(fs -> uris.add(fs.getWorkingDirectory().toString()));
         return uris;
-    }
-
-    @Override
-    public FsSourceTaskConfig getConf() {
-        return conf;
     }
 
     @Override

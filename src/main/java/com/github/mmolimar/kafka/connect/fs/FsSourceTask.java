@@ -63,9 +63,8 @@ public class FsSourceTask extends SourceTask {
 
     @Override
     public List<SourceRecord> poll() throws InterruptedException {
-        log.trace("Polling for new data");
-
         while (stop != null && !stop.get() && !policy.hasEnded()) {
+            log.trace("Polling for new data");
 
             final List<SourceRecord> results = new ArrayList<>();
             List<FileMetadata> files = filesToProcess();
@@ -76,8 +75,9 @@ public class FsSourceTask extends SourceTask {
                     while (reader.hasNext()) {
                         results.add(convert(metadata, reader.currentOffset(), reader.next()));
                     }
-                } catch (IOException ioe) {
-                    throw new ConnectException(ioe);
+                } catch (ConnectException | IOException e) {
+                    //when an exception happens reading a file, the connector continues
+                    log.error("Error reading file from FS: " + metadata.getPath() + ". Keep going...", e);
                 }
             });
             return results;
@@ -91,8 +91,10 @@ public class FsSourceTask extends SourceTask {
             return asStream(policy.execute())
                     .filter(metadata -> metadata.getLen() > 0)
                     .collect(Collectors.toList());
-        } catch (IOException ioe) {
-            throw new ConnectException(ioe);
+        } catch (IOException | ConnectException e) {
+            //when an exception happens executing the policy, the connector continues
+            log.error("Cannot retrive files to process from FS: " + policy.getURIs() + ". Keep going...", e);
+            return Collections.EMPTY_LIST;
         }
     }
 
