@@ -17,9 +17,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.URI;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -63,13 +65,40 @@ abstract class AbstractPolicy implements Policy {
                     .forEach(entry -> fsConfig.set(entry.getKey().replace(FsSourceTaskConfig.POLICY_PREFIX_FS, ""),
                             (String) entry.getValue()));
 
-            FileSystem fs = FileSystem.get(URI.create(uri), fsConfig);
-            fs.setWorkingDirectory(new Path(uri));
+            Path workingDir = new Path(convert(uri));
+            FileSystem fs = FileSystem.get(workingDir.toUri(), fsConfig);
+            fs.setWorkingDirectory(workingDir);
             this.fileSystems.add(fs);
         }
     }
 
+    private String convert(String uri) {
+        String converted = uri;
+        LocalDateTime dateTime = LocalDateTime.now();
+        DateTimeFormatter formatter;
+
+        Pattern pattern = Pattern.compile("\\$\\{([a-zA-Z]+)}");
+        Matcher matcher = pattern.matcher(uri);
+        while (matcher.find()) {
+            try {
+                formatter = DateTimeFormatter.ofPattern(matcher.group(1));
+                converted = converted.replaceAll("\\$\\{" + matcher.group(1) + "}", dateTime.format(formatter));
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Cannot convert dynamic URI: " + matcher.group(1), e);
+            }
+        }
+
+        return converted;
+    }
+
     protected abstract void configPolicy(Map<String, Object> customConfigs);
+
+    @Override
+    public List<String> getURIs() {
+        List<String> uris = new ArrayList<>();
+        fileSystems.forEach(fs -> uris.add(fs.getWorkingDirectory().toString()));
+        return uris;
+    }
 
     @Override
     public FsSourceTaskConfig getConf() {

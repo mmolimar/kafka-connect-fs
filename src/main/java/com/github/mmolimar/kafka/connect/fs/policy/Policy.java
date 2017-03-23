@@ -8,6 +8,7 @@ import org.apache.kafka.connect.storage.OffsetStorageReader;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
 
 public interface Policy extends Closeable {
 
@@ -16,6 +17,8 @@ public interface Policy extends Closeable {
     FileReader offer(FileMetadata metadata, OffsetStorageReader offsetStorageReader) throws IOException;
 
     boolean hasEnded();
+
+    List<String> getURIs();
 
     FsSourceTaskConfig getConf();
 

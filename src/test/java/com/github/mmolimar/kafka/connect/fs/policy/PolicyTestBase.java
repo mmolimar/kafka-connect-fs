@@ -15,8 +15,11 @@ import org.junit.rules.TemporaryFolder;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 import static org.junit.Assert.*;
@@ -151,6 +154,44 @@ public abstract class PolicyTestBase {
         policy.execute();
         assertTrue(policy.hasEnded());
         policy.execute();
+    }
+
+    @Test
+    public void dynamicURIs() throws Throwable {
+        Path dynamic = new Path(fsUri.toString(), "${G}/${yyyy}/${MM}/${W}");
+        fs.create(dynamic);
+        Map<String, String> originals = taskConfig.originalsStrings();
+        originals.put(FsSourceTaskConfig.FS_URIS, dynamic.toString());
+        FsSourceTaskConfig cfg = new FsSourceTaskConfig(originals);
+        policy = ReflectionUtils.makePolicy((Class<? extends Policy>) taskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS),
+                cfg);
+        assertEquals(1, policy.getURIs().size());
+
+        LocalDateTime dateTime = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("G");
+        StringBuilder uri = new StringBuilder(dateTime.format(formatter));
+        uri.append("/");
+        formatter = DateTimeFormatter.ofPattern("yyyy");
+        uri.append(dateTime.format(formatter));
+        uri.append("/");
+        formatter = DateTimeFormatter.ofPattern("MM");
+        uri.append(dateTime.format(formatter));
+        uri.append("/");
+        formatter = DateTimeFormatter.ofPattern("W");
+        uri.append(dateTime.format(formatter));
+        assertTrue(policy.getURIs().get(0).endsWith(uri.toString()));
+
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void invalidDynamicURIs() throws Throwable {
+        Path dynamic = new Path(fsUri.toString(), "${yyyy}/${MM}/${mmmmmmm}");
+        fs.create(dynamic);
+        Map<String, String> originals = taskConfig.originalsStrings();
+        originals.put(FsSourceTaskConfig.FS_URIS, dynamic.toString());
+        FsSourceTaskConfig cfg = new FsSourceTaskConfig(originals);
+        policy = ReflectionUtils.makePolicy((Class<? extends Policy>) taskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS),
+                cfg);
     }
 
 }

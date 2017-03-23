@@ -23,8 +23,8 @@ public class SleepyPolicyTest extends LocalPolicyTestBase {
     @BeforeClass
     public static void setUp() throws IOException {
         directories = new ArrayList<Path>() {{
-            add(new Path(fsUri + String.valueOf(System.nanoTime())));
-            add(new Path(fsUri + String.valueOf(System.nanoTime())));
+            add(new Path(fsUri.toString(), String.valueOf(System.nanoTime())));
+            add(new Path(fsUri.toString(), String.valueOf(System.nanoTime())));
         }};
         for (Path dir : directories) {
             fs.mkdirs(dir);
