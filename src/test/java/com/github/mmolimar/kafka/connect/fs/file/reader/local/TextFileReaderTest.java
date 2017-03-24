@@ -47,13 +47,13 @@ public class TextFileReaderTest extends LocalFileReaderTestBase {
         return path;
     }
 
-    @Ignore(value = "This does not apply for txt files")
+    @Ignore(value = "This test does not apply for txt files")
     @Test(expected = IOException.class)
     public void emptyFile() throws Throwable {
         super.emptyFile();
     }
 
-    @Ignore(value = "This does not apply for txt files")
+    @Ignore(value = "This test does not apply for txt files")
     @Test(expected = IOException.class)
     public void invalidFileFormat() throws Throwable {
         super.invalidFileFormat();

@@ -6,7 +6,9 @@ import com.github.mmolimar.kafka.connect.fs.file.reader.TextFileReader;
 import com.github.mmolimar.kafka.connect.fs.policy.SimplePolicy;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,6 +18,8 @@ import java.util.Map;
 import static org.junit.Assert.*;
 
 public class FsSourceTaskTest {
+    @ClassRule
+    public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     private FsSourceTask task;
     private Map<String, String> taskConfig;
@@ -26,9 +30,9 @@ public class FsSourceTaskTest {
 
         taskConfig = new HashMap<String, String>() {{
             put(FsSourceTaskConfig.FS_URIS, String.join(",",
-                    System.getProperty("java.io.tmpdir") + File.separator + "dir1",
-                    System.getProperty("java.io.tmpdir") + File.separator + "dir2",
-                    System.getProperty("java.io.tmpdir") + File.separator + "dir3"));
+                    temporaryFolder.getRoot().toURI() + File.separator + "dir1",
+                    temporaryFolder.getRoot().toURI() + File.separator + "dir2",
+                    temporaryFolder.getRoot().toURI() + File.separator + "dir3"));
             put(FsSourceTaskConfig.TOPIC, "topic_test");
             put(FsSourceTaskConfig.POLICY_CLASS, SimplePolicy.class.getName());
             put(FsSourceTaskConfig.FILE_READER_CLASS, TextFileReader.class.getName());

@@ -5,8 +5,10 @@ import com.github.mmolimar.kafka.connect.fs.util.ReflectionUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
-import org.junit.*;
-import org.junit.rules.TemporaryFolder;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.*;
 import java.net.URI;
@@ -18,8 +20,6 @@ import java.util.UUID;
 import static org.junit.Assert.*;
 
 public abstract class FileReaderTestBase {
-    @ClassRule
-    public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     protected static final int NUM_RECORDS = 100;
     protected static final Map<Integer, Long> OFFSETS_BY_INDEX = new HashMap<>();
@@ -33,7 +33,6 @@ public abstract class FileReaderTestBase {
 
     @AfterClass
     public static void tearDown() throws IOException {
-        fs.delete(dataFile, true);
         fs.close();
     }
 

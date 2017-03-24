@@ -5,8 +5,11 @@ import com.github.mmolimar.kafka.connect.fs.FsSourceTask;
 import com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -16,6 +19,8 @@ import java.util.stream.IntStream;
 import static org.junit.Assert.*;
 
 public class FsSourceConnectorTest {
+    @ClassRule
+    public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     private FsSourceConnector connector;
     private Map<String, String> connProps;
@@ -26,9 +31,9 @@ public class FsSourceConnectorTest {
 
         Map<String, String> cfg = new HashMap<String, String>() {{
             put(FsSourceTaskConfig.FS_URIS, String.join(",",
-                    System.getProperty("java.io.tmpdir") + "/dir1",
-                    System.getProperty("java.io.tmpdir") + "/dir2",
-                    System.getProperty("java.io.tmpdir") + "/dir3"));
+                    temporaryFolder.getRoot().toURI() + File.separator + "dir1",
+                    temporaryFolder.getRoot().toURI() + File.separator + "dir2",
+                    temporaryFolder.getRoot().toURI() + File.separator + "dir3"));
             put(FsSourceTaskConfig.TOPIC, "topic_test");
         }};
         connProps = new HashMap<>(cfg);

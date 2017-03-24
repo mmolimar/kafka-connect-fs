@@ -13,8 +13,10 @@ import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTaskContext;
 import org.apache.kafka.connect.storage.OffsetStorageReader;
 import org.easymock.EasyMock;
-import org.junit.*;
-import org.junit.rules.TemporaryFolder;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.Test;
 import org.powermock.api.easymock.PowerMock;
 import org.powermock.api.support.membermodification.MemberModifier;
 
@@ -31,9 +33,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 public abstract class FsSourceTaskTestBase {
-
-    @ClassRule
-    public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     protected static final int NUM_RECORDS = 10;
 

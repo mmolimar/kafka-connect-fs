@@ -3,7 +3,6 @@ package com.github.mmolimar.kafka.connect.fs.file.reader.hdfs;
 import com.github.mmolimar.kafka.connect.fs.file.Offset;
 import com.github.mmolimar.kafka.connect.fs.file.reader.DelimitedTextFileReader;
 import com.github.mmolimar.kafka.connect.fs.file.reader.FileReader;
-import com.github.mmolimar.kafka.connect.fs.file.reader.local.LocalFileReaderTestBase;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
@@ -59,13 +58,13 @@ public class DelimitedTextFileReaderTest extends HdfsFileReaderTestBase {
         return path;
     }
 
-    @Ignore(value = "This does not apply for txt files")
+    @Ignore(value = "This test does not apply for txt files")
     @Test(expected = IOException.class)
     public void emptyFile() throws Throwable {
         super.emptyFile();
     }
 
-    @Ignore(value = "This does not apply for txt files")
+    @Ignore(value = "This test does not apply for txt files")
     @Test(expected = IOException.class)
     public void invalidFileFormat() throws Throwable {
         super.invalidFileFormat();

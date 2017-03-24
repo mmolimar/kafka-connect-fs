@@ -8,8 +8,10 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.connect.errors.IllegalWorkerStateException;
-import org.junit.*;
-import org.junit.rules.TemporaryFolder;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -24,9 +26,6 @@ import java.util.NoSuchElementException;
 import static org.junit.Assert.*;
 
 public abstract class PolicyTestBase {
-
-    @ClassRule
-    public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     protected static FileSystem fs;
     protected static Policy policy;
