@@ -1,4 +1,4 @@
-# Kafka Connect FileSystem Source Connector [![Build Status](https://travis-ci.org/mmolimar/kafka-connect-fs.svg?branch=master)](https://travis-ci.org/mmolimar/kafka-connect-fs)[![Coverage Status](https://coveralls.io/repos/github/mmolimar/kafka-connect-fs/badge.svg?branch=master)](https://coveralls.io/github/mmolimar/kafka-connect-fs?branch=master)
+# Kafka Connect FileSystem Connector [![Build Status](https://travis-ci.org/mmolimar/kafka-connect-fs.svg?branch=master)](https://travis-ci.org/mmolimar/kafka-connect-fs)[![Coverage Status](https://coveralls.io/repos/github/mmolimar/kafka-connect-fs/badge.svg?branch=master)](https://coveralls.io/github/mmolimar/kafka-connect-fs?branch=master)
 
 Kafka Connect FileSystem is a Source Connector for reading data from any file system which implements 
 ``org.apache.hadoop.fs.FileSystem`` class from [Hadoop-Common](https://github.com/apache/hadoop-common) and writing to Kafka.
@@ -21,8 +21,8 @@ Kafka Connect FileSystem is a Source Connector for reading data from any file sy
     topic=mytopic
     policy.class=com.github.mmolimar.kafka.connect.fs.policy.SimplePolicy
     policy.recursive=true
-    file.reader.class=com.github.mmolimar.kafka.connect.fs.file.reader.TextFileReader
-    file.regexps=^[0-9]*\.txt$
+    policy_regexp=^[0-9]*\.txt$
+    file_reader.class=com.github.mmolimar.kafka.connect.fs.file.reader.TextFileReader
 The ``kafka-connect-fs.properties`` file defines:
 
 1. The connector name.
@@ -46,9 +46,9 @@ Just list files included in the corresponding URI.
 Simple policy with an custom sleep on each execution.
 
 ```
-    policy.custom.sleep=200000
-    policy.custom.sleep.fraction=100
-    policy.custom.max.executions=-1
+    policy.sleepy.sleep=200000
+    policy.sleepy.fraction=100
+    policy.sleepy.max_execs=-1
 ```
 1. Max sleep time (in ms) to wait to look for files in the FS.
 2. Sleep fraction to divide the sleep time to allow interrupt the policy.
@@ -78,8 +78,8 @@ Read [Sequence files](https://wiki.apache.org/hadoop/SequenceFile).
 Text file reader using custom tokens to distinguish different columns on each line. 
 
 ```
-    file.reader.delimited.header=true
-    file.reader.delimited.token=,
+    file_reader.delimited.token=,
+    file_reader.delimited.header=true
 ```
 1. If the file contains header or not (default false).
 2. The token delimiter for columns.
