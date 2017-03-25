@@ -18,13 +18,13 @@ General config properties for this connector.
   * Importance: high
 
 ``connector.class``
-  Class containing the connector.
+  Class indicating the connector.
 
   * Type: string
   * Importance: high
 
 ``tasks.max``
-  The number of tasks the connector is allowed to start.
+  Number of tasks the connector is allowed to start.
 
   * Type: int
   * Importance: high
@@ -49,6 +49,9 @@ General config properties for this connector.
   avoiding to add new URIs or look for files from a parent directory, you can include expressions
   in the URIs to do that. For example, for this URI ``file:///data/${yyyy}``, it will be
   converted to ``file:///data/2017`` (when executing whe policy).
+
+  You can use as many as you like in the URIs, for instance:
+  ``file:///data/${yyyy}/${MM}/${dd}/${HH}${mm}``
 
 ``topic``
   Topic in which copy data.

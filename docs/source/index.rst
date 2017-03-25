@@ -9,7 +9,7 @@ files in the file systems specified and load them into Kafka.
 
 The connector supports:
 
-* Several sort of FS to use.
+* Several sort of File Systems (FS) to use.
 * Dynamic and static URIs to ingest data from.
 * Policies to define rules about how to look for files.
 * File readers to parse and read different kind of file formats.

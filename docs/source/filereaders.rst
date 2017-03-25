@@ -4,7 +4,9 @@ Avro
 Files with `Avro <http://avro.apache.org/>`__ format can be read with this reader.
 
 The Avro schema is not needed due to is read from the file. The message sent
-to Kafka is created by transforming the record by means of Confluent Connect API.
+to Kafka is created by transforming the record by means of
+`Confluent avro-converter <https://github.com/confluentinc/schema-registry/tree/master/avro-converter>`__
+API.
 
 Parquet
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -43,7 +45,7 @@ named ``value`` in the message sent to Kafka.
 Delimited text
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Text file reader using custom tokens to distinguish different columns on each line.
+Text file reader using a custom token to distinguish different columns on each line.
 
 It allows to distinguish a header in the files and set the name of their columns
 in the message sent to Kafka. If there is no header, the value of each column will be in

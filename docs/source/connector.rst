@@ -4,7 +4,7 @@
 Connector
 ********************************************
 
-The connector use the abstraction provided from `Hadoop Common <http://hadoop.apache.org/>`__
+The connector takes advantage of the abstraction provided from `Hadoop Common <http://hadoop.apache.org/>`__
 using the implementation of the ``org.apache.hadoop.fs.FileSystem`` class. So, it's possible to use a
 wide variety of FS or if your FS is not included in the Hadoop Common API you can implement an extension
 of this abstraction and using it in a transparent way.
@@ -52,8 +52,8 @@ The ``kafka-connect-fs.properties`` file defines the following properties as req
    file_reader.class=<File reader class>
 
 #. The connector name.
-#. Class containing the connector.
-#. The number of tasks the connector is allowed to start.
+#. Class indicating the connector.
+#. Number of tasks the connector is allowed to start.
 #. Comma-separated URIs of the FS(s). They can be URIs pointing out directly to a file
    or a directory in the FS. These URIs can also be dynamic by using expressions for
    modifying them in runtime.
@@ -100,7 +100,7 @@ The policy to be used by the connector is defined in ``policy.class`` connector 
 .. important:: When delivering records from the connector to Kafka, they contain their own file offset
                so, if in the next eventual policy execution this file is processed again,
                the policy will seek the file to this offset and process the next records
-               if any (obviously, **if the offset was committed**).
+               if any (**if the offset was committed**).
 
 .. note:: If the URIs included in the ``fs.uris`` connector property contain any expression of the
           form ``${XXX}``, this dynamic URI is built in the moment of the policy execution.
