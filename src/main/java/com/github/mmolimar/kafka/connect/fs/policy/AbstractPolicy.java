@@ -42,7 +42,7 @@ abstract class AbstractPolicy implements Policy {
         this.conf = conf;
         this.executions = new AtomicInteger(0);
         this.recursive = conf.getBoolean(FsSourceTaskConfig.POLICY_RECURSIVE);
-        this.fileRegexp = Pattern.compile(conf.getString(FsSourceTaskConfig.FILE_REGEXP));
+        this.fileRegexp = Pattern.compile(conf.getString(FsSourceTaskConfig.POLICY_REGEXP));
         this.interrupted = false;
 
         Map<String, Object> customConfigs = customConfigs();
@@ -53,7 +53,7 @@ abstract class AbstractPolicy implements Policy {
 
     private Map<String, Object> customConfigs() {
         return conf.originals().entrySet().stream()
-                .filter(entry -> entry.getKey().startsWith(FsSourceTaskConfig.POLICY_PREFIX_CUSTOM))
+                .filter(entry -> entry.getKey().startsWith(FsSourceTaskConfig.POLICY_PREFIX))
                 .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
     }
 

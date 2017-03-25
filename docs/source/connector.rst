@@ -48,7 +48,7 @@ The ``kafka-connect-fs.properties`` file defines the following properties as req
    topic=mytopic
    policy.class=<Policy class>
    policy.recursive=true
-   policy.regexp=*
+   policy.regexp=.*
    file_reader.class=<File reader class>
 
 #. The connector name.

@@ -60,7 +60,7 @@ public abstract class FsSourceTaskTestBase {
             put(FsSourceTaskConfig.TOPIC, "topic_test");
             put(FsSourceTaskConfig.POLICY_CLASS, SimplePolicy.class.getName());
             put(FsSourceTaskConfig.FILE_READER_CLASS, TextFileReader.class.getName());
-            put(FsSourceTaskConfig.FILE_REGEXP, "^[0-9]*\\.txt$");
+            put(FsSourceTaskConfig.POLICY_REGEXP, "^[0-9]*\\.txt$");
         }};
 
         //Mock initialization

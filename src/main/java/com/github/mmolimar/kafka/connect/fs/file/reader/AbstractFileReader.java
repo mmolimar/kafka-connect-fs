@@ -7,9 +7,9 @@ import org.apache.kafka.connect.data.Struct;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public abstract class AbstractFileReader<T> implements FileReader {
+import static com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig.FILE_READER_PREFIX;
 
-    public static final String FILE_READER_PREFIX_CONF = "file.reader";
+public abstract class AbstractFileReader<T> implements FileReader {
 
     private final FileSystem fs;
     private final Path filePath;
@@ -24,7 +24,7 @@ public abstract class AbstractFileReader<T> implements FileReader {
         this.adapter = adapter;
 
         Map<String, Object> readerConf = config.entrySet().stream()
-                .filter(entry -> entry.getKey().startsWith(FILE_READER_PREFIX_CONF))
+                .filter(entry -> entry.getKey().startsWith(FILE_READER_PREFIX))
                 .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
         configure(readerConf);
     }

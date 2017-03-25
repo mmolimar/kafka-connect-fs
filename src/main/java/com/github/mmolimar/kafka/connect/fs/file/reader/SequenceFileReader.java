@@ -15,12 +15,16 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import static com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig.FILE_READER_PREFIX;
+
 public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.SequenceRecord<Writable, Writable>> {
+
+    private static final int DEFAULT_BUFFER_SIZE = 4096;
+    private static final String FILE_READER_SEQUENCE = FILE_READER_PREFIX + "sequence.";
+    public static final String FILE_READER_BUFFER_SIZE = FILE_READER_SEQUENCE + "buffer_size";
 
     private static final String FIELD_KEY = "key";
     private static final String FIELD_VALUE = "value";
-    private static final String BUFFER_SIZE = "reader.sequencefile.buffer.bytes";
-    private static final int DEFAULT_BUFF_SIZE = 4096;
 
     private final SequenceFile.Reader reader;
     private final Writable key, value;
@@ -34,7 +38,7 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
 
         this.reader = new SequenceFile.Reader(fs.getConf(),
                 SequenceFile.Reader.file(filePath),
-                SequenceFile.Reader.bufferSize(fs.getConf().getInt(BUFFER_SIZE, DEFAULT_BUFF_SIZE)));
+                SequenceFile.Reader.bufferSize(fs.getConf().getInt(FILE_READER_BUFFER_SIZE, DEFAULT_BUFFER_SIZE)));
         this.key = (Writable) ReflectionUtils.newInstance(reader.getKeyClass(), fs.getConf());
         this.value = (Writable) ReflectionUtils.newInstance(reader.getValueClass(), fs.getConf());
         this.schema = SchemaBuilder.struct()

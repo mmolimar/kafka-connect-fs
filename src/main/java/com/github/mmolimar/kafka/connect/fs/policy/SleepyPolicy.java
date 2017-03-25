@@ -12,11 +12,13 @@ public class SleepyPolicy extends AbstractPolicy {
 
     private static final Logger log = LoggerFactory.getLogger(SleepyPolicy.class);
 
-    public static final String SLEEPY_POLICY_SLEEP_MS = FsSourceTaskConfig.POLICY_PREFIX_CUSTOM + "sleep";
-    public static final String SLEEPY_POLICY_SLEEP_FRACTION_MS = SLEEPY_POLICY_SLEEP_MS + ".fraction";
-    public static final String SLEEPY_POLICY_MAX_EXECS = FsSourceTaskConfig.POLICY_PREFIX_CUSTOM + "max.executions";
-
     private static final int DEFAULT_SLEEP_FRACTION = 10;
+    private static final int DEFAULT_MAX_EXECS = -1;
+    private static final String SLEEPY_POLICY_PREFIX = FsSourceTaskConfig.POLICY_PREFIX + "sleepy.";
+
+    public static final String SLEEPY_POLICY_SLEEP_MS = SLEEPY_POLICY_PREFIX + "sleep";
+    public static final String SLEEPY_POLICY_SLEEP_FRACTION = SLEEPY_POLICY_PREFIX + "fraction";
+    public static final String SLEEPY_POLICY_MAX_EXECS = SLEEPY_POLICY_PREFIX + "max_execs";
 
     private long sleep;
     private long sleepFraction;
@@ -41,13 +43,15 @@ public class SleepyPolicy extends AbstractPolicy {
                 throw new ConfigException(SLEEPY_POLICY_MAX_EXECS + " property must be a number(long). Got: " +
                         customConfigs.get(SLEEPY_POLICY_MAX_EXECS));
             }
+        } else {
+            this.maxExecs = DEFAULT_MAX_EXECS;
         }
-        if (customConfigs.get(SLEEPY_POLICY_SLEEP_FRACTION_MS) != null) {
+        if (customConfigs.get(SLEEPY_POLICY_SLEEP_FRACTION) != null) {
             try {
-                this.sleepFraction = Long.valueOf((String) customConfigs.get(SLEEPY_POLICY_SLEEP_FRACTION_MS));
+                this.sleepFraction = Long.valueOf((String) customConfigs.get(SLEEPY_POLICY_SLEEP_FRACTION));
             } catch (NumberFormatException nfe) {
-                throw new ConfigException(SLEEPY_POLICY_SLEEP_FRACTION_MS + " property must be a number(long). Got: " +
-                        customConfigs.get(SLEEPY_POLICY_SLEEP_FRACTION_MS));
+                throw new ConfigException(SLEEPY_POLICY_SLEEP_FRACTION + " property must be a number(long). Got: " +
+                        customConfigs.get(SLEEPY_POLICY_SLEEP_FRACTION));
             }
         } else {
             this.sleepFraction = DEFAULT_SLEEP_FRACTION;
