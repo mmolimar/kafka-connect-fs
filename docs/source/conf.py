@@ -46,7 +46,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'Kafka Connect FileSystem'
+project = 'Kafka Connect FileSystem Connector'
 copyright = '2017, Mario Molina'
 author = 'Mario Molina'
 
@@ -100,7 +100,7 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'KafkaConnectFileSystemDoc'
+htmlhelp_basename = 'KafkaConnectFileSystemConnectorDoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -126,7 +126,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'KafkaConnectFileSystem.tex', 'Kafka Connect FileSystem Documentation',
+    (master_doc, 'KafkaConnectFileSystemConnector.tex', 'Kafka Connect FileSystem Connector Documentation',
      'Mario Molina', 'manual'),
 ]
 
@@ -135,7 +135,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'kafkaconnectfs', 'Kafka Connect FileSystem Documentation',
+    (master_doc, 'kafkaconnectfs', 'Kafka Connect FileSystem Connector Documentation',
      [author], 1)
 ]
 
@@ -145,7 +145,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'KafkaConnectFs', 'Kafka Connect FileSystem Documentation',
-     author, 'KafkaConnectFileSystem', 'Kafka Connector for FileSystem',
+    (master_doc, 'KafkaConnectFs', 'Kafka Connect FileSystem Connector Documentation',
+     author, 'KafkaConnectFileSystemConnector', 'Kafka Connector for FileSystem',
      'Miscellaneous'),
 ]

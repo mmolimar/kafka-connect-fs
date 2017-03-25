@@ -1,7 +1,7 @@
 .. kafka-connect-fs documentation master file, created by Mario Molina
 
 ********************************************
-FileSystem Connector
+Kafka Connect FileSystem Connector
 ********************************************
 
 Kafka Connect FileSystem Connector is a source connector for reading records from
