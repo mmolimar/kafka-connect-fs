@@ -1,21 +1,26 @@
 .. kafka-connect-fs documentation master file, created by Mario Molina
 
-File System Connector
-============================================
+********************************************
+FileSystem Connector
+********************************************
 
-Kafka Connect File System is a Source Connector for reading records from
-files in the file systems specified and copy them to Kafka.
+Kafka Connect FileSystem Connector is a source connector for reading records from
+files in the file systems specified and load them into Kafka.
 
-Prerequisites
--------------
+The connector supports:
 
--  Confluent 3.1.1
--  Java 8
+* Several sort of FS to use.
+* Dynamic and static URIs to ingest data from.
+* Policies to define rules about how to look for files.
+* File readers to parse and read different kind of file formats.
 
-You can download the source code `here. <https://github.com/mmolimar/kafka-connect-fs>`__
+To learn more about the connector you can read :ref:`this section<connector>` and for more detailed
+configuration options you can read :ref:`this other one<config_options>`.
+
+Also, you can download the source code from `here. <https://github.com/mmolimar/kafka-connect-fs>`__
 
 Contents
-----------
+============================================
 
 .. toctree::
    :maxdepth: 2

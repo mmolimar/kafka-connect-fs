@@ -146,6 +146,6 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'KafkaConnectFs', 'Kafka Connect FileSystem Documentation',
-     author, 'KafkaConnectFileSystem', 'Kafka Connector for FileSystem source',
+     author, 'KafkaConnectFileSystem', 'Kafka Connector for FileSystem',
      'Miscellaneous'),
 ]
