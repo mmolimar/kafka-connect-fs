@@ -38,7 +38,7 @@ public class SleepyPolicyTest extends LocalPolicyTestBase {
             put(FsSourceTaskConfig.TOPIC, "topic_test");
             put(FsSourceTaskConfig.POLICY_CLASS, SleepyPolicy.class.getName());
             put(FsSourceTaskConfig.FILE_READER_CLASS, TextFileReader.class.getName());
-            put(FsSourceTaskConfig.FILE_REGEXP, "^[0-9]*\\.txt$");
+            put(FsSourceTaskConfig.POLICY_REGEXP, "^[0-9]*\\.txt$");
             put(FsSourceTaskConfig.POLICY_PREFIX_FS + "dfs.data.dir", "test");
             put(FsSourceTaskConfig.POLICY_PREFIX_FS + "fs.default.name", "test");
             put(SleepyPolicy.SLEEPY_POLICY_SLEEP_MS, "100");
@@ -66,7 +66,7 @@ public class SleepyPolicyTest extends LocalPolicyTestBase {
     @Test(expected = ConfigException.class)
     public void invalidSleepFraction() throws Throwable {
         Map<String, String> originals = taskConfig.originalsStrings();
-        originals.put(SleepyPolicy.SLEEPY_POLICY_SLEEP_FRACTION_MS, "invalid");
+        originals.put(SleepyPolicy.SLEEPY_POLICY_SLEEP_FRACTION, "invalid");
         FsSourceTaskConfig cfg = new FsSourceTaskConfig(originals);
         ReflectionUtils.makePolicy((Class<? extends Policy>) taskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS), cfg);
     }
@@ -84,6 +84,25 @@ public class SleepyPolicyTest extends LocalPolicyTestBase {
         policy.execute();
         assertFalse(policy.hasEnded());
         policy.execute();
+        assertTrue(policy.hasEnded());
+    }
+
+    @Test
+    public void defaultExecutions() throws Throwable {
+        Map<String, String> tConfig = taskConfig.originalsStrings();
+        tConfig.put(SleepyPolicy.SLEEPY_POLICY_SLEEP_MS, "1");
+        tConfig.remove(SleepyPolicy.SLEEPY_POLICY_MAX_EXECS);
+        FsSourceTaskConfig sleepConfig = new FsSourceTaskConfig(tConfig);
+
+        policy = ReflectionUtils.makePolicy((Class<? extends Policy>) taskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS),
+                sleepConfig);
+
+        //it never ends
+        for (int i = 0; i < 100; i++) {
+            assertFalse(policy.hasEnded());
+            policy.execute();
+        }
+        policy.interrupt();
         assertTrue(policy.hasEnded());
     }
 }
