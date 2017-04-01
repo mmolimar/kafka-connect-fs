@@ -38,7 +38,7 @@ public class LocalFsSourceTaskTest extends LocalFsSourceTaskTestBase {
             assertNotNull(record.sourceOffset());
             assertNotNull(record.value());
 
-            assertNotNull(((Struct) record.value()).get(TextFileReader.FIELD_VALUE));
+            assertNotNull(((Struct) record.value()).get(TextFileReader.FIELD_NAME_VALUE_DEFAULT));
         });
     }
 

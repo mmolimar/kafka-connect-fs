@@ -10,25 +10,31 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.kafka.connect.data.Struct;
 import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class SequenceFileReaderTest extends LocalFileReaderTestBase {
 
-    private static final String FIELD_KEY = "key";
-    private static final String FIELD_VALUE = "value";
+    private static final String FIELD_NAME_KEY = "custom_field_key";
+    private static final String FIELD_NAME_VALUE = "custom_field_name";
 
     @BeforeClass
     public static void setUp() throws IOException {
         readerClass = SequenceFileReader.class;
         dataFile = createDataFile();
-        readerConfig = new HashMap<>();
+        readerConfig = new HashMap<String, Object>() {{
+            put(SequenceFileReader.FILE_READER_SEQUENCE_FIELD_NAME_KEY, FIELD_NAME_KEY);
+            put(SequenceFileReader.FILE_READER_SEQUENCE_FIELD_NAME_VALUE, FIELD_NAME_VALUE);
+        }};
     }
 
     private static Path createDataFile() throws IOException {
@@ -63,6 +69,23 @@ public class SequenceFileReaderTest extends LocalFileReaderTestBase {
         return path;
     }
 
+    @Test
+    public void defaultFieldNames() throws Throwable {
+        Map<String, Object> customReaderCfg = new HashMap<String, Object>();
+        reader = getReader(fs, dataFile, customReaderCfg);
+        assertTrue(reader.getFilePath().equals(dataFile));
+
+        assertTrue(reader.hasNext());
+
+        int recordCount = 0;
+        while (reader.hasNext()) {
+            Struct record = reader.next();
+            checkData(SequenceFileReader.FIELD_NAME_KEY_DEFAULT, SequenceFileReader.FIELD_NAME_VALUE_DEFAULT, record, recordCount);
+            recordCount++;
+        }
+        assertEquals("The number of records in the file does not match", NUM_RECORDS, recordCount);
+    }
+
     @Override
     protected Offset getOffset(long offset) {
         return new SequenceFileReader.SeqOffset(offset);
@@ -70,7 +93,11 @@ public class SequenceFileReaderTest extends LocalFileReaderTestBase {
 
     @Override
     protected void checkData(Struct record, long index) {
-        assertTrue((Integer) record.get(FIELD_KEY) == index);
-        assertTrue(record.get(FIELD_VALUE).toString().startsWith(index + "_"));
+        checkData(FIELD_NAME_KEY, FIELD_NAME_VALUE, record, index);
+    }
+
+    private void checkData(String keyFieldName, String valueFieldName, Struct record, long index) {
+        assertTrue((Integer) record.get(keyFieldName) == index);
+        assertTrue(record.get(valueFieldName).toString().startsWith(index + "_"));
     }
 }
