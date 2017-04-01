@@ -4,7 +4,7 @@
 
     <groupId>com.github.mmolimar.kafka.connect</groupId>
     <artifactId>kafka-connect-fs</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.1.1</version>
     <packaging>jar</packaging>
 
     <name>kafka-connect-fs</name>
