@@ -29,7 +29,8 @@ SequenceFile
 the Hadoop file formats which are serialized in key/value pairs.
 
 This reader can process this file format and build a Kafka message with the
-key/value pair. These two values are named ``key`` and ``value`` in the message.
+key/value pair. These two values are named ``key`` and ``value`` in the message
+by default but you can customize these field names.
 
 More information about properties of this file reader
 :ref:`here<config_options-filereaders-sequencefile>`.
@@ -40,7 +41,8 @@ Text
 Read plain text files.
 
 Each line represents one record which will be in a field
-named ``value`` in the message sent to Kafka.
+named ``value`` in the message sent to Kafka by default but you can
+customize these field names.
 
 Delimited text
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
