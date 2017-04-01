@@ -119,8 +119,8 @@ public class ParquetFileReader extends AbstractFileReader<GenericRecord> {
     }
 
     static class GenericRecordToStruct implements ReaderAdapter<GenericRecord> {
-        static final int CACHE_SIZE = 100;
-        AvroData avroData;
+        private static final int CACHE_SIZE = 100;
+        private final AvroData avroData;
 
         public GenericRecordToStruct() {
             this.avroData = new AvroData(CACHE_SIZE);

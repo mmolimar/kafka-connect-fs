@@ -14,14 +14,22 @@ import java.io.LineNumberReader;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-public class TextFileReader extends AbstractFileReader<String> {
+import static com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig.FILE_READER_PREFIX;
 
-    public static final String FIELD_VALUE = "value";
+public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord> {
+
+    public static final String FIELD_NAME_VALUE_DEFAULT = "value";
+
+    private static final String FILE_READER_TEXT = FILE_READER_PREFIX + "text.";
+    private static final String FILE_READER_SEQUENCE_FIELD_NAME_PREFIX = FILE_READER_TEXT + "field_name.";
+
+    public static final String FILE_READER_TEXT_FIELD_NAME_VALUE = FILE_READER_SEQUENCE_FIELD_NAME_PREFIX + "value";
 
     private final TextOffset offset;
     private String currentLine;
     private boolean finished = false;
     private LineNumberReader reader;
+    private Schema schema;
 
     public TextFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
         super(fs, filePath, new TxtToStruct(), config);
@@ -31,6 +39,16 @@ public class TextFileReader extends AbstractFileReader<String> {
 
     @Override
     protected void configure(Map<String, Object> config) {
+        String valueFieldName;
+        if (config.get(FILE_READER_TEXT_FIELD_NAME_VALUE) == null ||
+                config.get(FILE_READER_TEXT_FIELD_NAME_VALUE).toString().equals("")) {
+            valueFieldName = FIELD_NAME_VALUE_DEFAULT;
+        } else {
+            valueFieldName = config.get(FILE_READER_TEXT_FIELD_NAME_VALUE).toString();
+        }
+        this.schema = SchemaBuilder.struct()
+                .field(valueFieldName, Schema.STRING_SCHEMA)
+                .build();
     }
 
     @Override
@@ -58,14 +76,14 @@ public class TextFileReader extends AbstractFileReader<String> {
     }
 
     @Override
-    protected String nextRecord() {
+    protected TextRecord nextRecord() {
         if (!hasNext()) {
             throw new NoSuchElementException("There are no more records in file: " + getFilePath());
         }
         String aux = currentLine;
         currentLine = null;
 
-        return aux;
+        return new TextRecord(schema, aux);
     }
 
     @Override
@@ -117,13 +135,26 @@ public class TextFileReader extends AbstractFileReader<String> {
         }
     }
 
-    static class TxtToStruct implements ReaderAdapter<String> {
-        final Schema schema = SchemaBuilder.struct()
-                .field(FIELD_VALUE, SchemaBuilder.STRING_SCHEMA).build();
+    static class TxtToStruct implements ReaderAdapter<TextRecord> {
 
         @Override
-        public Struct apply(String record) {
-            return new Struct(schema).put(FIELD_VALUE, record);
+        public Struct apply(TextRecord record) {
+            return new Struct(record.schema)
+                    .put(record.schema.fields().get(0), record.value);
+        }
+    }
+
+    static class TextRecord {
+        private final Schema schema;
+        private final String value;
+
+        public TextRecord(Schema schema, String value) {
+            this.schema = schema;
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
         }
     }
 }

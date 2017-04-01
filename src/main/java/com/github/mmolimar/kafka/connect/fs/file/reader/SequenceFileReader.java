@@ -19,17 +19,23 @@ import static com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig.FILE_READE
 
 public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.SequenceRecord<Writable, Writable>> {
 
+    public static final String FIELD_NAME_KEY_DEFAULT = "key";
+    public static final String FIELD_NAME_VALUE_DEFAULT = "value";
+
     private static final int DEFAULT_BUFFER_SIZE = 4096;
     private static final String FILE_READER_SEQUENCE = FILE_READER_PREFIX + "sequence.";
-    public static final String FILE_READER_BUFFER_SIZE = FILE_READER_SEQUENCE + "buffer_size";
+    private static final String FILE_READER_SEQUENCE_FIELD_NAME_PREFIX = FILE_READER_SEQUENCE + "field_name.";
 
-    private static final String FIELD_KEY = "key";
-    private static final String FIELD_VALUE = "value";
+    public static final String FILE_READER_BUFFER_SIZE = FILE_READER_SEQUENCE + "buffer_size";
+    public static final String FILE_READER_SEQUENCE_FIELD_NAME_KEY = FILE_READER_SEQUENCE_FIELD_NAME_PREFIX + "key";
+    public static final String FILE_READER_SEQUENCE_FIELD_NAME_VALUE = FILE_READER_SEQUENCE_FIELD_NAME_PREFIX + "value";
+
 
     private final SequenceFile.Reader reader;
     private final Writable key, value;
-    private final Schema schema;
     private final SeqOffset offset;
+    private final Schema schema;
+    private String keyFieldName, valueFieldName;
     private long recordIndex, hasNextIndex;
     private boolean hasNext;
 
@@ -42,7 +48,9 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
         this.key = (Writable) ReflectionUtils.newInstance(reader.getKeyClass(), fs.getConf());
         this.value = (Writable) ReflectionUtils.newInstance(reader.getValueClass(), fs.getConf());
         this.schema = SchemaBuilder.struct()
-                .field(FIELD_KEY, getSchema(key)).field(FIELD_VALUE, getSchema(value)).build();
+                .field(keyFieldName, getSchema(this.key))
+                .field(valueFieldName, getSchema(this.value))
+                .build();
         this.offset = new SeqOffset(0);
         this.recordIndex = this.hasNextIndex = -1;
         this.hasNext = false;
@@ -50,6 +58,18 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
 
     @Override
     protected void configure(Map<String, Object> config) {
+        if (config.get(FILE_READER_SEQUENCE_FIELD_NAME_KEY) == null ||
+                config.get(FILE_READER_SEQUENCE_FIELD_NAME_KEY).toString().equals("")) {
+            this.keyFieldName = FIELD_NAME_KEY_DEFAULT;
+        } else {
+            this.keyFieldName = config.get(FILE_READER_SEQUENCE_FIELD_NAME_KEY).toString();
+        }
+        if (config.get(FILE_READER_SEQUENCE_FIELD_NAME_VALUE) == null ||
+                config.get(FILE_READER_SEQUENCE_FIELD_NAME_VALUE).toString().equals("")) {
+            this.valueFieldName = FIELD_NAME_VALUE_DEFAULT;
+        } else {
+            this.valueFieldName = config.get(FILE_READER_SEQUENCE_FIELD_NAME_VALUE).toString();
+        }
     }
 
     private Schema getSchema(Writable writable) {
@@ -95,7 +115,7 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
             throw new NoSuchElementException("There are no more records in file: " + getFilePath());
         }
         recordIndex++;
-        return new SequenceRecord<Writable, Writable>(schema, key, value);
+        return new SequenceRecord<Writable, Writable>(schema, keyFieldName, key, valueFieldName, value);
     }
 
     @Override
@@ -149,8 +169,8 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
         @Override
         public Struct apply(SequenceRecord<Writable, Writable> record) {
             return new Struct(record.schema)
-                    .put(FIELD_KEY, toSchemaValue(record.key))
-                    .put(FIELD_VALUE, toSchemaValue(record.value));
+                    .put(record.keyFieldName, toSchemaValue(record.key))
+                    .put(record.valueFieldName, toSchemaValue(record.value));
         }
 
         private Object toSchemaValue(Writable writable) {
@@ -176,13 +196,17 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
     }
 
     static class SequenceRecord<T, U> {
-        final Schema schema;
-        final T key;
-        final U value;
+        private final Schema schema;
+        private final String keyFieldName;
+        private final T key;
+        private final String valueFieldName;
+        private final U value;
 
-        public SequenceRecord(Schema schema, T key, U value) {
+        public SequenceRecord(Schema schema, String keyFieldName, T key, String valueFieldName, U value) {
             this.schema = schema;
+            this.keyFieldName = keyFieldName;
             this.key = key;
+            this.valueFieldName = valueFieldName;
             this.value = value;
         }
 
