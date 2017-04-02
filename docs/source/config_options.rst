@@ -190,12 +190,33 @@ In order to configure custom properties for this reader, the name you must use i
   * Default: 4096
   * Importance: medium
 
+``file_reader.sequence.field_name.key``
+  Custom field name for the output key to include in the Kafka message.
+
+  * Type: string
+  * Default: key
+  * Importance: low
+
+``file_reader.sequence.field_name.value``
+  Custom field name for the output value to include in the Kafka message.
+
+  * Type: string
+  * Default: value
+  * Importance: low
+
 .. _config_options-filereaders-text:
 
 Text
 --------------------------------------------
 
-This reader does not have any additional configuration.
+In order to configure custom properties for this reader, the name you must use is ``text``.
+
+``file_reader.text.field_name.value``
+  Custom field name for the output value to include in the Kafka message.
+
+  * Type: string
+  * Default: value
+  * Importance: low
 
 .. _config_options-filereaders-delimited:
 

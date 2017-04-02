@@ -19,13 +19,15 @@ import static org.junit.Assert.assertTrue;
 
 public class TextFileReaderTest extends LocalFileReaderTestBase {
 
-    private static final String FIELD_VALUE = "value";
+    private static final String FIELD_NAME_VALUE = "custom_field_name";
 
     @BeforeClass
     public static void setUp() throws IOException {
         readerClass = TextFileReader.class;
         dataFile = createDataFile();
-        readerConfig = new HashMap<>();
+        readerConfig = new HashMap<String, Object>() {{
+            put(TextFileReader.FILE_READER_TEXT_FIELD_NAME_VALUE, FIELD_NAME_VALUE);
+        }};
     }
 
     private static Path createDataFile() throws IOException {
@@ -66,6 +68,6 @@ public class TextFileReaderTest extends LocalFileReaderTestBase {
 
     @Override
     protected void checkData(Struct record, long index) {
-        assertTrue(record.get(FIELD_VALUE).toString().startsWith(index + "_"));
+        assertTrue(record.get(FIELD_NAME_VALUE).toString().startsWith(index + "_"));
     }
 }

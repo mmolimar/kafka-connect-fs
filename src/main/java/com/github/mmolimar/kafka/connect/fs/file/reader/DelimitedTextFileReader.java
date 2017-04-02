@@ -33,7 +33,7 @@ public class DelimitedTextFileReader extends AbstractFileReader<DelimitedTextFil
 
         SchemaBuilder schemaBuilder = SchemaBuilder.struct();
         if (hasNext()) {
-            String firstLine = inner.nextRecord();
+            String firstLine = inner.nextRecord().getValue();
             String columns[] = firstLine.split(token);
             IntStream.range(0, columns.length).forEach(index -> {
                 String columnName = hasHeader ? columns[index] : DEFAULT_COLUMN_NAME + "_" + ++index;
@@ -61,7 +61,7 @@ public class DelimitedTextFileReader extends AbstractFileReader<DelimitedTextFil
     @Override
     protected DelimitedRecord nextRecord() {
         offset.inc();
-        return new DelimitedRecord(schema, inner.nextRecord().split(token));
+        return new DelimitedRecord(schema, inner.nextRecord().getValue().split(token));
     }
 
     @Override
@@ -123,8 +123,8 @@ public class DelimitedTextFileReader extends AbstractFileReader<DelimitedTextFil
     }
 
     static class DelimitedRecord {
-        final Schema schema;
-        final String[] values;
+        private final Schema schema;
+        private final String[] values;
 
         public DelimitedRecord(Schema schema, String[] values) {
             this.schema = schema;
