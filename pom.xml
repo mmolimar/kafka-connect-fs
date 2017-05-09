@@ -4,7 +4,7 @@
 
     <groupId>com.github.mmolimar.kafka.connect</groupId>
     <artifactId>kafka-connect-fs</artifactId>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.1.1.1</version>
     <packaging>jar</packaging>
 
     <name>kafka-connect-fs</name>
@@ -44,9 +44,15 @@
             <version>${hadoop.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-aws</artifactId>
+            <version>${hadoop.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.avro</groupId>
             <artifactId>avro-tools</artifactId>
             <version>${avro.version}</version>
+            <classifier>nodeps</classifier>
         </dependency>
         <dependency>
             <groupId>org.apache.avro</groupId>
