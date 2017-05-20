@@ -11,6 +11,7 @@ import org.apache.kafka.connect.errors.ConnectException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
+import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -24,16 +25,18 @@ public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord
     private static final String FILE_READER_SEQUENCE_FIELD_NAME_PREFIX = FILE_READER_TEXT + "field_name.";
 
     public static final String FILE_READER_TEXT_FIELD_NAME_VALUE = FILE_READER_SEQUENCE_FIELD_NAME_PREFIX + "value";
+    public static final String FILE_READER_TEXT_ENCODING = FILE_READER_TEXT + "encoding";
 
     private final TextOffset offset;
     private String currentLine;
     private boolean finished = false;
     private LineNumberReader reader;
     private Schema schema;
+    private Charset charset;
 
     public TextFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
         super(fs, filePath, new TxtToStruct(), config);
-        this.reader = new LineNumberReader(new InputStreamReader(fs.open(filePath)));
+        this.reader = new LineNumberReader(new InputStreamReader(fs.open(filePath), this.charset));
         this.offset = new TextOffset(0);
     }
 
@@ -49,6 +52,13 @@ public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord
         this.schema = SchemaBuilder.struct()
                 .field(valueFieldName, Schema.STRING_SCHEMA)
                 .build();
+
+        if (config.get(FILE_READER_TEXT_ENCODING) == null ||
+                config.get(FILE_READER_TEXT_ENCODING).toString().equals("")) {
+            this.charset = Charset.defaultCharset();
+        } else {
+            this.charset = Charset.forName(config.get(FILE_READER_TEXT_ENCODING).toString());
+        }
     }
 
     @Override
