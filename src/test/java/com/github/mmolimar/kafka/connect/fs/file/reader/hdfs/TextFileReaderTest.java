@@ -11,7 +11,9 @@ import org.junit.Test;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
@@ -59,6 +61,25 @@ public class TextFileReaderTest extends HdfsFileReaderTestBase {
     @Test(expected = IOException.class)
     public void invalidFileFormat() throws Throwable {
         super.invalidFileFormat();
+    }
+
+    @Test
+    public void validFileEncoding() throws Throwable {
+        Map<String, Object> cfg = new HashMap<String, Object>() {{
+            put(TextFileReader.FILE_READER_TEXT_FIELD_NAME_VALUE, FIELD_NAME_VALUE);
+            put(TextFileReader.FILE_READER_TEXT_ENCODING, "Cp1252");
+        }};
+        reader = getReader(fs, dataFile, cfg);
+        readAllData();
+    }
+
+    @Test(expected = UnsupportedCharsetException.class)
+    public void invalidFileEncoding() throws Throwable {
+        Map<String, Object> cfg = new HashMap<String, Object>() {{
+            put(TextFileReader.FILE_READER_TEXT_FIELD_NAME_VALUE, FIELD_NAME_VALUE);
+            put(TextFileReader.FILE_READER_TEXT_ENCODING, "invalid_charset");
+        }};
+        getReader(fs, dataFile, cfg);
     }
 
     @Override
