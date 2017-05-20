@@ -86,7 +86,7 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
         } else if (writable instanceof DoubleWritable) {
             return SchemaBuilder.INT64_SCHEMA;
         } else if (writable instanceof BytesWritable) {
-            return SchemaBuilder.INT64_SCHEMA;
+            return SchemaBuilder.BYTES_SCHEMA;
         } else if (writable instanceof BooleanWritable) {
             return SchemaBuilder.BOOLEAN_SCHEMA;
         }
