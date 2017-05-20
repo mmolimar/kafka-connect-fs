@@ -2,6 +2,7 @@ package com.github.mmolimar.kafka.connect.fs.file.reader;
 
 import com.github.mmolimar.kafka.connect.fs.file.Offset;
 import io.confluent.connect.avro.AvroData;
+import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.specific.SpecificDatumReader;
@@ -15,21 +16,32 @@ import org.apache.kafka.connect.errors.ConnectException;
 import java.io.IOException;
 import java.util.Map;
 
+import static com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig.FILE_READER_PREFIX;
+
 public class AvroFileReader extends AbstractFileReader<GenericRecord> {
 
-    private DataFileReader<GenericRecord> reader;
+    private static final String FILE_READER_AVRO = FILE_READER_PREFIX + "avro.";
+
+    public static final String FILE_READER_AVRO_SCHEMA = FILE_READER_AVRO + "schema";
 
     private final AvroOffset offset;
+    private DataFileReader<GenericRecord> reader;
+    private Schema schema;
 
     public AvroFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
         super(fs, filePath, new GenericRecordToStruct(), config);
 
         AvroFSInput input = new AvroFSInput(FileContext.getFileContext(filePath.toUri()), filePath);
-        this.reader = new DataFileReader<>(input, new SpecificDatumReader<>());
+        this.reader = new DataFileReader<>(input, new SpecificDatumReader<>(this.schema));
         this.offset = new AvroOffset(0);
     }
 
     protected void configure(Map<String, Object> config) {
+        if (config.get(FILE_READER_AVRO_SCHEMA) != null) {
+            this.schema = new Schema.Parser().parse(config.get(FILE_READER_AVRO_SCHEMA).toString());
+        } else {
+            this.schema = null;
+        }
     }
 
     @Override
