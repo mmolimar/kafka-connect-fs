@@ -205,7 +205,7 @@ abstract class AbstractPolicy implements Policy {
             reader = ReflectionUtils.makeReader((Class<? extends FileReader>) conf.getClass(FsSourceTaskConfig.FILE_READER_CLASS),
                     current, new Path(metadata.getPath()), conf.originals());
         } catch (Throwable t) {
-            throw new ConnectException("An error has ocurred when creating reader for file: " + metadata.getPath(), t);
+            throw new ConnectException("An error has occurred when creating reader for file: " + metadata.getPath(), t);
         }
 
         Map<String, Object> offset = offsetStorageReader.offset(partition);

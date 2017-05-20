@@ -71,7 +71,7 @@ public class SleepyPolicy extends AbstractPolicy {
                     Thread.sleep(sleep / sleepFraction);
                     counter++;
                 } catch (InterruptedException ie) {
-                    log.warn("An interrupted exception has ocurred.", ie);
+                    log.warn("An interrupted exception has occurred.", ie);
                 }
             }
         }

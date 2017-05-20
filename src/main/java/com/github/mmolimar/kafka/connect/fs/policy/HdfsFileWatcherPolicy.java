@@ -128,7 +128,7 @@ public class HdfsFileWatcherPolicy extends AbstractPolicy {
             } catch (FileNotFoundException fnfe) {
                 log.warn("Cannot find file in this FS {}. Stopping watcher...", fs.getWorkingDirectory(), fnfe);
             } catch (IOException ioe) {
-                log.info("An interrupted exception has ocurred. Path {} is not watched any more", fs.getWorkingDirectory());
+                log.info("An interrupted exception has occurred. Path {} is not watched any more", fs.getWorkingDirectory());
             } catch (Exception ioe) {
                 log.warn("Exception watching path {}", fs.getWorkingDirectory(), ioe);
                 throw new IllegalWorkerStateException(ioe);
