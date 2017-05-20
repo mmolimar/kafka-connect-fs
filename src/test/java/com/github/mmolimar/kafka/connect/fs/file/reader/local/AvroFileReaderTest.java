@@ -2,7 +2,9 @@ package com.github.mmolimar.kafka.connect.fs.file.reader.local;
 
 import com.github.mmolimar.kafka.connect.fs.file.Offset;
 import com.github.mmolimar.kafka.connect.fs.file.reader.AvroFileReader;
+import org.apache.avro.AvroTypeException;
 import org.apache.avro.Schema;
+import org.apache.avro.SchemaParseException;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;
@@ -11,10 +13,12 @@ import org.apache.avro.io.DatumWriter;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
 import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
@@ -60,6 +64,32 @@ public class AvroFileReaderTest extends LocalFileReaderTestBase {
         Path path = new Path(new Path(fsUri), avroFile.getName());
         fs.moveFromLocalFile(new Path(avroFile.getAbsolutePath()), path);
         return path;
+    }
+
+    @Test
+    public void readerWithSchema() throws Throwable {
+        Map<String, Object> cfg = new HashMap<String, Object>() {{
+            put(AvroFileReader.FILE_READER_AVRO_SCHEMA, schema.toString());
+        }};
+        reader = getReader(fs, dataFile, cfg);
+        readAllData();
+    }
+
+    @Test(expected = AvroTypeException.class)
+    public void readerWithInvalidSchema() throws Throwable {
+        Map<String, Object> cfg = new HashMap<String, Object>() {{
+            put(AvroFileReader.FILE_READER_AVRO_SCHEMA, Schema.create(Schema.Type.STRING).toString());
+        }};
+        reader = getReader(fs, dataFile, cfg);
+        readAllData();
+    }
+
+    @Test(expected = SchemaParseException.class)
+    public void readerWithUnparseableSchema() throws Throwable {
+        Map<String, Object> cfg = new HashMap<String, Object>() {{
+            put(AvroFileReader.FILE_READER_AVRO_SCHEMA, "invalid schema");
+        }};
+        getReader(fs, dataFile, cfg);
     }
 
     @Override
