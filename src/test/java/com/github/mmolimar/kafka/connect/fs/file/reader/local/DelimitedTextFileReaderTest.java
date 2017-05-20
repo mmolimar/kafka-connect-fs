@@ -13,6 +13,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -130,6 +131,26 @@ public class DelimitedTextFileReaderTest extends LocalFileReaderTestBase {
         reader.seek(getOffset(OFFSETS_BY_INDEX.get(NUM_RECORDS - 1) + 1, false));
         assertFalse(reader.hasNext());
 
+    }
+
+    @Test
+    public void validFileEncoding() throws Throwable {
+        Map<String, Object> cfg = new HashMap<String, Object>() {{
+            put(DelimitedTextFileReader.FILE_READER_DELIMITED_TOKEN, ",");
+            put(DelimitedTextFileReader.FILE_READER_DELIMITED_HEADER, "true");
+            put(DelimitedTextFileReader.FILE_READER_DELIMITED_ENCODING, "Cp1252");
+        }};
+        getReader(fs, dataFile, cfg);
+    }
+
+    @Test(expected = UnsupportedCharsetException.class)
+    public void invalidFileEncoding() throws Throwable {
+        Map<String, Object> cfg = new HashMap<String, Object>() {{
+            put(DelimitedTextFileReader.FILE_READER_DELIMITED_TOKEN, ",");
+            put(DelimitedTextFileReader.FILE_READER_DELIMITED_HEADER, "true");
+            put(DelimitedTextFileReader.FILE_READER_DELIMITED_ENCODING, "invalid_charset");
+        }};
+        getReader(fs, dataFile, cfg);
     }
 
     @Override

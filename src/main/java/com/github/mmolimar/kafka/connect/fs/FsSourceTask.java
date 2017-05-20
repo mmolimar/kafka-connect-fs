@@ -55,7 +55,7 @@ public class FsSourceTask extends SourceTask {
             throw new ConnectException("Couldn't start FsSourceTask due to configuration error", ce);
         } catch (Throwable t) {
             log.error("Couldn't start FsSourceConnector:", t);
-            throw new ConnectException("A problem has ocurred reading configuration:" + t.getMessage());
+            throw new ConnectException("A problem has occurred reading configuration:" + t.getMessage());
         }
 
         stop = new AtomicBoolean(false);

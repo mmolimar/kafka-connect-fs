@@ -17,6 +17,7 @@ public class DelimitedTextFileReader extends AbstractFileReader<DelimitedTextFil
     private static final String FILE_READER_DELIMITED = FILE_READER_PREFIX + "delimited.";
     public static final String FILE_READER_DELIMITED_HEADER = FILE_READER_DELIMITED + "header";
     public static final String FILE_READER_DELIMITED_TOKEN = FILE_READER_DELIMITED + "token";
+    public static final String FILE_READER_DELIMITED_ENCODING = FILE_READER_DELIMITED + "encoding";
 
     private static final String DEFAULT_COLUMN_NAME = "column";
 
@@ -28,6 +29,11 @@ public class DelimitedTextFileReader extends AbstractFileReader<DelimitedTextFil
 
     public DelimitedTextFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
         super(fs, filePath, new DelimitedTxtToStruct(), config);
+
+        //mapping encoding for text file reader
+        if (config.get(FILE_READER_DELIMITED_ENCODING) != null) {
+            config.put(TextFileReader.FILE_READER_TEXT_ENCODING, config.get(FILE_READER_DELIMITED_ENCODING));
+        }
         this.inner = new TextFileReader(fs, filePath, config);
         this.offset = new DelimitedTextOffset(0, hasHeader);
 

@@ -38,7 +38,7 @@ More information about properties of this file reader
 Text
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Read plain text files.
+Reads plain text files.
 
 Each line represents one record which will be in a field
 named ``value`` in the message sent to Kafka by default but you can

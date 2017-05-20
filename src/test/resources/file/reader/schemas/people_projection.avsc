@@ -1,0 +1,12 @@
+{
+	"type": "record",
+	"namespace": "test.avro",
+	"name": "PeopleProjection",
+	"fields": [{
+		"name": "name",
+		"type": "string"
+	}, {
+		"name": "index",
+		"type": "int"
+	}]
+}

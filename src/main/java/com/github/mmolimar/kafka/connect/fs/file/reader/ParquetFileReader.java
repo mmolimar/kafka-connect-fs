@@ -2,24 +2,37 @@ package com.github.mmolimar.kafka.connect.fs.file.reader;
 
 import com.github.mmolimar.kafka.connect.fs.file.Offset;
 import io.confluent.connect.avro.AvroData;
+import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.parquet.avro.AvroParquetReader;
+import org.apache.parquet.avro.AvroReadSupport;
 import org.apache.parquet.hadoop.ParquetReader;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import static com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig.FILE_READER_PREFIX;
+
 public class ParquetFileReader extends AbstractFileReader<GenericRecord> {
+
+    private static final String FILE_READER_PARQUET = FILE_READER_PREFIX + "parquet.";
+
+    public static final String FILE_READER_PARQUET_SCHEMA = FILE_READER_PARQUET + "schema";
+    public static final String FILE_READER_PARQUET_PROJECTION = FILE_READER_PARQUET + "projection";
 
     private final ParquetOffset offset;
 
     private ParquetReader<GenericRecord> reader;
     private GenericRecord currentRecord;
+    private Schema schema;
+    private Schema projection;
     private boolean closed;
 
 
@@ -32,12 +45,29 @@ public class ParquetFileReader extends AbstractFileReader<GenericRecord> {
     }
 
     private ParquetReader<GenericRecord> initReader() throws IOException {
+        Configuration configuration = getFs().getConf();
+        if (this.schema != null) {
+            AvroReadSupport.setAvroReadSchema(configuration, this.schema);
+        }
+        if (this.projection != null) {
+            AvroReadSupport.setRequestedProjection(configuration, this.projection);
+        }
         ParquetReader reader = AvroParquetReader.<GenericRecord>builder(getFilePath())
-                .withConf(getFs().getConf()).build();
+                .withConf(configuration).build();
         return reader;
     }
 
     protected void configure(Map<String, Object> config) {
+        if (config.get(FILE_READER_PARQUET_SCHEMA) != null) {
+            this.schema = new Schema.Parser().parse(config.get(FILE_READER_PARQUET_SCHEMA).toString());
+        } else {
+            this.schema = null;
+        }
+        if (config.get(FILE_READER_PARQUET_PROJECTION) != null) {
+            this.projection = new Schema.Parser().parse(config.get(FILE_READER_PARQUET_PROJECTION).toString());
+        } else {
+            this.projection = null;
+        }
     }
 
     @Override
@@ -59,9 +89,15 @@ public class ParquetFileReader extends AbstractFileReader<GenericRecord> {
         if (!hasNext()) {
             throw new NoSuchElementException("There are no more records in file: " + getFilePath());
         }
-        GenericRecord aux = currentRecord;
+        GenericRecord record;
+        if (this.projection != null) {
+            record = new GenericData.Record(this.projection);
+            this.projection.getFields().forEach(field -> record.put(field.name(), currentRecord.get(field.name())));
+        } else {
+            record = currentRecord;
+        }
         currentRecord = null;
-        return aux;
+        return record;
     }
 
     @Override

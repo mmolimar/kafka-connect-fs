@@ -167,14 +167,33 @@ to take into account their properties.
 Avro
 --------------------------------------------
 
-This reader does not have any additional configuration.
+In order to configure custom properties for this reader, the name you must use is ``avro``.
+
+``file_reader.avro.schema``
+  AVRO schema in JSON format to use when reading a file.
+  If not specified, the reader will use the schema defined in the file.
+
+  * Type: string
+  * Importance: medium
 
 .. _config_options-filereaders-parquet:
 
 Parquet
 --------------------------------------------
 
-This reader does not have any additional configuration.
+In order to configure custom properties for this reader, the name you must use is ``parquet``.
+
+``file_reader.parquet.schema``
+  AVRO schema in JSON format to use when reading a file.
+
+  * Type: string
+  * Importance: medium
+
+``file_reader.parquet.projection``
+  AVRO schema in JSON format to use for projecting fields from records in a file.
+
+  * Type: string
+  * Importance: medium
 
 .. _config_options-filereaders-sequencefile:
 
@@ -218,6 +237,12 @@ In order to configure custom properties for this reader, the name you must use i
   * Default: value
   * Importance: low
 
+``file_reader.text.encoding``
+  Encoding to use for reading a file. If not specified, the reader will use the default encoding.
+
+  * Type: string
+  * Importance: medium
+
 .. _config_options-filereaders-delimited:
 
 Delimited text
@@ -238,5 +263,9 @@ In order to configure custom properties for this reader, the name you must use i
   * Default: false
   * Importance: medium
 
+``file_reader.delimited.encoding``
+  Encoding to use for reading a file. If not specified, the reader will use the default encoding.
 
+  * Type: string
+  * Importance: medium
 
