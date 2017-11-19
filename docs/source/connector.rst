@@ -14,7 +14,7 @@ Among others, these are some file systems it supports:
 * HDFS.
 * WebHDFS.
 * S3.
-* FTP.
+* FTP and SFTP.
 * Local File System.
 * Hadoop Archive File System.
 
