@@ -101,6 +101,37 @@ public class DelimitedTextFileReaderTest extends HdfsFileReaderTestBase {
     }
 
     @Test
+    public void readAllDataWithMalformedRows() throws Throwable {
+        File tmp = File.createTempFile("test-", "");
+        try (FileWriter writer = new FileWriter(tmp)) {
+            writer.append(FIELD_COLUMN1 + "," + FIELD_COLUMN2 + "," + FIELD_COLUMN3 + "," + FIELD_COLUMN4 + "\n");
+            writer.append("dummy\n");
+            writer.append("dummy\n");
+        }
+        Map<String, Object> cfg = new HashMap<String, Object>() {{
+            put(DelimitedTextFileReader.FILE_READER_DELIMITED_TOKEN, ",");
+            put(DelimitedTextFileReader.FILE_READER_DELIMITED_HEADER, "true");
+            put(DelimitedTextFileReader.FILE_READER_DELIMITED_DEFAULT_VALUE, "custom_value");
+        }};
+        Path path = new Path(new Path(fsUri), tmp.getName());
+        fs.moveFromLocalFile(new Path(tmp.getAbsolutePath()), path);
+        reader = getReader(fs, path, cfg);
+
+        assertTrue(reader.hasNext());
+
+        int recordCount = 0;
+        while (reader.hasNext()) {
+            Struct record = reader.next();
+            assertTrue(record.get(FIELD_COLUMN1).equals("dummy"));
+            assertTrue(record.get(FIELD_COLUMN2).equals("custom_value"));
+            assertTrue(record.get(FIELD_COLUMN3).equals("custom_value"));
+            assertTrue(record.get(FIELD_COLUMN4).equals("custom_value"));
+            recordCount++;
+        }
+        assertEquals("The number of records in the file does not match", 2, recordCount);
+    }
+
+    @Test
     public void seekFileWithoutHeader() throws Throwable {
         Path file = createDataFile(false);
         FileReader reader = getReader(fs, file, new HashMap<String, Object>() {{
