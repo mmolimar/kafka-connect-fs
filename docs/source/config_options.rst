@@ -269,3 +269,10 @@ In order to configure custom properties for this reader, the name you must use i
   * Type: string
   * Importance: medium
 
+``file_reader.delimited.default_value``
+  Sets a default value in a column when its value is null. This is due to the record is malformed (it does not contain
+  all expected columns).
+
+  * Type: string
+  * Default: null
+  * Importance: low
