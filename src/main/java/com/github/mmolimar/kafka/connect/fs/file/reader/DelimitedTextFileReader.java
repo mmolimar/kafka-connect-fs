@@ -9,6 +9,7 @@ import org.apache.kafka.connect.data.Struct;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig.FILE_READER_PREFIX;
@@ -18,6 +19,7 @@ public class DelimitedTextFileReader extends AbstractFileReader<DelimitedTextFil
     public static final String FILE_READER_DELIMITED_HEADER = FILE_READER_DELIMITED + "header";
     public static final String FILE_READER_DELIMITED_TOKEN = FILE_READER_DELIMITED + "token";
     public static final String FILE_READER_DELIMITED_ENCODING = FILE_READER_DELIMITED + "encoding";
+    public static final String FILE_READER_DELIMITED_DEFAULT_VALUE = FILE_READER_DELIMITED + "default_value";
 
     private static final String DEFAULT_COLUMN_NAME = "column";
 
@@ -25,6 +27,7 @@ public class DelimitedTextFileReader extends AbstractFileReader<DelimitedTextFil
     private final Schema schema;
     private DelimitedTextOffset offset;
     private String token;
+    private String defaultValue;
     private boolean hasHeader;
 
     public DelimitedTextFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
@@ -61,13 +64,29 @@ public class DelimitedTextFileReader extends AbstractFileReader<DelimitedTextFil
             throw new IllegalArgumentException(FILE_READER_DELIMITED_TOKEN + " property cannot be empty for DelimitedTextFileReader");
         }
         this.token = config.get(FILE_READER_DELIMITED_TOKEN).toString();
+        this.defaultValue = config.get(FILE_READER_DELIMITED_DEFAULT_VALUE) == null ?
+                null : config.get(FILE_READER_DELIMITED_DEFAULT_VALUE).toString();
         this.hasHeader = Boolean.valueOf((String) config.get(FILE_READER_DELIMITED_HEADER));
     }
 
     @Override
     protected DelimitedRecord nextRecord() {
         offset.inc();
-        return new DelimitedRecord(schema, inner.nextRecord().getValue().split(token));
+        String values[] = inner.nextRecord().getValue().split(token);
+        return new DelimitedRecord(schema, defaultValue != null ? fillNullValues(values) : values);
+    }
+
+    private String[] fillNullValues(final String[] values) {
+        return IntStream.range(0, schema.fields().size())
+                .mapToObj(index -> {
+                    if (index < values.length) {
+                        return values[index];
+                    } else {
+                        return defaultValue;
+                    }
+                })
+                .collect(Collectors.toList())
+                .toArray(new String[0]);
     }
 
     @Override
