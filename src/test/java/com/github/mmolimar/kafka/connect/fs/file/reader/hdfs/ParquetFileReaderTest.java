@@ -1,6 +1,7 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader.hdfs;
 
 import com.github.mmolimar.kafka.connect.fs.file.Offset;
+import com.github.mmolimar.kafka.connect.fs.file.reader.AgnosticFileReader;
 import com.github.mmolimar.kafka.connect.fs.file.reader.ParquetFileReader;
 import org.apache.avro.AvroRuntimeException;
 import org.apache.avro.Schema;
@@ -34,21 +35,24 @@ public class ParquetFileReaderTest extends HdfsFileReaderTestBase {
     private static final String FIELD_INDEX = "index";
     private static final String FIELD_NAME = "name";
     private static final String FIELD_SURNAME = "surname";
+    private static final String FILE_EXTENSION = "parquet";
 
     private static Schema readerSchema;
     private static Schema projectionSchema;
 
     @BeforeClass
     public static void setUp() throws IOException {
-        readerClass = ParquetFileReader.class;
+        readerClass = AgnosticFileReader.class;
         dataFile = createDataFile();
         readerConfig = new HashMap<>();
     }
 
     private static Path createDataFile() throws IOException {
-        File parquetFile = File.createTempFile("test-", ".parquet");
-        readerSchema = new Schema.Parser().parse(com.github.mmolimar.kafka.connect.fs.file.reader.local.ParquetFileReaderTest.class.getResourceAsStream("/file/reader/schemas/people.avsc"));
-        projectionSchema = new Schema.Parser().parse(com.github.mmolimar.kafka.connect.fs.file.reader.local.ParquetFileReaderTest.class.getResourceAsStream("/file/reader/schemas/people_projection.avsc"));
+        File parquetFile = File.createTempFile("test-", "." + FILE_EXTENSION);
+        readerSchema = new Schema.Parser().parse(
+                ParquetFileReaderTest.class.getResourceAsStream("/file/reader/schemas/people.avsc"));
+        projectionSchema = new Schema.Parser().parse(
+                ParquetFileReaderTest.class.getResourceAsStream("/file/reader/schemas/people_projection.avsc"));
 
         try (ParquetWriter writer = AvroParquetWriter.<GenericRecord>builder(new Path(parquetFile.toURI()))
                 .withConf(fs.getConf()).withWriteMode(ParquetFileWriter.Mode.OVERWRITE).withSchema(readerSchema).build()) {
@@ -138,4 +142,10 @@ public class ParquetFileReaderTest extends HdfsFileReaderTestBase {
         assertTrue(record.get(FIELD_NAME).toString().startsWith(index + "_"));
         assertTrue(record.get(FIELD_SURNAME).toString().startsWith(index + "_"));
     }
+
+    @Override
+    protected String getFileExtension() {
+        return FILE_EXTENSION;
+    }
+
 }

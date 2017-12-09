@@ -1,6 +1,7 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader.hdfs;
 
 import com.github.mmolimar.kafka.connect.fs.file.Offset;
+import com.github.mmolimar.kafka.connect.fs.file.reader.AgnosticFileReader;
 import com.github.mmolimar.kafka.connect.fs.file.reader.SequenceFileReader;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
@@ -26,10 +27,11 @@ public class SequenceFileReaderTest extends HdfsFileReaderTestBase {
 
     private static final String FIELD_NAME_KEY = "key";
     private static final String FIELD_NAME_VALUE = "value";
+    private static final String FILE_EXTENSION = "seq";
 
     @BeforeClass
     public static void setUp() throws IOException {
-        readerClass = SequenceFileReader.class;
+        readerClass = AgnosticFileReader.class;
         dataFile = createDataFile();
         readerConfig = new HashMap<String, Object>() {{
             put(SequenceFileReader.FILE_READER_SEQUENCE_FIELD_NAME_KEY, FIELD_NAME_KEY);
@@ -38,7 +40,7 @@ public class SequenceFileReaderTest extends HdfsFileReaderTestBase {
     }
 
     private static Path createDataFile() throws IOException {
-        File seqFile = File.createTempFile("test-", ".seq");
+        File seqFile = File.createTempFile("test-", "." + FILE_EXTENSION);
         try (SequenceFile.Writer writer = SequenceFile.createWriter(fs.getConf(), SequenceFile.Writer.file(new Path(seqFile.getAbsolutePath())),
                 SequenceFile.Writer.keyClass(IntWritable.class), SequenceFile.Writer.valueClass(Text.class))) {
 
@@ -71,7 +73,7 @@ public class SequenceFileReaderTest extends HdfsFileReaderTestBase {
 
     @Test
     public void defaultFieldNames() throws Throwable {
-        Map<String, Object> customReaderCfg = new HashMap<String, Object>();
+        Map<String, Object> customReaderCfg = new HashMap<>();
         reader = getReader(fs, dataFile, customReaderCfg);
         assertTrue(reader.getFilePath().equals(dataFile));
 
@@ -100,4 +102,10 @@ public class SequenceFileReaderTest extends HdfsFileReaderTestBase {
         assertTrue((Integer) record.get(keyFieldName) == index);
         assertTrue(record.get(valueFieldName).toString().startsWith(index + "_"));
     }
+
+    @Override
+    protected String getFileExtension() {
+        return FILE_EXTENSION;
+    }
+
 }

@@ -1,6 +1,7 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader.local;
 
 import com.github.mmolimar.kafka.connect.fs.file.Offset;
+import com.github.mmolimar.kafka.connect.fs.file.reader.AgnosticFileReader;
 import com.github.mmolimar.kafka.connect.fs.file.reader.ParquetFileReader;
 import org.apache.avro.AvroRuntimeException;
 import org.apache.avro.Schema;
@@ -34,21 +35,26 @@ public class ParquetFileReaderTest extends LocalFileReaderTestBase {
     private static final String FIELD_INDEX = "index";
     private static final String FIELD_NAME = "name";
     private static final String FIELD_SURNAME = "surname";
+    private static final String FILE_EXTENSION = "prqt";
 
     private static Schema readerSchema;
     private static Schema projectionSchema;
 
     @BeforeClass
     public static void setUp() throws IOException {
-        readerClass = ParquetFileReader.class;
+        readerClass = AgnosticFileReader.class;
         dataFile = createDataFile();
-        readerConfig = new HashMap<>();
+        readerConfig = new HashMap<String, Object>() {{
+            put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_PARQUET, FILE_EXTENSION);
+        }};
     }
 
     private static Path createDataFile() throws IOException {
-        File parquetFile = File.createTempFile("test-", ".parquet");
-        readerSchema = new Schema.Parser().parse(ParquetFileReaderTest.class.getResourceAsStream("/file/reader/schemas/people.avsc"));
-        projectionSchema = new Schema.Parser().parse(ParquetFileReaderTest.class.getResourceAsStream("/file/reader/schemas/people_projection.avsc"));
+        File parquetFile = File.createTempFile("test-", "." + FILE_EXTENSION);
+        readerSchema = new Schema.Parser().parse(
+                ParquetFileReaderTest.class.getResourceAsStream("/file/reader/schemas/people.avsc"));
+        projectionSchema = new Schema.Parser().parse(
+                ParquetFileReaderTest.class.getResourceAsStream("/file/reader/schemas/people_projection.avsc"));
 
         try (ParquetWriter writer = AvroParquetWriter.<GenericRecord>builder(new Path(parquetFile.toURI()))
                 .withConf(fs.getConf()).withWriteMode(ParquetFileWriter.Mode.OVERWRITE).withSchema(readerSchema).build()) {
@@ -75,6 +81,7 @@ public class ParquetFileReaderTest extends LocalFileReaderTestBase {
     public void readerWithSchema() throws Throwable {
         Map<String, Object> cfg = new HashMap<String, Object>() {{
             put(ParquetFileReader.FILE_READER_PARQUET_SCHEMA, readerSchema.toString());
+            put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_PARQUET, getFileExtension());
         }};
         reader = getReader(FileSystem.newInstance(fsUri, new Configuration()), dataFile, cfg);
         readAllData();
@@ -84,6 +91,7 @@ public class ParquetFileReaderTest extends LocalFileReaderTestBase {
     public void readerWithProjection() throws Throwable {
         Map<String, Object> cfg = new HashMap<String, Object>() {{
             put(ParquetFileReader.FILE_READER_PARQUET_PROJECTION, projectionSchema.toString());
+            put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_PARQUET, getFileExtension());
         }};
         reader = getReader(FileSystem.newInstance(fsUri, new Configuration()), dataFile, cfg);
         while (reader.hasNext()) {
@@ -105,6 +113,7 @@ public class ParquetFileReaderTest extends LocalFileReaderTestBase {
                 .endRecord();
         Map<String, Object> cfg = new HashMap<String, Object>() {{
             put(ParquetFileReader.FILE_READER_PARQUET_PROJECTION, testSchema.toString());
+            put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_PARQUET, getFileExtension());
         }};
         reader = getReader(FileSystem.newInstance(fsUri, new Configuration()), dataFile, cfg);
         readAllData();
@@ -114,6 +123,7 @@ public class ParquetFileReaderTest extends LocalFileReaderTestBase {
     public void readerWithInvalidSchema() throws Throwable {
         Map<String, Object> cfg = new HashMap<String, Object>() {{
             put(ParquetFileReader.FILE_READER_PARQUET_SCHEMA, Schema.create(Schema.Type.STRING).toString());
+            put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_PARQUET, getFileExtension());
         }};
         reader = getReader(FileSystem.newInstance(fsUri, new Configuration()), dataFile, cfg);
         readAllData();
@@ -123,6 +133,7 @@ public class ParquetFileReaderTest extends LocalFileReaderTestBase {
     public void readerWithUnparseableSchema() throws Throwable {
         Map<String, Object> cfg = new HashMap<String, Object>() {{
             put(ParquetFileReader.FILE_READER_PARQUET_SCHEMA, "invalid schema");
+            put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_PARQUET, getFileExtension());
         }};
         getReader(FileSystem.newInstance(fsUri, new Configuration()), dataFile, cfg);
     }
@@ -138,4 +149,10 @@ public class ParquetFileReaderTest extends LocalFileReaderTestBase {
         assertTrue(record.get(FIELD_NAME).toString().startsWith(index + "_"));
         assertTrue(record.get(FIELD_SURNAME).toString().startsWith(index + "_"));
     }
+
+    @Override
+    protected String getFileExtension() {
+        return FILE_EXTENSION;
+    }
+
 }

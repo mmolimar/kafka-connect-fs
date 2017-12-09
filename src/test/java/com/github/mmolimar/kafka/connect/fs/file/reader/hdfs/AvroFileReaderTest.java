@@ -1,6 +1,7 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader.hdfs;
 
 import com.github.mmolimar.kafka.connect.fs.file.Offset;
+import com.github.mmolimar.kafka.connect.fs.file.reader.AgnosticFileReader;
 import com.github.mmolimar.kafka.connect.fs.file.reader.AvroFileReader;
 import org.apache.avro.AvroTypeException;
 import org.apache.avro.Schema;
@@ -29,19 +30,20 @@ public class AvroFileReaderTest extends HdfsFileReaderTestBase {
     private static final String FIELD_INDEX = "index";
     private static final String FIELD_NAME = "name";
     private static final String FIELD_SURNAME = "surname";
+    private static final String FILE_EXTENSION = "avro";
 
     private static Schema schema;
 
     @BeforeClass
     public static void setUp() throws IOException {
         schema = new Schema.Parser().parse(AvroFileReaderTest.class.getResourceAsStream("/file/reader/schemas/people.avsc"));
-        readerClass = AvroFileReader.class;
+        readerClass = AgnosticFileReader.class;
         dataFile = createDataFile();
         readerConfig = new HashMap<>();
     }
 
     private static Path createDataFile() throws IOException {
-        File avroFile = File.createTempFile("test-", ".avro");
+        File avroFile = File.createTempFile("test-", "." + FILE_EXTENSION);
         DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema);
         try (DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<>(writer)) {
             dataFileWriter.setFlushOnEveryBlock(true);
@@ -102,5 +104,10 @@ public class AvroFileReaderTest extends HdfsFileReaderTestBase {
         assertTrue((Integer) record.get(FIELD_INDEX) == index);
         assertTrue(record.get(FIELD_NAME).toString().startsWith(index + "_"));
         assertTrue(record.get(FIELD_SURNAME).toString().startsWith(index + "_"));
+    }
+
+    @Override
+    protected String getFileExtension() {
+        return FILE_EXTENSION;
     }
 }

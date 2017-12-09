@@ -68,7 +68,7 @@ public abstract class FileReaderTestBase {
 
     @Test(expected = IOException.class)
     public void emptyFile() throws Throwable {
-        File tmp = File.createTempFile("test-", "");
+        File tmp = File.createTempFile("test-", "." + getFileExtension());
         Path path = new Path(new Path(fsUri), tmp.getName());
         fs.moveFromLocalFile(new Path(tmp.getAbsolutePath()), path);
         getReader(fs, path, readerConfig);
@@ -76,7 +76,7 @@ public abstract class FileReaderTestBase {
 
     @Test(expected = IOException.class)
     public void invalidFileFormat() throws Throwable {
-        File tmp = File.createTempFile("test-", "");
+        File tmp = File.createTempFile("test-", "." + getFileExtension());
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(tmp))) {
             writer.write("test");
         }
@@ -150,5 +150,6 @@ public abstract class FileReaderTestBase {
 
     protected abstract void checkData(Struct record, long index);
 
+    protected abstract String getFileExtension();
 
 }

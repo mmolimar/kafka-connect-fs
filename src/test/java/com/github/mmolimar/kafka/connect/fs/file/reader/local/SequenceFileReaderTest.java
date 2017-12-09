@@ -1,6 +1,7 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader.local;
 
 import com.github.mmolimar.kafka.connect.fs.file.Offset;
+import com.github.mmolimar.kafka.connect.fs.file.reader.AgnosticFileReader;
 import com.github.mmolimar.kafka.connect.fs.file.reader.SequenceFileReader;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
@@ -26,19 +27,21 @@ public class SequenceFileReaderTest extends LocalFileReaderTestBase {
 
     private static final String FIELD_NAME_KEY = "custom_field_key";
     private static final String FIELD_NAME_VALUE = "custom_field_name";
+    private static final String FILE_EXTENSION = "sq";
 
     @BeforeClass
     public static void setUp() throws IOException {
-        readerClass = SequenceFileReader.class;
+        readerClass = AgnosticFileReader.class;
         dataFile = createDataFile();
         readerConfig = new HashMap<String, Object>() {{
             put(SequenceFileReader.FILE_READER_SEQUENCE_FIELD_NAME_KEY, FIELD_NAME_KEY);
             put(SequenceFileReader.FILE_READER_SEQUENCE_FIELD_NAME_VALUE, FIELD_NAME_VALUE);
+            put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_SEQUENCE, FILE_EXTENSION);
         }};
     }
 
     private static Path createDataFile() throws IOException {
-        File seqFile = File.createTempFile("test-", ".seq");
+        File seqFile = File.createTempFile("test-", "." + FILE_EXTENSION);
         try (SequenceFile.Writer writer = SequenceFile.createWriter(fs.getConf(), SequenceFile.Writer.file(new Path(seqFile.getAbsolutePath())),
                 SequenceFile.Writer.keyClass(IntWritable.class), SequenceFile.Writer.valueClass(Text.class))) {
 
@@ -71,7 +74,9 @@ public class SequenceFileReaderTest extends LocalFileReaderTestBase {
 
     @Test
     public void defaultFieldNames() throws Throwable {
-        Map<String, Object> customReaderCfg = new HashMap<String, Object>();
+        Map<String, Object> customReaderCfg = new HashMap<String, Object>() {{
+            put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_SEQUENCE, getFileExtension());
+        }};
         reader = getReader(fs, dataFile, customReaderCfg);
         assertTrue(reader.getFilePath().equals(dataFile));
 
@@ -99,5 +104,10 @@ public class SequenceFileReaderTest extends LocalFileReaderTestBase {
     private void checkData(String keyFieldName, String valueFieldName, Struct record, long index) {
         assertTrue((Integer) record.get(keyFieldName) == index);
         assertTrue(record.get(valueFieldName).toString().startsWith(index + "_"));
+    }
+
+    @Override
+    protected String getFileExtension() {
+        return FILE_EXTENSION;
     }
 }

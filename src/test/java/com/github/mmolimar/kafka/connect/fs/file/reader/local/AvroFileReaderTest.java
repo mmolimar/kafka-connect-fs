@@ -1,6 +1,7 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader.local;
 
 import com.github.mmolimar.kafka.connect.fs.file.Offset;
+import com.github.mmolimar.kafka.connect.fs.file.reader.AgnosticFileReader;
 import com.github.mmolimar.kafka.connect.fs.file.reader.AvroFileReader;
 import org.apache.avro.AvroTypeException;
 import org.apache.avro.Schema;
@@ -29,19 +30,22 @@ public class AvroFileReaderTest extends LocalFileReaderTestBase {
     private static final String FIELD_INDEX = "index";
     private static final String FIELD_NAME = "name";
     private static final String FIELD_SURNAME = "surname";
+    private static final String FILE_EXTENSION = "avr";
 
     private static Schema schema;
 
     @BeforeClass
     public static void setUp() throws IOException {
         schema = new Schema.Parser().parse(AvroFileReaderTest.class.getResourceAsStream("/file/reader/schemas/people.avsc"));
-        readerClass = AvroFileReader.class;
+        readerClass = AgnosticFileReader.class;
         dataFile = createDataFile();
-        readerConfig = new HashMap<>();
+        readerConfig = new HashMap<String, Object>() {{
+            put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_AVRO, FILE_EXTENSION);
+        }};
     }
 
     private static Path createDataFile() throws IOException {
-        File avroFile = File.createTempFile("test-", ".avro");
+        File avroFile = File.createTempFile("test-", "." + FILE_EXTENSION);
         DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema);
         try (DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<>(writer)) {
             dataFileWriter.setFlushOnEveryBlock(true);
@@ -70,6 +74,7 @@ public class AvroFileReaderTest extends LocalFileReaderTestBase {
     public void readerWithSchema() throws Throwable {
         Map<String, Object> cfg = new HashMap<String, Object>() {{
             put(AvroFileReader.FILE_READER_AVRO_SCHEMA, schema.toString());
+            put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_AVRO, getFileExtension());
         }};
         reader = getReader(fs, dataFile, cfg);
         readAllData();
@@ -79,6 +84,7 @@ public class AvroFileReaderTest extends LocalFileReaderTestBase {
     public void readerWithInvalidSchema() throws Throwable {
         Map<String, Object> cfg = new HashMap<String, Object>() {{
             put(AvroFileReader.FILE_READER_AVRO_SCHEMA, Schema.create(Schema.Type.STRING).toString());
+            put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_AVRO, getFileExtension());
         }};
         reader = getReader(fs, dataFile, cfg);
         readAllData();
@@ -88,6 +94,7 @@ public class AvroFileReaderTest extends LocalFileReaderTestBase {
     public void readerWithUnparseableSchema() throws Throwable {
         Map<String, Object> cfg = new HashMap<String, Object>() {{
             put(AvroFileReader.FILE_READER_AVRO_SCHEMA, "invalid schema");
+            put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_AVRO, getFileExtension());
         }};
         getReader(fs, dataFile, cfg);
     }
@@ -103,4 +110,10 @@ public class AvroFileReaderTest extends LocalFileReaderTestBase {
         assertTrue(record.get(FIELD_NAME).toString().startsWith(index + "_"));
         assertTrue(record.get(FIELD_SURNAME).toString().startsWith(index + "_"));
     }
+
+    @Override
+    protected String getFileExtension() {
+        return FILE_EXTENSION;
+    }
+
 }
