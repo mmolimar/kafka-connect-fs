@@ -46,4 +46,8 @@ public abstract class AbstractFileReader<T> implements FileReader {
 
     protected abstract T nextRecord();
 
+    protected ReaderAdapter<T> getAdapter() {
+        return adapter;
+    }
+
 }
