@@ -8,10 +8,12 @@ to Kafka is created by transforming the record by means of
 `Confluent avro-converter <https://github.com/confluentinc/schema-registry/tree/master/avro-converter>`__
 API.
 
+More information about properties of this file reader :ref:`here<config_options-filereaders-avro>`.
+
 Parquet
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Read files with `Parquet <https://parquet.apache.org/>`__ format.
+Reads files with `Parquet <https://parquet.apache.org/>`__ format.
 
 The reader takes advantage of the Parquet-Avro API and uses the Parquet file
 as if it were an Avro file, so the message sent to Kafka is built in the same
@@ -21,6 +23,8 @@ way as the Avro file reader does.
              iterate over all records. If the policy processes the same file
              over and over again and has to seek the file, the performance
              can be affected.
+
+More information about properties of this file reader :ref:`here<config_options-filereaders-parquet>`.
 
 SequenceFile
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -32,8 +36,7 @@ This reader can process this file format and build a Kafka message with the
 key/value pair. These two values are named ``key`` and ``value`` in the message
 by default but you can customize these field names.
 
-More information about properties of this file reader
-:ref:`here<config_options-filereaders-sequencefile>`.
+More information about properties of this file reader :ref:`here<config_options-filereaders-sequencefile>`.
 
 Text
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -43,6 +46,8 @@ Reads plain text files.
 Each line represents one record which will be in a field
 named ``value`` in the message sent to Kafka by default but you can
 customize these field names.
+
+More information about properties of this file reader :ref:`here<config_options-filereaders-text>`.
 
 Delimited text
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -56,3 +61,20 @@ Also, the token delimiter for columns is configurable.
 
 More information about properties of this file reader :ref:`here<config_options-filereaders-delimited>`.
 
+Agnostic
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Actually, this reader is a wrapper of the readers listing above.
+
+It tries to read any kind of file format using an internal reader based on the file extension,
+applying the proper one (Parquet, Avro, SecuenceFile, Text or Delimited text). In case of no
+extension has been matched, the Text file reader will be applied.
+
+Default extensions for each format:
+* Parquet: .parquet
+* Avro: .avro
+* SequenceFile: .seq
+* Delimited text: .tsv, .csv
+* Text: any other sort of file extension.
+
+More information about properties of this file reader :ref:`here<config_options-filereaders-agnostic>`.
