@@ -1,6 +1,7 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader.hdfs;
 
 import com.github.mmolimar.kafka.connect.fs.file.Offset;
+import com.github.mmolimar.kafka.connect.fs.file.reader.AgnosticFileReader;
 import com.github.mmolimar.kafka.connect.fs.file.reader.DelimitedTextFileReader;
 import com.github.mmolimar.kafka.connect.fs.file.reader.FileReader;
 import org.apache.hadoop.fs.FileSystem;
@@ -27,10 +28,11 @@ public class DelimitedTextFileReaderTest extends HdfsFileReaderTestBase {
     private static final String FIELD_COLUMN2 = "column_2";
     private static final String FIELD_COLUMN3 = "column_3";
     private static final String FIELD_COLUMN4 = "column_4";
+    private static final String FILE_EXTENSION = "csv";
 
     @BeforeClass
     public static void setUp() throws IOException {
-        readerClass = DelimitedTextFileReader.class;
+        readerClass = AgnosticFileReader.class;
         dataFile = createDataFile(true);
         readerConfig = new HashMap<String, Object>() {{
             put(DelimitedTextFileReader.FILE_READER_DELIMITED_TOKEN, ",");
@@ -39,7 +41,7 @@ public class DelimitedTextFileReaderTest extends HdfsFileReaderTestBase {
     }
 
     private static Path createDataFile(boolean header) throws IOException {
-        File txtFile = File.createTempFile("test-", ".txt");
+        File txtFile = File.createTempFile("test-", "." + FILE_EXTENSION);
         try (FileWriter writer = new FileWriter(txtFile)) {
 
             if (header)
@@ -102,7 +104,7 @@ public class DelimitedTextFileReaderTest extends HdfsFileReaderTestBase {
 
     @Test
     public void readAllDataWithMalformedRows() throws Throwable {
-        File tmp = File.createTempFile("test-", "");
+        File tmp = File.createTempFile("test-", "." + getFileExtension());
         try (FileWriter writer = new FileWriter(tmp)) {
             writer.append(FIELD_COLUMN1 + "," + FIELD_COLUMN2 + "," + FIELD_COLUMN3 + "," + FIELD_COLUMN4 + "\n");
             writer.append("dummy\n");
@@ -199,5 +201,10 @@ public class DelimitedTextFileReaderTest extends HdfsFileReaderTestBase {
         assertTrue(record.get(FIELD_COLUMN2).toString().startsWith(index + "_"));
         assertTrue(record.get(FIELD_COLUMN3).toString().startsWith(index + "_"));
         assertTrue(record.get(FIELD_COLUMN4).toString().startsWith(index + "_"));
+    }
+
+    @Override
+    protected String getFileExtension() {
+        return FILE_EXTENSION;
     }
 }

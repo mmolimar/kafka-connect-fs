@@ -1,6 +1,7 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader.local;
 
 import com.github.mmolimar.kafka.connect.fs.file.Offset;
+import com.github.mmolimar.kafka.connect.fs.file.reader.AgnosticFileReader;
 import com.github.mmolimar.kafka.connect.fs.file.reader.DelimitedTextFileReader;
 import com.github.mmolimar.kafka.connect.fs.file.reader.FileReader;
 import org.apache.hadoop.fs.FileSystem;
@@ -27,19 +28,21 @@ public class DelimitedTextFileReaderTest extends LocalFileReaderTestBase {
     private static final String FIELD_COLUMN2 = "column_2";
     private static final String FIELD_COLUMN3 = "column_3";
     private static final String FIELD_COLUMN4 = "column_4";
+    private static final String FILE_EXTENSION = "tcsv";
 
     @BeforeClass
     public static void setUp() throws IOException {
-        readerClass = DelimitedTextFileReader.class;
+        readerClass = AgnosticFileReader.class;
         dataFile = createDataFile(true);
         readerConfig = new HashMap<String, Object>() {{
             put(DelimitedTextFileReader.FILE_READER_DELIMITED_TOKEN, ",");
             put(DelimitedTextFileReader.FILE_READER_DELIMITED_HEADER, "true");
+            put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_DELIMITED, FILE_EXTENSION);
         }};
     }
 
     private static Path createDataFile(boolean header) throws IOException {
-        File txtFile = File.createTempFile("test-", ".txt");
+        File txtFile = File.createTempFile("test-", "." + FILE_EXTENSION);
         try (FileWriter writer = new FileWriter(txtFile)) {
 
             if (header)
@@ -74,7 +77,10 @@ public class DelimitedTextFileReaderTest extends LocalFileReaderTestBase {
     @Test(expected = IllegalArgumentException.class)
     public void invaliConfigArgs() throws Throwable {
         try {
-            readerClass.getConstructor(FileSystem.class, Path.class, Map.class).newInstance(fs, dataFile, new HashMap<>());
+            readerClass.getConstructor(FileSystem.class, Path.class, Map.class).newInstance(fs, dataFile,
+                    new HashMap<String, Object>() {{
+                        put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_DELIMITED, FILE_EXTENSION);
+                    }});
         } catch (Exception e) {
             throw e.getCause();
         }
@@ -86,6 +92,7 @@ public class DelimitedTextFileReaderTest extends LocalFileReaderTestBase {
         FileReader reader = getReader(fs, file, new HashMap<String, Object>() {{
             put(DelimitedTextFileReader.FILE_READER_DELIMITED_TOKEN, ",");
             put(DelimitedTextFileReader.FILE_READER_DELIMITED_HEADER, "false");
+            put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_DELIMITED, getFileExtension());
         }});
 
         assertTrue(reader.hasNext());
@@ -102,7 +109,7 @@ public class DelimitedTextFileReaderTest extends LocalFileReaderTestBase {
 
     @Test
     public void readAllDataWithMalformedRows() throws Throwable {
-        File tmp = File.createTempFile("test-", "");
+        File tmp = File.createTempFile("test-", "." + getFileExtension());
         try (FileWriter writer = new FileWriter(tmp)) {
             writer.append(FIELD_COLUMN1 + "," + FIELD_COLUMN2 + "," + FIELD_COLUMN3 + "," + FIELD_COLUMN4 + "\n");
             writer.append("dummy\n");
@@ -112,6 +119,7 @@ public class DelimitedTextFileReaderTest extends LocalFileReaderTestBase {
             put(DelimitedTextFileReader.FILE_READER_DELIMITED_TOKEN, ",");
             put(DelimitedTextFileReader.FILE_READER_DELIMITED_HEADER, "true");
             put(DelimitedTextFileReader.FILE_READER_DELIMITED_DEFAULT_VALUE, "custom_value");
+            put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_DELIMITED, getFileExtension());
         }};
         Path path = new Path(new Path(fsUri), tmp.getName());
         fs.moveFromLocalFile(new Path(tmp.getAbsolutePath()), path);
@@ -137,6 +145,7 @@ public class DelimitedTextFileReaderTest extends LocalFileReaderTestBase {
         FileReader reader = getReader(fs, file, new HashMap<String, Object>() {{
             put(DelimitedTextFileReader.FILE_READER_DELIMITED_TOKEN, ",");
             put(DelimitedTextFileReader.FILE_READER_DELIMITED_HEADER, "false");
+            put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_DELIMITED, getFileExtension());
         }});
 
         assertTrue(reader.hasNext());
@@ -170,6 +179,7 @@ public class DelimitedTextFileReaderTest extends LocalFileReaderTestBase {
             put(DelimitedTextFileReader.FILE_READER_DELIMITED_TOKEN, ",");
             put(DelimitedTextFileReader.FILE_READER_DELIMITED_HEADER, "true");
             put(DelimitedTextFileReader.FILE_READER_DELIMITED_ENCODING, "Cp1252");
+            put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_DELIMITED, getFileExtension());
         }};
         getReader(fs, dataFile, cfg);
     }
@@ -180,6 +190,7 @@ public class DelimitedTextFileReaderTest extends LocalFileReaderTestBase {
             put(DelimitedTextFileReader.FILE_READER_DELIMITED_TOKEN, ",");
             put(DelimitedTextFileReader.FILE_READER_DELIMITED_HEADER, "true");
             put(DelimitedTextFileReader.FILE_READER_DELIMITED_ENCODING, "invalid_charset");
+            put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_DELIMITED, getFileExtension());
         }};
         getReader(fs, dataFile, cfg);
     }
@@ -199,5 +210,10 @@ public class DelimitedTextFileReaderTest extends LocalFileReaderTestBase {
         assertTrue(record.get(FIELD_COLUMN2).toString().startsWith(index + "_"));
         assertTrue(record.get(FIELD_COLUMN3).toString().startsWith(index + "_"));
         assertTrue(record.get(FIELD_COLUMN4).toString().startsWith(index + "_"));
+    }
+
+    @Override
+    protected String getFileExtension() {
+        return FILE_EXTENSION;
     }
 }

@@ -25,15 +25,11 @@ public class ReflectionUtils {
 
     private static <T> T make(Class<T> clazz, Object... args) throws Throwable {
         try {
-            if (args == null || args.length == 0) {
-                return (T) clazz.getConstructor().newInstance();
-            }
             Class[] constClasses = Arrays.stream(args).map(arg -> arg.getClass()).toArray(Class[]::new);
 
             Constructor constructor = ConstructorUtils.getMatchingAccessibleConstructor(clazz, constClasses);
             return (T) constructor.newInstance(args);
-        } catch (NoSuchMethodException |
-                IllegalAccessException |
+        } catch (IllegalAccessException |
                 InstantiationException |
                 InvocationTargetException e) {
             throw e.getCause();

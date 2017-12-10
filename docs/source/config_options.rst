@@ -276,3 +276,36 @@ In order to configure custom properties for this reader, the name you must use i
   * Type: string
   * Default: null
   * Importance: low
+
+Agnostic
+--------------------------------------------
+
+In order to configure custom properties for this reader, the name you must use is ``agnostic``.
+
+``file_reader.agnostic.extensions.parquet``
+  A comma-separated string list with the accepted extensions for Parquet files.
+
+  * Type: string
+  * Default: parquet
+  * Importance: medium
+
+``file_reader.agnostic.extensions.avro``
+  A comma-separated string list with the accepted extensions for Avro files.
+
+  * Type: string
+  * Default: avro
+  * Importance: medium
+
+``file_reader.agnostic.extensions.sequence``
+  A comma-separated string list with the accepted extensions for Sequence files.
+
+  * Type: string
+  * Default: seq
+  * Importance: medium
+
+``file_reader.agnostic.extensions.delimited``
+  A comma-separated string list with the accepted extensions for Delimited text files.
+
+  * Type: string
+  * Default: tsv,csv
+  * Importance: medium

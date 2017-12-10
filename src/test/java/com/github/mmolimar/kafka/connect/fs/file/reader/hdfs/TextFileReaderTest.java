@@ -1,6 +1,7 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader.hdfs;
 
 import com.github.mmolimar.kafka.connect.fs.file.Offset;
+import com.github.mmolimar.kafka.connect.fs.file.reader.AgnosticFileReader;
 import com.github.mmolimar.kafka.connect.fs.file.reader.TextFileReader;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
@@ -22,10 +23,11 @@ import static org.junit.Assert.assertTrue;
 public class TextFileReaderTest extends HdfsFileReaderTestBase {
 
     private static final String FIELD_NAME_VALUE = "custom_field_name";
+    private static final String FILE_EXTENSION = "txt";
 
     @BeforeClass
     public static void setUp() throws IOException {
-        readerClass = TextFileReader.class;
+        readerClass = AgnosticFileReader.class;
         dataFile = createDataFile();
         readerConfig = new HashMap<String, Object>() {{
             put(TextFileReader.FILE_READER_TEXT_FIELD_NAME_VALUE, FIELD_NAME_VALUE);
@@ -33,7 +35,7 @@ public class TextFileReaderTest extends HdfsFileReaderTestBase {
     }
 
     private static Path createDataFile() throws IOException {
-        File txtFile = File.createTempFile("test-", ".txt");
+        File txtFile = File.createTempFile("test-", "." + FILE_EXTENSION);
         try (FileWriter writer = new FileWriter(txtFile)) {
 
             IntStream.range(0, NUM_RECORDS).forEach(index -> {
@@ -91,4 +93,10 @@ public class TextFileReaderTest extends HdfsFileReaderTestBase {
     protected void checkData(Struct record, long index) {
         assertTrue(record.get(FIELD_NAME_VALUE).toString().startsWith(index + "_"));
     }
+
+    @Override
+    protected String getFileExtension() {
+        return FILE_EXTENSION;
+    }
+
 }
