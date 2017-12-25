@@ -69,9 +69,8 @@ public class FsSourceTask extends SourceTask {
             final List<SourceRecord> results = new ArrayList<>();
             List<FileMetadata> files = filesToProcess();
             files.forEach(metadata -> {
-                try {
+                try (FileReader reader = policy.offer(metadata, context.offsetStorageReader())) {
                     log.info("Processing records for file {}", metadata);
-                    FileReader reader = policy.offer(metadata, context.offsetStorageReader());
                     while (reader.hasNext()) {
                         results.add(convert(metadata, reader.currentOffset(), reader.next()));
                     }
