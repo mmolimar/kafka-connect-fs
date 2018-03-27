@@ -20,6 +20,7 @@ public class DelimitedTextFileReader extends AbstractFileReader<DelimitedTextFil
     public static final String FILE_READER_DELIMITED_TOKEN = FILE_READER_DELIMITED + "token";
     public static final String FILE_READER_DELIMITED_ENCODING = FILE_READER_DELIMITED + "encoding";
     public static final String FILE_READER_DELIMITED_DEFAULT_VALUE = FILE_READER_DELIMITED + "default_value";
+    public static final String FILE_READER_DELIMITED_CUSTOM_HEADER = FILE_READER_DELIMITED + "custom_header";
 
     private static final String DEFAULT_COLUMN_NAME = "column";
 
@@ -29,6 +30,8 @@ public class DelimitedTextFileReader extends AbstractFileReader<DelimitedTextFil
     private String token;
     private String defaultValue;
     private boolean hasHeader;
+    private String customHeader;
+    private boolean hasCustomHeader;
 
     public DelimitedTextFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
         super(fs, filePath, new DelimitedTxtToStruct(), config);
@@ -44,8 +47,11 @@ public class DelimitedTextFileReader extends AbstractFileReader<DelimitedTextFil
         if (hasNext()) {
             String firstLine = inner.nextRecord().getValue();
             String columns[] = firstLine.split(token);
+            String columnHeaders[] = this.customHeader.split(",");
             IntStream.range(0, columns.length).forEach(index -> {
-                String columnName = hasHeader ? columns[index] : DEFAULT_COLUMN_NAME + "_" + ++index;
+                String customColumnName = (index < columnHeaders.length) ? columnHeaders[index] : "";
+                String columnName = hasHeader ? columns[index] : 
+                                    (hasCustomHeader ? customColumnName : DEFAULT_COLUMN_NAME + "_" + ++index);
                 schemaBuilder.field(columnName, SchemaBuilder.STRING_SCHEMA);
             });
 
@@ -67,6 +73,9 @@ public class DelimitedTextFileReader extends AbstractFileReader<DelimitedTextFil
         this.defaultValue = config.get(FILE_READER_DELIMITED_DEFAULT_VALUE) == null ?
                 null : config.get(FILE_READER_DELIMITED_DEFAULT_VALUE).toString();
         this.hasHeader = Boolean.valueOf((String) config.get(FILE_READER_DELIMITED_HEADER));
+        this.customHeader = config.get(FILE_READER_DELIMITED_CUSTOM_HEADER) == null ?
+                "" : config.get(FILE_READER_DELIMITED_CUSTOM_HEADER).toString();
+        this.hasCustomHeader = this.customHeader.length() > 0;
     }
 
     @Override
