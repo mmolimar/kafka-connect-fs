@@ -126,8 +126,8 @@ Sleepy
 In order to configure custom properties for this policy, the name you must use is ``sleepy``.
 
 ``policy.sleepy.sleep``
-  Max sleep time (in ms) to wait to look for files in the FS. Once an execution has finished, the policy
-  will sleep during this time to be executed again.
+  Max sleep time (in ms) to wait to before looking for files in the FS. Once an execution has finished, the policy
+  will sleep for this time after which it will executed again.
 
   * Type: long
   * Importance: high
@@ -140,7 +140,7 @@ In order to configure custom properties for this policy, the name you must use i
   * Importance: medium
 
 ``policy.sleepy.max_execs``
-  Max executions allowed (negative to disable). After exceeding this number, the policy will end.
+  Max executions allowed (negative to disable, run endlessly). After exceeding this number, the policy will end.
   An execution represents: listing files from the FS and its corresponding sleep time.
 
   * Type: long
