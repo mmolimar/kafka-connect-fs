@@ -52,7 +52,13 @@ General config properties for this connector.
 
   You can use as many as you like in the URIs, for instance:
   ``file:///data/${yyyy}/${MM}/${dd}/${HH}${mm}``
-
+  
+.. tip:: 
+  If you want to ingest data from S3, you can add credentials with :
+  ``policy.fs.fs.s3a.access.key=<ACCESS_KEY>``
+  and
+  ``policy.fs.fs.s3a.secret.key=<SECRET_KEY>``
+  
 ``topic``
   Topic in which copy data.
 
