@@ -138,17 +138,22 @@ abstract class AbstractPolicy implements Policy {
             @Override
             public boolean hasNext() {
                 try {
-                    if (current == null) {
-                        if (!it.hasNext()) return false;
-                        current = it.next();
-                        return hasNext();
+                    while (true) {
+                        if (current == null) {
+                            if (!it.hasNext()) {
+                                return false;
+                            } else {
+                                current = it.next();
+                            }
+                        }
+
+                        if (current.isFile() &&
+                                fileRegexp.matcher(current.getPath().getName()).find()) {
+                            return true;
+                        } else {
+                            current = null;
+                        }
                     }
-                    if (current.isFile() &&
-                            fileRegexp.matcher(current.getPath().getName()).find()) {
-                        return true;
-                    }
-                    current = null;
-                    return hasNext();
                 } catch (IOException ioe) {
                     throw new ConnectException(ioe);
                 }
