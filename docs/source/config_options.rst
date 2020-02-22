@@ -155,7 +155,7 @@ In order to configure custom properties for this policy, the name you must use i
 
 .. _config_options-policies-hdfs:
 
-Hdfs file watcher
+HDFS file watcher
 --------------------------------------------
 
 This policy does not have any additional configuration.

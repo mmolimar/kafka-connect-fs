@@ -53,4 +53,3 @@ until throws an exception. It's a matter of time.
 But the main thing is that you don't have to worry about removing files
 from the FS when they are being processed. The connector tolerates errors
 when reading files and continues with the next file.
-

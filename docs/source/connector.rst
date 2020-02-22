@@ -24,7 +24,7 @@ Getting started
 Prerequisites
 --------------------------------------------
 
--  Confluent Platform 3.1.1
+-  Confluent Platform 5.4.0
 -  Java 8
 
 Building from source

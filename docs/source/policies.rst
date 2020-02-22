@@ -14,7 +14,7 @@ and wait for the next one. Additionally, its custom properties allow to end it.
 
 You can learn more about the properties of this policy :ref:`here<config_options-policies-sleepy>`.
 
-Hdfs file watcher
+HDFS file watcher
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 It uses Hadoop notifications events and all create/append/close events will be reported

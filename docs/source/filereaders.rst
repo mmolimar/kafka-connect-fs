@@ -16,7 +16,7 @@ Parquet
 Reads files with `Parquet <https://parquet.apache.org/>`__ format.
 
 The reader takes advantage of the Parquet-Avro API and uses the Parquet file
-as if it were an Avro file, so the message sent to Kafka is built in the same
+as if it was an Avro file, so the message sent to Kafka is built in the same
 way as the Avro file reader does.
 
 .. warning:: Seeking Parquet files is a heavy task because the reader has to
