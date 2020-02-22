@@ -54,7 +54,7 @@ abstract class AbstractPolicy implements Policy {
     private Map<String, Object> customConfigs() {
         return conf.originals().entrySet().stream()
                 .filter(entry -> entry.getKey().startsWith(FsSourceTaskConfig.POLICY_PREFIX))
-                .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     private void configFs(Map<String, Object> customConfigs) throws IOException {
@@ -126,7 +126,7 @@ abstract class AbstractPolicy implements Policy {
     protected void preCheck() {
     }
 
-    protected void postCheck() {
+    private void postCheck() {
     }
 
     public Iterator<FileMetadata> listFiles(FileSystem fs) throws IOException {
@@ -173,17 +173,16 @@ abstract class AbstractPolicy implements Policy {
 
     protected abstract boolean isPolicyCompleted();
 
-    public final int getExecutions() {
+    final int getExecutions() {
         return executions.get();
     }
 
-    protected FileMetadata toMetadata(LocatedFileStatus fileStatus) {
-        List<FileMetadata.BlockInfo> blocks = new ArrayList<>();
+    FileMetadata toMetadata(LocatedFileStatus fileStatus) {
 
-        blocks.addAll(Arrays.stream(fileStatus.getBlockLocations())
+        List<FileMetadata.BlockInfo> blocks = Arrays.stream(fileStatus.getBlockLocations())
                 .map(block ->
                         new FileMetadata.BlockInfo(block.getOffset(), block.getLength(), block.isCorrupt()))
-                .collect(Collectors.toList()));
+                .collect(Collectors.toList());
 
         return new FileMetadata(fileStatus.getPath().toString(), fileStatus.getLen(), blocks);
     }
@@ -215,8 +214,8 @@ abstract class AbstractPolicy implements Policy {
         return reader;
     }
 
-    Iterator<FileMetadata> concat(final Iterator<FileMetadata> it1,
-                                  final Iterator<FileMetadata> it2) {
+    private Iterator<FileMetadata> concat(final Iterator<FileMetadata> it1,
+                                          final Iterator<FileMetadata> it2) {
         return new Iterator<FileMetadata>() {
 
             @Override

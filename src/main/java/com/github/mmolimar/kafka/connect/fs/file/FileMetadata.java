@@ -36,12 +36,9 @@ public class FileMetadata {
         if (!(object instanceof FileMetadata)) return false;
 
         FileMetadata metadata = (FileMetadata) object;
-        if (this.path.equals(metadata.getPath()) &&
+        return this.path.equals(metadata.getPath()) &&
                 this.length == metadata.length &&
-                this.blocks.equals(metadata.getBlocks())) {
-            return true;
-        }
-        return false;
+                this.blocks.equals(metadata.getBlocks());
     }
 
     public int hashCode() {

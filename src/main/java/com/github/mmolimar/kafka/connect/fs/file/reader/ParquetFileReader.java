@@ -13,6 +13,7 @@ import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.parquet.avro.AvroParquetReader;
 import org.apache.parquet.avro.AvroReadSupport;
 import org.apache.parquet.hadoop.ParquetReader;
+import org.apache.parquet.hadoop.util.HadoopInputFile;
 
 import java.io.IOException;
 import java.util.Map;
@@ -52,9 +53,9 @@ public class ParquetFileReader extends AbstractFileReader<GenericRecord> {
         if (this.projection != null) {
             AvroReadSupport.setRequestedProjection(configuration, this.projection);
         }
-        ParquetReader reader = AvroParquetReader.<GenericRecord>builder(getFilePath())
-                .withConf(configuration).build();
-        return reader;
+        return AvroParquetReader
+                .<GenericRecord>builder(HadoopInputFile.fromPath(getFilePath(), configuration))
+                .build();
     }
 
     protected void configure(Map<String, Object> config) {
@@ -144,7 +145,7 @@ public class ParquetFileReader extends AbstractFileReader<GenericRecord> {
             this.offset = offset;
         }
 
-        protected void inc() {
+        void inc() {
             this.offset++;
         }
 
@@ -158,7 +159,7 @@ public class ParquetFileReader extends AbstractFileReader<GenericRecord> {
         private static final int CACHE_SIZE = 100;
         private final AvroData avroData;
 
-        public GenericRecordToStruct() {
+        GenericRecordToStruct() {
             this.avroData = new AvroData(CACHE_SIZE);
         }
 

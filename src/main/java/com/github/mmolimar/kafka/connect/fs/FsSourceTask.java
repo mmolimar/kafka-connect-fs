@@ -24,7 +24,7 @@ import java.util.stream.StreamSupport;
 public class FsSourceTask extends SourceTask {
     private static final Logger log = LoggerFactory.getLogger(FsSourceTask.class);
 
-    private AtomicBoolean stop;
+    private final AtomicBoolean stop = new AtomicBoolean(false);
     private FsSourceTaskConfig config;
     private Policy policy;
 
@@ -37,7 +37,6 @@ public class FsSourceTask extends SourceTask {
     public void start(Map<String, String> properties) {
         try {
             config = new FsSourceTaskConfig(properties);
-
             if (config.getClass(FsSourceTaskConfig.POLICY_CLASS).isAssignableFrom(Policy.class)) {
                 throw new ConfigException("Policy class " +
                         config.getClass(FsSourceTaskConfig.POLICY_CLASS) + "is not a sublass of " + Policy.class);
@@ -57,13 +56,11 @@ public class FsSourceTask extends SourceTask {
             log.error("Couldn't start FsSourceConnector:", t);
             throw new ConnectException("A problem has occurred reading configuration:" + t.getMessage());
         }
-
-        stop = new AtomicBoolean(false);
     }
 
     @Override
-    public List<SourceRecord> poll() throws InterruptedException {
-        while (stop != null && !stop.get() && !policy.hasEnded()) {
+    public List<SourceRecord> poll() {
+        while (!stop.get() && policy != null && !policy.hasEnded()) {
             log.trace("Polling for new data");
 
             final List<SourceRecord> results = new ArrayList<>();
@@ -92,8 +89,8 @@ public class FsSourceTask extends SourceTask {
                     .collect(Collectors.toList());
         } catch (IOException | ConnectException e) {
             //when an exception happens executing the policy, the connector continues
-            log.error("Cannot retrive files to process from FS: " + policy.getURIs() + ". Keep going...", e);
-            return Collections.EMPTY_LIST;
+            log.error("Cannot retrieve files to process from FS: " + policy.getURIs() + ". Keep going...", e);
+            return Collections.emptyList();
         }
     }
 
@@ -120,9 +117,7 @@ public class FsSourceTask extends SourceTask {
 
     @Override
     public void stop() {
-        if (stop != null) {
-            stop.set(true);
-        }
+        stop.set(true);
         if (policy != null) {
             policy.interrupt();
         }

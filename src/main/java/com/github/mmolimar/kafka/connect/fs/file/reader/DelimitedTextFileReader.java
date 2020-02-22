@@ -9,7 +9,6 @@ import org.apache.kafka.connect.data.Struct;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig.FILE_READER_PREFIX;
@@ -43,7 +42,7 @@ public class DelimitedTextFileReader extends AbstractFileReader<DelimitedTextFil
         SchemaBuilder schemaBuilder = SchemaBuilder.struct();
         if (hasNext()) {
             String firstLine = inner.nextRecord().getValue();
-            String columns[] = firstLine.split(token);
+            String[] columns = firstLine.split(token);
             IntStream.range(0, columns.length).forEach(index -> {
                 String columnName = hasHeader ? columns[index] : DEFAULT_COLUMN_NAME + "_" + ++index;
                 schemaBuilder.field(columnName, SchemaBuilder.STRING_SCHEMA);
@@ -66,13 +65,13 @@ public class DelimitedTextFileReader extends AbstractFileReader<DelimitedTextFil
         this.token = config.get(FILE_READER_DELIMITED_TOKEN).toString();
         this.defaultValue = config.get(FILE_READER_DELIMITED_DEFAULT_VALUE) == null ?
                 null : config.get(FILE_READER_DELIMITED_DEFAULT_VALUE).toString();
-        this.hasHeader = Boolean.valueOf((String) config.get(FILE_READER_DELIMITED_HEADER));
+        this.hasHeader = Boolean.parseBoolean((String) config.get(FILE_READER_DELIMITED_HEADER));
     }
 
     @Override
     protected DelimitedRecord nextRecord() {
         offset.inc();
-        String values[] = inner.nextRecord().getValue().split(token);
+        String[] values = inner.nextRecord().getValue().split(token);
         return new DelimitedRecord(schema, defaultValue != null ? fillNullValues(values) : values);
     }
 
@@ -84,9 +83,7 @@ public class DelimitedTextFileReader extends AbstractFileReader<DelimitedTextFil
                     } else {
                         return defaultValue;
                     }
-                })
-                .collect(Collectors.toList())
-                .toArray(new String[0]);
+                }).toArray(String[]::new);
     }
 
     @Override
@@ -123,7 +120,7 @@ public class DelimitedTextFileReader extends AbstractFileReader<DelimitedTextFil
             this.offset = hasHeader && offset > 0 ? offset - 1 : offset;
         }
 
-        protected void inc() {
+        void inc() {
             this.offset++;
         }
 
@@ -151,7 +148,7 @@ public class DelimitedTextFileReader extends AbstractFileReader<DelimitedTextFil
         private final Schema schema;
         private final String[] values;
 
-        public DelimitedRecord(Schema schema, String[] values) {
+        DelimitedRecord(Schema schema, String[] values) {
             this.schema = schema;
             this.values = values;
         }

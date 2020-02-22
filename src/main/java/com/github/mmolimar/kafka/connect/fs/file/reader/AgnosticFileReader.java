@@ -8,6 +8,7 @@ import org.apache.kafka.connect.data.Struct;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +34,7 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
         } catch (RuntimeException | IOException e) {
             throw e;
         } catch (Throwable t) {
-            throw new IOException("An error has ocurred when creating a concrete reader", t);
+            throw new IOException("An error has occurred when creating a concrete reader", t);
         }
     }
 
@@ -62,13 +63,13 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
     @Override
     protected void configure(Map<String, Object> config) {
         this.parquetExtensions = config.get(FILE_READER_AGNOSTIC_EXTENSIONS_PARQUET) == null ?
-                Arrays.asList("parquet") :
+                Collections.singletonList("parquet") :
                 Arrays.asList(config.get(FILE_READER_AGNOSTIC_EXTENSIONS_PARQUET).toString().toLowerCase().split(","));
         this.avroExtensions = config.get(FILE_READER_AGNOSTIC_EXTENSIONS_AVRO) == null ?
-                Arrays.asList("avro") :
+                Collections.singletonList("avro") :
                 Arrays.asList(config.get(FILE_READER_AGNOSTIC_EXTENSIONS_AVRO).toString().toLowerCase().split(","));
         this.sequenceExtensions = config.get(FILE_READER_AGNOSTIC_EXTENSIONS_SEQUENCE) == null ?
-                Arrays.asList("seq") :
+                Collections.singletonList("seq") :
                 Arrays.asList(config.get(FILE_READER_AGNOSTIC_EXTENSIONS_SEQUENCE).toString().toLowerCase().split(","));
         this.delimitedExtensions = config.get(FILE_READER_AGNOSTIC_EXTENSIONS_DELIMITED) == null ?
                 Arrays.asList("tsv", "csv") :
@@ -102,7 +103,7 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
 
     static class AgnosticAdapter implements ReaderAdapter<AgnosticRecord> {
 
-        public AgnosticAdapter() {
+        AgnosticAdapter() {
         }
 
         @Override
@@ -115,7 +116,7 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
         private final ReaderAdapter<Object> adapter;
         private final Object record;
 
-        public AgnosticRecord(ReaderAdapter<Object> adapter, Object record) {
+        AgnosticRecord(ReaderAdapter<Object> adapter, Object record) {
             this.adapter = adapter;
             this.record = record;
         }

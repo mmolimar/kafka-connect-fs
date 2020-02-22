@@ -3,7 +3,7 @@ package com.github.mmolimar.kafka.connect.fs.util;
 import com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig;
 import com.github.mmolimar.kafka.connect.fs.file.reader.FileReader;
 import com.github.mmolimar.kafka.connect.fs.policy.Policy;
-import org.apache.commons.lang.reflect.ConstructorUtils;
+import org.apache.commons.lang3.reflect.ConstructorUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
@@ -25,10 +25,10 @@ public class ReflectionUtils {
 
     private static <T> T make(Class<T> clazz, Object... args) throws Throwable {
         try {
-            Class[] constClasses = Arrays.stream(args).map(arg -> arg.getClass()).toArray(Class[]::new);
+            Class[] constClasses = Arrays.stream(args).map(Object::getClass).toArray(Class[]::new);
 
-            Constructor constructor = ConstructorUtils.getMatchingAccessibleConstructor(clazz, constClasses);
-            return (T) constructor.newInstance(args);
+            Constructor<T> constructor = ConstructorUtils.getMatchingAccessibleConstructor(clazz, constClasses);
+            return constructor.newInstance(args);
         } catch (IllegalAccessException |
                 InstantiationException |
                 InvocationTargetException e) {

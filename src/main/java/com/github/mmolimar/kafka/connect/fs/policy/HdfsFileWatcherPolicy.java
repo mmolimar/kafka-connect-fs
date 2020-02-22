@@ -30,7 +30,7 @@ public class HdfsFileWatcherPolicy extends AbstractPolicy {
 
     public HdfsFileWatcherPolicy(FsSourceTaskConfig conf) throws IOException {
         super(conf);
-        this.fileQueue = new ConcurrentLinkedQueue();
+        this.fileQueue = new ConcurrentLinkedQueue<>();
         startWatchers();
     }
 
@@ -50,15 +50,15 @@ public class HdfsFileWatcherPolicy extends AbstractPolicy {
     }
 
     private void startWatchers() {
-        fsEvenStream.values().forEach(stream -> stream.start());
+        fsEvenStream.values().forEach(Thread::start);
     }
 
     private void stopWatchers() {
-        fsEvenStream.values().forEach(stream -> stream.interrupt());
+        fsEvenStream.values().forEach(Thread::interrupt);
     }
 
     @Override
-    public Iterator<FileMetadata> listFiles(FileSystem fs) throws IOException {
+    public Iterator<FileMetadata> listFiles(FileSystem fs) {
         Set<FileMetadata> files = new HashSet<>();
         FileMetadata metadata;
         while ((metadata = fileQueue.poll()) != null) {
@@ -95,7 +95,7 @@ public class HdfsFileWatcherPolicy extends AbstractPolicy {
         private final FileSystem fs;
         private final HdfsAdmin admin;
 
-        protected EventStreamThread(FileSystem fs, HdfsAdmin admin) {
+        EventStreamThread(FileSystem fs, HdfsAdmin admin) {
             this.fs = fs;
             this.admin = admin;
         }
@@ -151,4 +151,3 @@ public class HdfsFileWatcherPolicy extends AbstractPolicy {
         }
     }
 }
-

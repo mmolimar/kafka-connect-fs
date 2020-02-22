@@ -31,14 +31,14 @@ public class SleepyPolicy extends AbstractPolicy {
     @Override
     protected void configPolicy(Map<String, Object> customConfigs) {
         try {
-            this.sleep = Long.valueOf((String) customConfigs.get(SLEEPY_POLICY_SLEEP_MS));
+            this.sleep = Long.parseLong((String) customConfigs.get(SLEEPY_POLICY_SLEEP_MS));
         } catch (NumberFormatException nfe) {
             throw new ConfigException(SLEEPY_POLICY_SLEEP_MS + " property is required and must be a number(long). Got: " +
                     customConfigs.get(SLEEPY_POLICY_SLEEP_MS));
         }
         if (customConfigs.get(SLEEPY_POLICY_MAX_EXECS) != null) {
             try {
-                this.maxExecs = Long.valueOf((String) customConfigs.get(SLEEPY_POLICY_MAX_EXECS));
+                this.maxExecs = Long.parseLong((String) customConfigs.get(SLEEPY_POLICY_MAX_EXECS));
             } catch (NumberFormatException nfe) {
                 throw new ConfigException(SLEEPY_POLICY_MAX_EXECS + " property must be a number(long). Got: " +
                         customConfigs.get(SLEEPY_POLICY_MAX_EXECS));
@@ -48,7 +48,7 @@ public class SleepyPolicy extends AbstractPolicy {
         }
         if (customConfigs.get(SLEEPY_POLICY_SLEEP_FRACTION) != null) {
             try {
-                this.sleepFraction = Long.valueOf((String) customConfigs.get(SLEEPY_POLICY_SLEEP_FRACTION));
+                this.sleepFraction = Long.parseLong((String) customConfigs.get(SLEEPY_POLICY_SLEEP_FRACTION));
             } catch (NumberFormatException nfe) {
                 throw new ConfigException(SLEEPY_POLICY_SLEEP_FRACTION + " property must be a number(long). Got: " +
                         customConfigs.get(SLEEPY_POLICY_SLEEP_FRACTION));

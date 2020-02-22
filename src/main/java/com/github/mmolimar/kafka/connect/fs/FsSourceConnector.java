@@ -1,7 +1,5 @@
 package com.github.mmolimar.kafka.connect.fs;
 
-import com.github.mmolimar.kafka.connect.fs.file.reader.FileReader;
-import com.github.mmolimar.kafka.connect.fs.policy.Policy;
 import com.github.mmolimar.kafka.connect.fs.util.Version;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigException;
@@ -16,7 +14,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class FsSourceConnector extends SourceConnector {
 
@@ -60,7 +57,7 @@ public class FsSourceConnector extends SourceConnector {
         ConnectorUtils.groupPartitions(config.getFsUris(), groups)
                 .forEach(dirs -> {
                     Map<String, String> taskProps = new HashMap<>(config.originalsStrings());
-                    taskProps.put(FsSourceConnectorConfig.FS_URIS, dirs.stream().collect(Collectors.joining(",")));
+                    taskProps.put(FsSourceConnectorConfig.FS_URIS, String.join(",", dirs));
                     taskConfigs.add(taskProps);
                 });
 

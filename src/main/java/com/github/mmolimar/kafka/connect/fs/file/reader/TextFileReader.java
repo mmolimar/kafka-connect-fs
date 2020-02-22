@@ -158,7 +158,7 @@ public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord
         private final Schema schema;
         private final String value;
 
-        public TextRecord(Schema schema, String value) {
+        TextRecord(Schema schema, String value) {
             this.schema = schema;
             this.value = value;
         }

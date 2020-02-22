@@ -154,7 +154,7 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
             this.offset = offset;
         }
 
-        protected void inc() {
+        void inc() {
             this.offset++;
         }
 
@@ -202,7 +202,7 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
         private final String valueFieldName;
         private final U value;
 
-        public SequenceRecord(Schema schema, String keyFieldName, T key, String valueFieldName, U value) {
+        SequenceRecord(Schema schema, String keyFieldName, T key, String valueFieldName, U value) {
             this.schema = schema;
             this.keyFieldName = keyFieldName;
             this.key = key;
