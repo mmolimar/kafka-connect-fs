@@ -30,8 +30,8 @@ public class HdfsFileWatcherPolicyTest extends HdfsPolicyTestBase {
         }
 
         Map<String, String> cfg = new HashMap<String, String>() {{
-            String uris[] = directories.stream().map(dir -> dir.toString())
-                    .toArray(size -> new String[size]);
+            String[] uris = directories.stream().map(Path::toString)
+                    .toArray(String[]::new);
             put(FsSourceTaskConfig.FS_URIS, String.join(",", uris));
             put(FsSourceTaskConfig.TOPIC, "topic_test");
             put(FsSourceTaskConfig.POLICY_CLASS, HdfsFileWatcherPolicy.class.getName());
@@ -70,5 +70,4 @@ public class HdfsFileWatcherPolicyTest extends HdfsPolicyTestBase {
         assertTrue(policy.hasEnded());
         policy.execute();
     }
-
 }

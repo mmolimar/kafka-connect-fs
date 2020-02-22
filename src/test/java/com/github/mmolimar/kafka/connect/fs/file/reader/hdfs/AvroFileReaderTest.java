@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class AvroFileReaderTest extends HdfsFileReaderTestBase {
@@ -101,7 +102,7 @@ public class AvroFileReaderTest extends HdfsFileReaderTestBase {
 
     @Override
     protected void checkData(Struct record, long index) {
-        assertTrue((Integer) record.get(FIELD_INDEX) == index);
+        assertEquals((int) (Integer) record.get(FIELD_INDEX), index);
         assertTrue(record.get(FIELD_NAME).toString().startsWith(index + "_"));
         assertTrue(record.get(FIELD_SURNAME).toString().startsWith(index + "_"));
     }

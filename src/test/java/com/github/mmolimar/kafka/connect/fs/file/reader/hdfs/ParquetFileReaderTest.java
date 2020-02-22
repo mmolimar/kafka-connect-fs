@@ -19,6 +19,7 @@ import org.apache.parquet.hadoop.ParquetFileWriter;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.io.InvalidRecordException;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -63,7 +64,7 @@ public class ParquetFileReaderTest extends HdfsFileReaderTestBase {
                 datum.put(FIELD_NAME, String.format("%d_name_%s", index, UUID.randomUUID()));
                 datum.put(FIELD_SURNAME, String.format("%d_surname_%s", index, UUID.randomUUID()));
                 try {
-                    OFFSETS_BY_INDEX.put(index, Long.valueOf(index));
+                    OFFSETS_BY_INDEX.put(index, (long) index);
                     writer.write(datum);
                 } catch (IOException ioe) {
                     throw new RuntimeException(ioe);
@@ -73,6 +74,18 @@ public class ParquetFileReaderTest extends HdfsFileReaderTestBase {
         Path path = new Path(new Path(fsUri), parquetFile.getName());
         fs.moveFromLocalFile(new Path(parquetFile.getAbsolutePath()), path);
         return path;
+    }
+
+    @Ignore(value = "This test does not apply for parquet files")
+    @Test(expected = IOException.class)
+    public void emptyFile() throws Throwable {
+        super.emptyFile();
+    }
+
+    @Ignore(value = "This test does not apply for parquet files")
+    @Test(expected = IOException.class)
+    public void invalidFileFormat() throws Throwable {
+        super.invalidFileFormat();
     }
 
     @Test
@@ -138,7 +151,7 @@ public class ParquetFileReaderTest extends HdfsFileReaderTestBase {
 
     @Override
     protected void checkData(Struct record, long index) {
-        assertTrue((Integer) record.get(FIELD_INDEX) == index);
+        assertEquals((int) (Integer) record.get(FIELD_INDEX), index);
         assertTrue(record.get(FIELD_NAME).toString().startsWith(index + "_"));
         assertTrue(record.get(FIELD_SURNAME).toString().startsWith(index + "_"));
     }

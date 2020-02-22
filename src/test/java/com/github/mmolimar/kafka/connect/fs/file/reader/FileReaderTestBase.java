@@ -39,7 +39,7 @@ public abstract class FileReaderTestBase {
     @Before
     public void openReader() throws Throwable {
         reader = getReader(fs, dataFile, readerConfig);
-        assertTrue(reader.getFilePath().equals(dataFile));
+        assertEquals(reader.getFilePath(), dataFile);
     }
 
     @After
@@ -103,19 +103,19 @@ public abstract class FileReaderTestBase {
         int recordIndex = NUM_RECORDS / 2;
         reader.seek(getOffset(OFFSETS_BY_INDEX.get(recordIndex)));
         assertTrue(reader.hasNext());
-        assertEquals(OFFSETS_BY_INDEX.get(recordIndex).longValue() + 1, reader.currentOffset().getRecordOffset());
+        assertEquals(OFFSETS_BY_INDEX.get(recordIndex) + 1, reader.currentOffset().getRecordOffset());
         checkData(reader.next(), recordIndex);
 
         recordIndex = 0;
         reader.seek(getOffset(OFFSETS_BY_INDEX.get(recordIndex)));
         assertTrue(reader.hasNext());
-        assertEquals(OFFSETS_BY_INDEX.get(recordIndex).longValue() + 1, reader.currentOffset().getRecordOffset());
+        assertEquals(OFFSETS_BY_INDEX.get(recordIndex) + 1, reader.currentOffset().getRecordOffset());
         checkData(reader.next(), recordIndex);
 
         recordIndex = NUM_RECORDS - 3;
         reader.seek(getOffset(OFFSETS_BY_INDEX.get(recordIndex)));
         assertTrue(reader.hasNext());
-        assertEquals(OFFSETS_BY_INDEX.get(recordIndex).longValue() + 1, reader.currentOffset().getRecordOffset());
+        assertEquals(OFFSETS_BY_INDEX.get(recordIndex) + 1, reader.currentOffset().getRecordOffset());
         checkData(reader.next(), recordIndex);
 
         reader.seek(getOffset(OFFSETS_BY_INDEX.get(NUM_RECORDS - 1) + 1));

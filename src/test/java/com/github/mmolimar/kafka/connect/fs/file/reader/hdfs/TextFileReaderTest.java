@@ -42,7 +42,7 @@ public class TextFileReaderTest extends HdfsFileReaderTestBase {
                 String value = String.format("%d_%s", index, UUID.randomUUID());
                 try {
                     writer.append(value + "\n");
-                    OFFSETS_BY_INDEX.put(index, Long.valueOf(index++));
+                    OFFSETS_BY_INDEX.put(index, (long) index);
                 } catch (IOException ioe) {
                     throw new RuntimeException(ioe);
                 }
@@ -98,5 +98,4 @@ public class TextFileReaderTest extends HdfsFileReaderTestBase {
     protected String getFileExtension() {
         return FILE_EXTENSION;
     }
-
 }

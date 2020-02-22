@@ -78,8 +78,7 @@ public class SequenceFileReaderTest extends LocalFileReaderTestBase {
             put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_SEQUENCE, getFileExtension());
         }};
         reader = getReader(fs, dataFile, customReaderCfg);
-        assertTrue(reader.getFilePath().equals(dataFile));
-
+        assertEquals(reader.getFilePath(), dataFile);
         assertTrue(reader.hasNext());
 
         int recordCount = 0;
@@ -102,7 +101,7 @@ public class SequenceFileReaderTest extends LocalFileReaderTestBase {
     }
 
     private void checkData(String keyFieldName, String valueFieldName, Struct record, long index) {
-        assertTrue((Integer) record.get(keyFieldName) == index);
+        assertEquals((int) (Integer) record.get(keyFieldName), index);
         assertTrue(record.get(valueFieldName).toString().startsWith(index + "_"));
     }
 

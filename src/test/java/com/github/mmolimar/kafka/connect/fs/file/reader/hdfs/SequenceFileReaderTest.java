@@ -75,8 +75,7 @@ public class SequenceFileReaderTest extends HdfsFileReaderTestBase {
     public void defaultFieldNames() throws Throwable {
         Map<String, Object> customReaderCfg = new HashMap<>();
         reader = getReader(fs, dataFile, customReaderCfg);
-        assertTrue(reader.getFilePath().equals(dataFile));
-
+        assertEquals(reader.getFilePath(), dataFile);
         assertTrue(reader.hasNext());
 
         int recordCount = 0;
@@ -99,7 +98,7 @@ public class SequenceFileReaderTest extends HdfsFileReaderTestBase {
     }
 
     private void checkData(String keyFieldName, String valueFieldName, Struct record, long index) {
-        assertTrue((Integer) record.get(keyFieldName) == index);
+        assertEquals((int) (Integer) record.get(keyFieldName), index);
         assertTrue(record.get(valueFieldName).toString().startsWith(index + "_"));
     }
 
@@ -107,5 +106,4 @@ public class SequenceFileReaderTest extends HdfsFileReaderTestBase {
     protected String getFileExtension() {
         return FILE_EXTENSION;
     }
-
 }

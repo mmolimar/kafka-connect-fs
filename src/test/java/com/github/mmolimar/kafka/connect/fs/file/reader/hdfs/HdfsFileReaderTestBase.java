@@ -15,13 +15,11 @@ import java.nio.file.Path;
 public abstract class HdfsFileReaderTestBase extends FileReaderTestBase {
 
     private static MiniDFSCluster cluster;
-    private static Configuration clusterConfig;
-    private static Path hdfsDir;
 
     @BeforeClass
     public static void initFs() throws IOException {
-        clusterConfig = new Configuration();
-        hdfsDir = Files.createTempDirectory("test-");
+        Configuration clusterConfig = new Configuration();
+        Path hdfsDir = Files.createTempDirectory("test-");
         clusterConfig.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, hdfsDir.toAbsolutePath().toString());
         cluster = new MiniDFSCluster.Builder(clusterConfig).build();
         fsUri = URI.create("hdfs://localhost:" + cluster.getNameNodePort() + "/");
