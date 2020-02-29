@@ -104,7 +104,6 @@ public class DelimitedTextFileReaderTest extends LocalFileReaderTestBase {
             recordCount++;
         }
         assertEquals("The number of records in the file does not match", NUM_RECORDS, recordCount);
-
     }
 
     @Test

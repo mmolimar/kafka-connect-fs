@@ -14,6 +14,7 @@ import java.util.stream.IntStream;
 import static com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig.FILE_READER_PREFIX;
 
 public class DelimitedTextFileReader extends AbstractFileReader<DelimitedTextFileReader.DelimitedRecord> {
+
     private static final String FILE_READER_DELIMITED = FILE_READER_PREFIX + "delimited.";
     public static final String FILE_READER_DELIMITED_HEADER = FILE_READER_DELIMITED + "header";
     public static final String FILE_READER_DELIMITED_TOKEN = FILE_READER_DELIMITED + "token";
@@ -32,10 +33,9 @@ public class DelimitedTextFileReader extends AbstractFileReader<DelimitedTextFil
     public DelimitedTextFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
         super(fs, filePath, new DelimitedTxtToStruct(), config);
 
-        //mapping encoding for text file reader
-        if (config.get(FILE_READER_DELIMITED_ENCODING) != null) {
-            config.put(TextFileReader.FILE_READER_TEXT_ENCODING, config.get(FILE_READER_DELIMITED_ENCODING));
-        }
+        config.put(TextFileReader.FILE_READER_TEXT_ENCODING, config.get(FILE_READER_DELIMITED_ENCODING));
+        config.put(TextFileReader.FILE_READER_TEXT_RECORD_PER_LINE, "true");
+
         this.inner = new TextFileReader(fs, filePath, config);
         this.offset = new DelimitedTextOffset(0, hasHeader);
 

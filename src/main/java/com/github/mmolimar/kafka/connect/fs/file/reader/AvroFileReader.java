@@ -93,7 +93,7 @@ public class AvroFileReader extends AbstractFileReader<GenericRecord> {
             this.offset = offset;
         }
 
-        protected void inc() {
+        void inc() {
             this.offset++;
         }
 
@@ -104,10 +104,11 @@ public class AvroFileReader extends AbstractFileReader<GenericRecord> {
     }
 
     static class GenericRecordToStruct implements ReaderAdapter<GenericRecord> {
+
         private static final int CACHE_SIZE = 100;
         private final AvroData avroData;
 
-        public GenericRecordToStruct() {
+        GenericRecordToStruct() {
             this.avroData = new AvroData(CACHE_SIZE);
         }
 

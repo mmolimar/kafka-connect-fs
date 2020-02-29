@@ -30,7 +30,6 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
     public static final String FILE_READER_SEQUENCE_FIELD_NAME_KEY = FILE_READER_SEQUENCE_FIELD_NAME_PREFIX + "key";
     public static final String FILE_READER_SEQUENCE_FIELD_NAME_VALUE = FILE_READER_SEQUENCE_FIELD_NAME_PREFIX + "value";
 
-
     private final SequenceFile.Reader reader;
     private final Writable key, value;
     private final SeqOffset offset;
@@ -115,7 +114,7 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
             throw new NoSuchElementException("There are no more records in file: " + getFilePath());
         }
         recordIndex++;
-        return new SequenceRecord<Writable, Writable>(schema, keyFieldName, key, valueFieldName, value);
+        return new SequenceRecord<>(schema, keyFieldName, key, valueFieldName, value);
     }
 
     @Override
@@ -196,6 +195,7 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
     }
 
     static class SequenceRecord<T, U> {
+
         private final Schema schema;
         private final String keyFieldName;
         private final T key;
@@ -211,5 +211,4 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
         }
 
     }
-
 }

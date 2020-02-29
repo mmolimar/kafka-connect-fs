@@ -59,7 +59,6 @@ public class ParquetFileReaderTest extends LocalFileReaderTestBase {
 
         try (ParquetWriter writer = AvroParquetWriter.<GenericRecord>builder(new Path(parquetFile.toURI()))
                 .withConf(fs.getConf()).withWriteMode(ParquetFileWriter.Mode.OVERWRITE).withSchema(readerSchema).build()) {
-
             IntStream.range(0, NUM_RECORDS).forEach(index -> {
                 GenericRecord datum = new GenericData.Record(readerSchema);
                 datum.put(FIELD_INDEX, index);

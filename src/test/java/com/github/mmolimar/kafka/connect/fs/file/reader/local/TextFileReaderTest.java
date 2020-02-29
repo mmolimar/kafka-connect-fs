@@ -2,6 +2,7 @@ package com.github.mmolimar.kafka.connect.fs.file.reader.local;
 
 import com.github.mmolimar.kafka.connect.fs.file.Offset;
 import com.github.mmolimar.kafka.connect.fs.file.reader.AgnosticFileReader;
+import com.github.mmolimar.kafka.connect.fs.file.reader.FileReader;
 import com.github.mmolimar.kafka.connect.fs.file.reader.TextFileReader;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
@@ -18,6 +19,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class TextFileReaderTest extends LocalFileReaderTestBase {
@@ -82,6 +84,26 @@ public class TextFileReaderTest extends LocalFileReaderTestBase {
             put(TextFileReader.FILE_READER_TEXT_ENCODING, "invalid_charset");
         }};
         getReader(fs, dataFile, cfg);
+    }
+
+    @Test
+    public void readDataWithRecordPerLineDisabled() throws Throwable {
+        Path file = createDataFile();
+        FileReader reader = getReader(fs, file, new HashMap<String, Object>() {{
+            put(TextFileReader.FILE_READER_TEXT_FIELD_NAME_VALUE, FIELD_NAME_VALUE);
+            put(TextFileReader.FILE_READER_TEXT_RECORD_PER_LINE, "false");
+        }});
+
+        assertTrue(reader.hasNext());
+
+        int recordCount = 0;
+        while (reader.hasNext()) {
+            Struct record = reader.next();
+            checkData(record, recordCount);
+            recordCount++;
+        }
+        reader.close();
+        assertEquals("The number of records in the file does not match", 1, recordCount);
     }
 
     @Override

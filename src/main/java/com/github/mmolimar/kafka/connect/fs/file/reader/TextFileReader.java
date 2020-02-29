@@ -8,31 +8,35 @@ import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.errors.ConnectException;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.nio.charset.Charset;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 import static com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig.FILE_READER_PREFIX;
 
 public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord> {
 
-    public static final String FIELD_NAME_VALUE_DEFAULT = "value";
-
     private static final String FILE_READER_TEXT = FILE_READER_PREFIX + "text.";
-    private static final String FILE_READER_SEQUENCE_FIELD_NAME_PREFIX = FILE_READER_TEXT + "field_name.";
+    private static final String FILE_READER_FIELD_NAME_PREFIX = FILE_READER_TEXT + "field_name.";
 
-    public static final String FILE_READER_TEXT_FIELD_NAME_VALUE = FILE_READER_SEQUENCE_FIELD_NAME_PREFIX + "value";
+    public static final String FIELD_NAME_VALUE_DEFAULT = "value";
+    public static final String FILE_READER_TEXT_FIELD_NAME_VALUE = FILE_READER_FIELD_NAME_PREFIX + "value";
+    public static final String FILE_READER_TEXT_RECORD_PER_LINE = FILE_READER_TEXT + "record_per_line";
     public static final String FILE_READER_TEXT_ENCODING = FILE_READER_TEXT + "encoding";
 
     private final TextOffset offset;
-    private String currentLine;
+    private String current;
     private boolean finished = false;
     private LineNumberReader reader;
     private Schema schema;
     private Charset charset;
+    private boolean recordPerLine;
 
     public TextFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
         super(fs, filePath, new TxtToStruct(), config);
@@ -49,34 +53,46 @@ public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord
         } else {
             valueFieldName = config.get(FILE_READER_TEXT_FIELD_NAME_VALUE).toString();
         }
-        this.schema = SchemaBuilder.struct()
-                .field(valueFieldName, Schema.STRING_SCHEMA)
-                .build();
-
         if (config.get(FILE_READER_TEXT_ENCODING) == null ||
                 config.get(FILE_READER_TEXT_ENCODING).toString().equals("")) {
             this.charset = Charset.defaultCharset();
         } else {
             this.charset = Charset.forName(config.get(FILE_READER_TEXT_ENCODING).toString());
         }
+        if (config.get(FILE_READER_TEXT_RECORD_PER_LINE) == null ||
+                config.get(FILE_READER_TEXT_RECORD_PER_LINE).toString().equals("")) {
+            this.recordPerLine = true;
+        } else {
+            this.recordPerLine = Boolean.parseBoolean(config.get(FILE_READER_TEXT_RECORD_PER_LINE).toString());
+        }
+        this.schema = SchemaBuilder.struct()
+                .field(valueFieldName, Schema.STRING_SCHEMA)
+                .build();
     }
 
     @Override
     public boolean hasNext() {
-        if (currentLine != null) {
+        if (current != null) {
             return true;
         } else if (finished) {
             return false;
         } else {
             try {
-                while (true) {
+                if (!recordPerLine) {
+                    List<String> lines = new BufferedReader(reader).lines().collect(Collectors.toList());
+                    offset.setOffset(lines.size() - 1);
+                    current = String.join("\n", lines);
+                    finished = true;
+                    return true;
+                }
+                for (; ; ) {
                     String line = reader.readLine();
                     offset.setOffset(reader.getLineNumber());
                     if (line == null) {
                         finished = true;
                         return false;
                     }
-                    currentLine = line;
+                    current = line;
                     return true;
                 }
             } catch (IOException ioe) {
@@ -90,8 +106,8 @@ public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord
         if (!hasNext()) {
             throw new NoSuchElementException("There are no more records in file: " + getFilePath());
         }
-        String aux = currentLine;
-        currentLine = null;
+        String aux = current;
+        current = null;
 
         return new TextRecord(schema, aux);
     }
@@ -104,9 +120,9 @@ public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord
         try {
             if (offset.getRecordOffset() < reader.getLineNumber()) {
                 this.reader = new LineNumberReader(new InputStreamReader(getFs().open(getFilePath())));
-                currentLine = null;
+                current = null;
             }
-            while ((currentLine = reader.readLine()) != null) {
+            while ((current = reader.readLine()) != null) {
                 if (reader.getLineNumber() - 1 == offset.getRecordOffset()) {
                     this.offset.setOffset(reader.getLineNumber());
                     return;

@@ -3,6 +3,8 @@ package com.github.mmolimar.kafka.connect.fs.file.reader;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -10,6 +12,7 @@ import java.util.stream.Collectors;
 import static com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig.FILE_READER_PREFIX;
 
 public abstract class AbstractFileReader<T> implements FileReader {
+    protected final Logger log = LoggerFactory.getLogger(getClass());
 
     private final FileSystem fs;
     private final Path filePath;
@@ -25,6 +28,7 @@ public abstract class AbstractFileReader<T> implements FileReader {
 
         Map<String, Object> readerConf = config.entrySet().stream()
                 .filter(entry -> entry.getKey().startsWith(FILE_READER_PREFIX))
+                .filter(entry -> entry.getValue() != null)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         configure(readerConf);
     }
