@@ -118,17 +118,15 @@ public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord
             throw new IllegalArgumentException("Record offset must be greater than 0");
         }
         try {
+            current = null;
             if (offset.getRecordOffset() < reader.getLineNumber()) {
-                this.reader = new LineNumberReader(new InputStreamReader(getFs().open(getFilePath())));
-                current = null;
+                finished = false;
+                reader = new LineNumberReader(new InputStreamReader(getFs().open(getFilePath())));
             }
-            while ((current = reader.readLine()) != null) {
-                if (reader.getLineNumber() - 1 == offset.getRecordOffset()) {
-                    this.offset.setOffset(reader.getLineNumber());
-                    return;
-                }
+            while (reader.getLineNumber() < offset.getRecordOffset()) {
+                reader.readLine();
             }
-            this.offset.setOffset(reader.getLineNumber());
+            this.offset.setOffset(reader.getLineNumber() + 1);
         } catch (IOException ioe) {
             throw new ConnectException("Error seeking file " + getFilePath(), ioe);
         }
