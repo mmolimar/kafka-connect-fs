@@ -5,8 +5,8 @@ import com.github.mmolimar.kafka.connect.fs.file.reader.TextFileReader;
 import com.github.mmolimar.kafka.connect.fs.policy.HdfsFileWatcherPolicy;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.errors.IllegalWorkerStateException;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -14,12 +14,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class HdfsFileWatcherPolicyTest extends HdfsPolicyTestBase {
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() throws IOException {
         directories = new ArrayList<Path>() {{
             add(new Path(fsUri.toString(), UUID.randomUUID().toString()));
@@ -38,7 +37,7 @@ public class HdfsFileWatcherPolicyTest extends HdfsPolicyTestBase {
             put(FsSourceTaskConfig.FILE_READER_CLASS, TextFileReader.class.getName());
             put(FsSourceTaskConfig.POLICY_REGEXP, "^[0-9]*\\.txt$");
             put(FsSourceTaskConfig.POLICY_PREFIX_FS + "dfs.data.dir", "test");
-            put(FsSourceTaskConfig.POLICY_PREFIX_FS + "fs.default.name", "test");
+            put(FsSourceTaskConfig.POLICY_PREFIX_FS + "fs.default.name", "hdfs://test");
         }};
         taskConfig = new FsSourceTaskConfig(cfg);
     }
@@ -47,7 +46,16 @@ public class HdfsFileWatcherPolicyTest extends HdfsPolicyTestBase {
     @Test
     @Override
     public void invalidDirectory() throws IOException {
-        super.invalidDirectory();
+        for (Path dir : directories) {
+            fs.delete(dir, true);
+        }
+        try {
+            policy.execute();
+        } finally {
+            for (Path dir : directories) {
+                fs.mkdirs(dir);
+            }
+        }
     }
 
     //This policy never ends at least all watchers die
@@ -61,13 +69,13 @@ public class HdfsFileWatcherPolicyTest extends HdfsPolicyTestBase {
     }
 
     //This policy never ends. We have to interrupt it
-    @Test(expected = IllegalWorkerStateException.class)
+    @Test
     @Override
     public void execPolicyAlreadyEnded() throws IOException {
         policy.execute();
         assertFalse(policy.hasEnded());
         policy.interrupt();
         assertTrue(policy.hasEnded());
-        policy.execute();
+        assertThrows(IllegalWorkerStateException.class, () -> policy.execute());
     }
 }

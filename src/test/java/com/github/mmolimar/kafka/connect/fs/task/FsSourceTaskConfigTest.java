@@ -3,10 +3,10 @@ package com.github.mmolimar.kafka.connect.fs.task;
 import com.github.mmolimar.kafka.connect.fs.FsSourceConnectorConfig;
 import com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig;
 import org.apache.kafka.common.config.ConfigDef;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class FsSourceTaskConfigTest {
 
@@ -14,9 +14,9 @@ public class FsSourceTaskConfigTest {
     public void checkDocumentation() {
         ConfigDef config = FsSourceTaskConfig.conf();
         config.names().forEach(key -> {
-            assertFalse("Property " + key + " should be documented",
-                    config.configKeys().get(key).documentation == null ||
-                            "".equals(config.configKeys().get(key).documentation.trim()));
+            assertFalse(config.configKeys().get(key).documentation == null ||
+                            "".equals(config.configKeys().get(key).documentation.trim()),
+                    () -> "Property " + key + " should be documented");
         });
     }
 

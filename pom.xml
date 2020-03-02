@@ -17,14 +17,17 @@
         <avro.version>1.9.2</avro.version>
         <parquet.version>1.11.0</parquet.version>
         <fasterxml-jackson.version>2.10.2</fasterxml-jackson.version>
-        <junit.version>4.13</junit.version>
+        <junit-jupiter.version>5.6.0</junit-jupiter.version>
         <easymock.version>4.2</easymock.version>
         <powermock.version>2.0.5</powermock.version>
+        <maven-compiler.source>1.8</maven-compiler.source>
+        <maven-compiler.target>${maven-compiler.source}</maven-compiler.target>
         <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-assembly-plugin.version>3.2.0</maven-assembly-plugin.version>
-        <jacoco-maven-plugin.version>0.8.5</jacoco-maven-plugin.version>
-        <coveralls-maven-plugin.version>4.3.0</coveralls-maven-plugin.version>
+        <maven-jacoco-plugin.version>0.8.5</maven-jacoco-plugin.version>
+        <maven-coveralls-plugin.version>4.3.0</maven-coveralls-plugin.version>
+        <maven-surfire-plugin.version>3.0.0-M4</maven-surfire-plugin.version>
     </properties>
 
     <dependencies>
@@ -74,21 +77,15 @@
 
         <!-- test dependencies -->
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>${junit-jupiter.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.easymock</groupId>
             <artifactId>easymock</artifactId>
             <version>${easymock.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-module-junit4</artifactId>
-            <version>${powermock.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -126,9 +123,14 @@
                 <version>${maven-compiler-plugin.version}</version>
                 <inherited>true</inherited>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>${maven-compiler.source}</source>
+                    <target>${maven-compiler.target}</target>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven-surfire-plugin.version}</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -153,7 +155,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>${jacoco-maven-plugin.version}</version>
+                <version>${maven-jacoco-plugin.version}</version>
                 <executions>
                     <execution>
                         <id>prepare-agent</id>
@@ -166,7 +168,7 @@
             <plugin>
                 <groupId>org.eluder.coveralls</groupId>
                 <artifactId>coveralls-maven-plugin</artifactId>
-                <version>${coveralls-maven-plugin.version}</version>
+                <version>${maven-coveralls-plugin.version}</version>
             </plugin>
         </plugins>
         <resources>

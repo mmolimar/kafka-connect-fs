@@ -3,27 +3,23 @@ package com.github.mmolimar.kafka.connect.fs.policy;
 import com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig;
 import com.github.mmolimar.kafka.connect.fs.file.FileMetadata;
 import com.github.mmolimar.kafka.connect.fs.util.ReflectionUtils;
-import org.apache.commons.collections.map.HashedMap;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.connect.errors.IllegalWorkerStateException;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public abstract class PolicyTestBase {
 
@@ -33,19 +29,19 @@ public abstract class PolicyTestBase {
     protected static FsSourceTaskConfig taskConfig;
     protected static URI fsUri;
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         policy.close();
         fs.close();
     }
 
-    @Before
+    @BeforeEach
     public void initPolicy() throws Throwable {
-        policy = ReflectionUtils.makePolicy((Class<? extends Policy>) taskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS),
-                taskConfig);
+        policy = ReflectionUtils.makePolicy(
+                (Class<? extends Policy>) taskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS), taskConfig);
     }
 
-    @After
+    @AfterEach
     public void cleanDirs() throws IOException {
         for (Path dir : directories) {
             fs.delete(dir, true);
@@ -54,15 +50,17 @@ public abstract class PolicyTestBase {
         policy.close();
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void invalidArgs() throws Exception {
-        taskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS).getConstructor(taskConfig.getClass()).newInstance(null);
+    @Test
+    public void invalidArgs() {
+        assertThrows(IllegalArgumentException.class, () -> taskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS)
+                .getConstructor(taskConfig.getClass()).newInstance(null));
     }
 
-    @Test(expected = ConfigException.class)
-    public void invalidConfig() throws Throwable {
-        ReflectionUtils.makePolicy((Class<? extends Policy>) taskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS),
-                new FsSourceTaskConfig(new HashedMap()));
+    @Test
+    public void invalidConfig() {
+        assertThrows(ConfigException.class, () -> ReflectionUtils.makePolicy(
+                (Class<? extends Policy>) taskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS),
+                new FsSourceTaskConfig(new HashMap<>())));
     }
 
     @Test
@@ -72,13 +70,13 @@ public abstract class PolicyTestBase {
         assertTrue(policy.hasEnded());
     }
 
-    @Test(expected = FileNotFoundException.class)
+    @Test
     public void invalidDirectory() throws IOException {
         for (Path dir : directories) {
             fs.delete(dir, true);
         }
         try {
-            policy.execute();
+            assertThrows(FileNotFoundException.class, () -> policy.execute());
         } finally {
             for (Path dir : directories) {
                 fs.mkdirs(dir);
@@ -86,19 +84,19 @@ public abstract class PolicyTestBase {
         }
     }
 
-    @Test(expected = NoSuchElementException.class)
+    @Test
     public void listEmptyDirectories() throws IOException {
         Iterator<FileMetadata> it = policy.execute();
         assertFalse(it.hasNext());
-        it.next();
+        assertThrows(NoSuchElementException.class, it::next);
     }
 
     @Test
     public void oneFilePerFs() throws IOException, InterruptedException {
         for (Path dir : directories) {
-            fs.createNewFile(new Path(dir, String.valueOf(System.nanoTime() + ".txt")));
+            fs.createNewFile(new Path(dir, System.nanoTime() + ".txt"));
             //this file does not match the regexp
-            fs.createNewFile(new Path(dir, String.valueOf(System.nanoTime()) + ".invalid"));
+            fs.createNewFile(new Path(dir, System.nanoTime() + ".invalid"));
         }
         //we wait till FS has registered the files
         Thread.sleep(500);
@@ -116,9 +114,9 @@ public abstract class PolicyTestBase {
         for (Path dir : directories) {
             Path tmpDir = new Path(dir, String.valueOf(System.nanoTime()));
             fs.mkdirs(tmpDir);
-            fs.createNewFile(new Path(tmpDir, String.valueOf(System.nanoTime() + ".txt")));
+            fs.createNewFile(new Path(tmpDir, System.nanoTime() + ".txt"));
             //this file does not match the regexp
-            fs.createNewFile(new Path(tmpDir, String.valueOf(System.nanoTime()) + ".invalid"));
+            fs.createNewFile(new Path(tmpDir, System.nanoTime() + ".invalid"));
         }
         //we wait till FS has registered the files
         Thread.sleep(500);
@@ -137,11 +135,11 @@ public abstract class PolicyTestBase {
         assertTrue(policy.hasEnded());
     }
 
-    @Test(expected = IllegalWorkerStateException.class)
+    @Test
     public void execPolicyAlreadyEnded() throws IOException {
         policy.execute();
         assertTrue(policy.hasEnded());
-        policy.execute();
+        assertThrows(IllegalWorkerStateException.class, () -> policy.execute());
     }
 
     @Test
@@ -151,8 +149,8 @@ public abstract class PolicyTestBase {
         Map<String, String> originals = taskConfig.originalsStrings();
         originals.put(FsSourceTaskConfig.FS_URIS, dynamic.toString());
         FsSourceTaskConfig cfg = new FsSourceTaskConfig(originals);
-        policy = ReflectionUtils.makePolicy((Class<? extends Policy>) taskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS),
-                cfg);
+        policy = ReflectionUtils.makePolicy(
+                (Class<? extends Policy>) taskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS), cfg);
         assertEquals(1, policy.getURIs().size());
 
         LocalDateTime dateTime = LocalDateTime.now();
@@ -168,18 +166,16 @@ public abstract class PolicyTestBase {
         formatter = DateTimeFormatter.ofPattern("W");
         uri.append(dateTime.format(formatter));
         assertTrue(policy.getURIs().get(0).endsWith(uri.toString()));
-
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void invalidDynamicURIs() throws Throwable {
         Path dynamic = new Path(fsUri.toString(), "${yyyy}/${MM}/${mmmmmmm}");
         fs.create(dynamic);
         Map<String, String> originals = taskConfig.originalsStrings();
         originals.put(FsSourceTaskConfig.FS_URIS, dynamic.toString());
         FsSourceTaskConfig cfg = new FsSourceTaskConfig(originals);
-        policy = ReflectionUtils.makePolicy((Class<? extends Policy>) taskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS),
-                cfg);
+        assertThrows(IllegalArgumentException.class, () -> ReflectionUtils.makePolicy(
+                (Class<? extends Policy>) taskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS), cfg));
     }
-
 }

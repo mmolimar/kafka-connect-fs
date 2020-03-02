@@ -13,10 +13,10 @@ import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTaskContext;
 import org.apache.kafka.connect.storage.OffsetStorageReader;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.powermock.api.easymock.PowerMock;
 import org.powermock.api.support.membermodification.MemberModifier;
 
@@ -29,8 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public abstract class FsSourceTaskTestBase {
 
@@ -45,17 +45,17 @@ public abstract class FsSourceTaskTestBase {
     protected SourceTaskContext taskContext;
     protected OffsetStorageReader offsetStorageReader;
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         fs.close();
     }
 
-    @Before
+    @BeforeEach
     public void initTask() {
         task = new FsSourceTask();
         taskConfig = new HashMap<String, String>() {{
-            String uris[] = directories.stream().map(dir -> dir.toString())
-                    .toArray(size -> new String[size]);
+            String[] uris = directories.stream().map(Path::toString)
+                    .toArray(String[]::new);
             put(FsSourceTaskConfig.FS_URIS, String.join(",", uris));
             put(FsSourceTaskConfig.TOPIC, "topic_test");
             put(FsSourceTaskConfig.POLICY_CLASS, SimplePolicy.class.getName());
@@ -92,7 +92,7 @@ public abstract class FsSourceTaskTestBase {
 
     }
 
-    @After
+    @AfterEach
     public void cleanDirsAndStop() throws IOException {
         for (Path dir : directories) {
             fs.delete(dir, true);
@@ -102,7 +102,7 @@ public abstract class FsSourceTaskTestBase {
     }
 
     @Test
-    public void pollNoData() throws InterruptedException {
+    public void pollNoData() {
         task.start(taskConfig);
         assertEquals(0, task.poll().size());
         //policy has ended
@@ -110,9 +110,9 @@ public abstract class FsSourceTaskTestBase {
     }
 
     @Test
-    public void emptyFilesToProcess() throws IOException, InterruptedException {
+    public void emptyFilesToProcess() throws IOException {
         for (Path dir : directories) {
-            fs.createNewFile(new Path(dir, String.valueOf(System.nanoTime() + ".txt")));
+            fs.createNewFile(new Path(dir, System.nanoTime() + ".txt"));
             //this file does not match the regexp
             fs.createNewFile(new Path(dir, String.valueOf(System.nanoTime())));
         }
@@ -123,9 +123,9 @@ public abstract class FsSourceTaskTestBase {
     }
 
     @Test
-    public void oneFilePerFs() throws IOException, InterruptedException {
+    public void oneFilePerFs() throws IOException {
         for (Path dir : directories) {
-            Path dataFile = new Path(dir, String.valueOf(System.nanoTime() + ".txt"));
+            Path dataFile = new Path(dir, System.nanoTime() + ".txt");
             createDataFile(dataFile);
             //this file does not match the regexp
             fs.createNewFile(new Path(dir, String.valueOf(System.nanoTime())));
@@ -140,7 +140,7 @@ public abstract class FsSourceTaskTestBase {
     }
 
     @Test
-    public void nonExistentUri() throws InterruptedException {
+    public void nonExistentUri() {
         Map<String, String> props = new HashMap<>(taskConfig);
         props.put(FsSourceTaskConfig.FS_URIS, new Path(fs.getWorkingDirectory(), UUID.randomUUID().toString()).toString());
         task.start(props);
@@ -148,7 +148,7 @@ public abstract class FsSourceTaskTestBase {
     }
 
     @Test
-    public void exceptionExecutingPolicy() throws InterruptedException, IOException, IllegalAccessException {
+    public void exceptionExecutingPolicy() throws IOException, IllegalAccessException {
         Map<String, String> props = new HashMap<>(taskConfig);
         task.start(props);
 
@@ -164,7 +164,7 @@ public abstract class FsSourceTaskTestBase {
     }
 
     @Test
-    public void exceptionReadingFile() throws InterruptedException, IOException {
+    public void exceptionReadingFile() throws IOException {
         Map<String, String> props = new HashMap<>(taskConfig);
         File tmp = File.createTempFile("test-", ".txt");
         try (PrintWriter writer = new PrintWriter(tmp)) {

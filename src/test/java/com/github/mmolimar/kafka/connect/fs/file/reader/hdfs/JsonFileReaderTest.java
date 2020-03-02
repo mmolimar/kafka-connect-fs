@@ -9,9 +9,8 @@ import com.github.mmolimar.kafka.connect.fs.file.reader.FileReader;
 import com.github.mmolimar.kafka.connect.fs.file.reader.JsonFileReader;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -23,7 +22,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class JsonFileReaderTest extends HdfsFileReaderTestBase {
 
@@ -37,7 +36,7 @@ public class JsonFileReaderTest extends HdfsFileReaderTestBase {
     private static final String FIELD_NULL = "nullField";
     private static final String FILE_EXTENSION = "json";
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() throws IOException {
         readerClass = AgnosticFileReader.class;
         dataFile = createDataFile();
@@ -87,10 +86,12 @@ public class JsonFileReaderTest extends HdfsFileReaderTestBase {
         return path;
     }
 
-    @Ignore(value = "This test does not apply for json files")
-    @Test(expected = IOException.class)
+    @Test
     public void emptyFile() throws Throwable {
-        super.emptyFile();
+        File tmp = File.createTempFile("test-", "." + getFileExtension());
+        Path path = new Path(new Path(fsUri), tmp.getName());
+        fs.moveFromLocalFile(new Path(tmp.getAbsolutePath()), path);
+        getReader(fs, path, readerConfig);
     }
 
     @Test
@@ -111,12 +112,12 @@ public class JsonFileReaderTest extends HdfsFileReaderTestBase {
         readAllData();
     }
 
-    @Test(expected = UnsupportedCharsetException.class)
-    public void invalidFileEncoding() throws Throwable {
+    @Test
+    public void invalidFileEncoding() {
         Map<String, Object> cfg = new HashMap<String, Object>() {{
             put(JsonFileReader.FILE_READER_JSON_ENCODING, "invalid_charset");
         }};
-        getReader(fs, dataFile, cfg);
+        assertThrows(UnsupportedCharsetException.class, () -> getReader(fs, dataFile, cfg));
     }
 
     @Test
@@ -135,7 +136,7 @@ public class JsonFileReaderTest extends HdfsFileReaderTestBase {
             recordCount++;
         }
         reader.close();
-        assertEquals("The number of records in the file does not match", 1, recordCount);
+        assertEquals(1, recordCount, () -> "The number of records in the file does not match");
     }
 
     @Override
@@ -145,22 +146,25 @@ public class JsonFileReaderTest extends HdfsFileReaderTestBase {
 
     @Override
     protected void checkData(Struct record, long index) {
-        assertEquals((int) (Integer) record.get(FIELD_INTEGER), index);
-        assertEquals((long) (Long) record.get(FIELD_LONG), Long.MAX_VALUE);
-        assertTrue(record.get(FIELD_STRING).toString().startsWith(index + "_"));
-        assertTrue(Boolean.parseBoolean(record.get(FIELD_BOOLEAN).toString()));
-        assertEquals((Double) record.get(FIELD_DECIMAL), Double.parseDouble(index + "." + index), 0);
-        assertNull(record.get(FIELD_NULL));
-        assertNotNull(record.schema().field(FIELD_NULL));
-        assertEquals(record.get(FIELD_ARRAY), Arrays.asList("elm[" + index + "]", "elm[" + index + "]"));
         Struct subrecord = record.getStruct(FIELD_STRUCT);
-        assertEquals((int) (Integer) subrecord.get(FIELD_INTEGER), index);
-        assertEquals((long) (Long) subrecord.get(FIELD_LONG), Long.MAX_VALUE);
-        assertTrue(subrecord.get(FIELD_STRING).toString().startsWith(index + "_"));
-        assertTrue(Boolean.parseBoolean(subrecord.get(FIELD_BOOLEAN).toString()));
-        assertEquals((Double) subrecord.get(FIELD_DECIMAL), Double.parseDouble(index + "." + index), 0);
-        assertNull(subrecord.get(FIELD_NULL));
-        assertNotNull(subrecord.schema().field(FIELD_NULL));
+        assertAll(
+                () -> assertEquals((int) (Integer) record.get(FIELD_INTEGER), index),
+                () -> assertEquals((long) (Long) record.get(FIELD_LONG), Long.MAX_VALUE),
+                () -> assertTrue(record.get(FIELD_STRING).toString().startsWith(index + "_")),
+                () -> assertTrue(Boolean.parseBoolean(record.get(FIELD_BOOLEAN).toString())),
+                () -> assertEquals((Double) record.get(FIELD_DECIMAL), Double.parseDouble(index + "." + index), 0),
+                () -> assertNull(record.get(FIELD_NULL)),
+                () -> assertNotNull(record.schema().field(FIELD_NULL)),
+                () -> assertEquals(record.get(FIELD_ARRAY), Arrays.asList("elm[" + index + "]", "elm[" + index + "]")),
+                () -> assertEquals((int) (Integer) subrecord.get(FIELD_INTEGER), index),
+                () -> assertEquals((long) (Long) subrecord.get(FIELD_LONG), Long.MAX_VALUE),
+                () -> assertTrue(subrecord.get(FIELD_STRING).toString().startsWith(index + "_")),
+                () -> assertTrue(Boolean.parseBoolean(subrecord.get(FIELD_BOOLEAN).toString())),
+                () -> assertEquals((Double) subrecord.get(FIELD_DECIMAL), Double.parseDouble(index + "." + index), 0),
+                () -> assertNull(subrecord.get(FIELD_NULL)),
+                () -> assertNotNull(subrecord.schema().field(FIELD_NULL))
+        );
+
     }
 
     @Override

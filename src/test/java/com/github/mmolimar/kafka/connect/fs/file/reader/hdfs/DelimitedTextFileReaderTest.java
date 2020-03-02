@@ -7,10 +7,10 @@ import com.github.mmolimar.kafka.connect.fs.file.reader.FileReader;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class DelimitedTextFileReaderTest extends HdfsFileReaderTestBase {
 
@@ -30,7 +30,7 @@ public class DelimitedTextFileReaderTest extends HdfsFileReaderTestBase {
     private static final String FIELD_COLUMN4 = "column_4";
     private static final String FILE_EXTENSION = "csv";
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() throws IOException {
         readerClass = AgnosticFileReader.class;
         dataFile = createDataFile(true);
@@ -61,24 +61,33 @@ public class DelimitedTextFileReaderTest extends HdfsFileReaderTestBase {
         return path;
     }
 
-    @Ignore(value = "This test does not apply for txt files")
-    @Test(expected = IOException.class)
+    @Test
     public void emptyFile() throws Throwable {
-        super.emptyFile();
+        File tmp = File.createTempFile("test-", "." + getFileExtension());
+        Path path = new Path(new Path(fsUri), tmp.getName());
+        fs.moveFromLocalFile(new Path(tmp.getAbsolutePath()), path);
+        getReader(fs, path, readerConfig);
     }
 
-    @Ignore(value = "This test does not apply for txt files")
-    @Test(expected = IOException.class)
+    @Test
     public void invalidFileFormat() throws Throwable {
-        super.invalidFileFormat();
+        File tmp = File.createTempFile("test-", "." + getFileExtension());
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(tmp))) {
+            writer.write("test");
+        }
+        Path path = new Path(new Path(fsUri), tmp.getName());
+        fs.moveFromLocalFile(new Path(tmp.getAbsolutePath()), path);
+        getReader(fs, path, readerConfig);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void invaliConfigArgs() throws Throwable {
+    @Test
+    public void invaliConfigArgs() {
         try {
             readerClass.getConstructor(FileSystem.class, Path.class, Map.class).newInstance(fs, dataFile, new HashMap<>());
         } catch (Exception e) {
-            throw e.getCause();
+            assertThrows(IllegalArgumentException.class, () -> {
+                throw e.getCause();
+            });
         }
     }
 
@@ -98,8 +107,7 @@ public class DelimitedTextFileReaderTest extends HdfsFileReaderTestBase {
             checkData(record, recordCount);
             recordCount++;
         }
-        assertEquals("The number of records in the file does not match", NUM_RECORDS, recordCount);
-
+        assertEquals(NUM_RECORDS, recordCount, () -> "The number of records in the file does not match");
     }
 
     @Test
@@ -130,7 +138,7 @@ public class DelimitedTextFileReaderTest extends HdfsFileReaderTestBase {
             assertEquals("custom_value", record.get(FIELD_COLUMN4));
             recordCount++;
         }
-        assertEquals("The number of records in the file does not match", 2, recordCount);
+        assertEquals(2, recordCount, () -> "The number of records in the file does not match");
     }
 
     @Test
@@ -163,7 +171,6 @@ public class DelimitedTextFileReaderTest extends HdfsFileReaderTestBase {
 
         reader.seek(getOffset(OFFSETS_BY_INDEX.get(NUM_RECORDS - 1) + 1, false));
         assertFalse(reader.hasNext());
-
     }
 
     @Test
@@ -176,14 +183,14 @@ public class DelimitedTextFileReaderTest extends HdfsFileReaderTestBase {
         getReader(fs, dataFile, cfg);
     }
 
-    @Test(expected = UnsupportedCharsetException.class)
-    public void invalidFileEncoding() throws Throwable {
+    @Test
+    public void invalidFileEncoding() {
         Map<String, Object> cfg = new HashMap<String, Object>() {{
             put(DelimitedTextFileReader.FILE_READER_DELIMITED_TOKEN, ",");
             put(DelimitedTextFileReader.FILE_READER_DELIMITED_HEADER, "true");
             put(DelimitedTextFileReader.FILE_READER_DELIMITED_ENCODING, "invalid_charset");
         }};
-        getReader(fs, dataFile, cfg);
+        assertThrows(UnsupportedCharsetException.class, () -> getReader(fs, dataFile, cfg));
     }
 
     @Override
@@ -197,10 +204,12 @@ public class DelimitedTextFileReaderTest extends HdfsFileReaderTestBase {
 
     @Override
     protected void checkData(Struct record, long index) {
-        assertTrue(record.get(FIELD_COLUMN1).toString().startsWith(index + "_"));
-        assertTrue(record.get(FIELD_COLUMN2).toString().startsWith(index + "_"));
-        assertTrue(record.get(FIELD_COLUMN3).toString().startsWith(index + "_"));
-        assertTrue(record.get(FIELD_COLUMN4).toString().startsWith(index + "_"));
+        assertAll(
+                () -> assertTrue(record.get(FIELD_COLUMN1).toString().startsWith(index + "_")),
+                () -> assertTrue(record.get(FIELD_COLUMN2).toString().startsWith(index + "_")),
+                () -> assertTrue(record.get(FIELD_COLUMN3).toString().startsWith(index + "_")),
+                () -> assertTrue(record.get(FIELD_COLUMN4).toString().startsWith(index + "_"))
+        );
     }
 
     @Override

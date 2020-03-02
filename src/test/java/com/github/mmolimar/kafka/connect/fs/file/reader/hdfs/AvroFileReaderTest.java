@@ -13,8 +13,8 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumWriter;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,8 +23,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class AvroFileReaderTest extends HdfsFileReaderTestBase {
 
@@ -35,7 +34,7 @@ public class AvroFileReaderTest extends HdfsFileReaderTestBase {
 
     private static Schema schema;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() throws IOException {
         schema = new Schema.Parser().parse(AvroFileReaderTest.class.getResourceAsStream("/file/reader/schemas/people.avsc"));
         readerClass = AgnosticFileReader.class;
@@ -78,21 +77,28 @@ public class AvroFileReaderTest extends HdfsFileReaderTestBase {
         readAllData();
     }
 
-    @Test(expected = AvroTypeException.class)
+    @Test
     public void readerWithInvalidSchema() throws Throwable {
         Map<String, Object> cfg = new HashMap<String, Object>() {{
             put(AvroFileReader.FILE_READER_AVRO_SCHEMA, Schema.create(Schema.Type.STRING).toString());
         }};
         reader = getReader(fs, dataFile, cfg);
-        readAllData();
+        assertThrows(IllegalStateException.class, this::readAllData);
+        assertThrows(AvroTypeException.class, () -> {
+            try {
+                readAllData();
+            } catch (Exception e) {
+                throw e.getCause();
+            }
+        });
     }
 
-    @Test(expected = SchemaParseException.class)
-    public void readerWithUnparseableSchema() throws Throwable {
+    @Test
+    public void readerWithUnparseableSchema() {
         Map<String, Object> cfg = new HashMap<String, Object>() {{
             put(AvroFileReader.FILE_READER_AVRO_SCHEMA, "invalid schema");
         }};
-        getReader(fs, dataFile, cfg);
+        assertThrows(SchemaParseException.class, () -> getReader(fs, dataFile, cfg));
     }
 
     @Override
@@ -102,9 +108,11 @@ public class AvroFileReaderTest extends HdfsFileReaderTestBase {
 
     @Override
     protected void checkData(Struct record, long index) {
-        assertEquals((int) (Integer) record.get(FIELD_INDEX), index);
-        assertTrue(record.get(FIELD_NAME).toString().startsWith(index + "_"));
-        assertTrue(record.get(FIELD_SURNAME).toString().startsWith(index + "_"));
+        assertAll(
+                () -> assertEquals((int) (Integer) record.get(FIELD_INDEX), index),
+                () -> assertTrue(record.get(FIELD_NAME).toString().startsWith(index + "_")),
+                () -> assertTrue(record.get(FIELD_SURNAME).toString().startsWith(index + "_"))
+        );
     }
 
     @Override

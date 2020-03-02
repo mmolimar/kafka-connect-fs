@@ -5,10 +5,10 @@ import com.github.mmolimar.kafka.connect.fs.util.ReflectionUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.*;
 import java.net.URI;
@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public abstract class FileReaderTestBase {
 
@@ -31,18 +31,18 @@ public abstract class FileReaderTestBase {
     protected static Map<String, Object> readerConfig;
     protected static FileReader reader;
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws IOException {
         fs.close();
     }
 
-    @Before
+    @BeforeEach
     public void openReader() throws Throwable {
         reader = getReader(fs, dataFile, readerConfig);
         assertEquals(reader.getFilePath(), dataFile);
     }
 
-    @After
+    @AfterEach
     public void closeReader() {
         try {
             reader.close();
@@ -51,30 +51,32 @@ public abstract class FileReaderTestBase {
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void invalidArgs() throws Throwable {
+    @Test
+    public void invalidArgs() {
         try {
             readerClass.getConstructor(FileSystem.class, Path.class, Map.class).newInstance(null, null, null);
         } catch (Exception e) {
-            throw e.getCause();
+            assertThrows(IllegalArgumentException.class, () -> {
+                throw e.getCause();
+            });
         }
     }
 
-    @Test(expected = FileNotFoundException.class)
-    public void fileDoesNotExist() throws Throwable {
+    @Test
+    public void fileDoesNotExist() {
         Path path = new Path(new Path(fsUri), UUID.randomUUID().toString());
-        getReader(fs, path, readerConfig);
+        assertThrows(FileNotFoundException.class, () -> getReader(fs, path, readerConfig));
     }
 
-    @Test(expected = IOException.class)
+    @Test
     public void emptyFile() throws Throwable {
         File tmp = File.createTempFile("test-", "." + getFileExtension());
         Path path = new Path(new Path(fsUri), tmp.getName());
         fs.moveFromLocalFile(new Path(tmp.getAbsolutePath()), path);
-        getReader(fs, path, readerConfig);
+        assertThrows(IOException.class, () -> getReader(fs, path, readerConfig));
     }
 
-    @Test(expected = IOException.class)
+    @Test
     public void invalidFileFormat() throws Throwable {
         File tmp = File.createTempFile("test-", "." + getFileExtension());
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(tmp))) {
@@ -82,7 +84,7 @@ public abstract class FileReaderTestBase {
         }
         Path path = new Path(new Path(fsUri), tmp.getName());
         fs.moveFromLocalFile(new Path(tmp.getAbsolutePath()), path);
-        getReader(fs, path, readerConfig);
+        assertThrows(IOException.class, () -> getReader(fs, path, readerConfig));
     }
 
     @Test
@@ -95,7 +97,7 @@ public abstract class FileReaderTestBase {
             checkData(record, recordCount);
             recordCount++;
         }
-        assertEquals("The number of records in the file does not match", NUM_RECORDS, recordCount);
+        assertEquals(NUM_RECORDS, recordCount, () -> "The number of records in the file does not match");
     }
 
     @Test
@@ -120,26 +122,25 @@ public abstract class FileReaderTestBase {
 
         reader.seek(getOffset(OFFSETS_BY_INDEX.get(NUM_RECORDS - 1) + 1));
         assertFalse(reader.hasNext());
-
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void negativeSeek() {
-        reader.seek(getOffset(-1));
+        assertThrows(RuntimeException.class, () -> reader.seek(getOffset(-1)));
     }
 
-    @Test(expected = NoSuchElementException.class)
+    @Test
     public void exceededSeek() {
         reader.seek(getOffset(OFFSETS_BY_INDEX.get(NUM_RECORDS - 1) + 1));
         assertFalse(reader.hasNext());
-        reader.next();
+        assertThrows(NoSuchElementException.class, () -> reader.next());
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void readFileAlreadyClosed() throws IOException {
         reader.close();
-        assertFalse(reader.hasNext());
-        reader.seek(getOffset(0));
+        assertThrows(IllegalStateException.class, () -> reader.hasNext());
+        assertThrows(IllegalStateException.class, () -> reader.next());
     }
 
     protected final FileReader getReader(FileSystem fs, Path path, Map<String, Object> config) throws Throwable {

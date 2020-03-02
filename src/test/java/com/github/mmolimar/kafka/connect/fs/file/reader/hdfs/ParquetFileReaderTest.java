@@ -18,18 +18,19 @@ import org.apache.parquet.avro.AvroParquetWriter;
 import org.apache.parquet.hadoop.ParquetFileWriter;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.io.InvalidRecordException;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ParquetFileReaderTest extends HdfsFileReaderTestBase {
 
@@ -41,7 +42,7 @@ public class ParquetFileReaderTest extends HdfsFileReaderTestBase {
     private static Schema readerSchema;
     private static Schema projectionSchema;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() throws IOException {
         readerClass = AgnosticFileReader.class;
         dataFile = createDataFile();
@@ -57,7 +58,6 @@ public class ParquetFileReaderTest extends HdfsFileReaderTestBase {
 
         try (ParquetWriter writer = AvroParquetWriter.<GenericRecord>builder(new Path(parquetFile.toURI()))
                 .withConf(fs.getConf()).withWriteMode(ParquetFileWriter.Mode.OVERWRITE).withSchema(readerSchema).build()) {
-
             IntStream.range(0, NUM_RECORDS).forEach(index -> {
                 GenericRecord datum = new GenericData.Record(readerSchema);
                 datum.put(FIELD_INDEX, index);
@@ -76,16 +76,23 @@ public class ParquetFileReaderTest extends HdfsFileReaderTestBase {
         return path;
     }
 
-    @Ignore(value = "This test does not apply for parquet files")
-    @Test(expected = IOException.class)
+    @Test
     public void emptyFile() throws Throwable {
-        super.emptyFile();
+        File tmp = File.createTempFile("test-", "." + getFileExtension());
+        Path path = new Path(new Path(fsUri), tmp.getName());
+        fs.moveFromLocalFile(new Path(tmp.getAbsolutePath()), path);
+        getReader(fs, path, readerConfig);
     }
 
-    @Ignore(value = "This test does not apply for parquet files")
-    @Test(expected = IOException.class)
+    @Test
     public void invalidFileFormat() throws Throwable {
-        super.invalidFileFormat();
+        File tmp = File.createTempFile("test-", "." + getFileExtension());
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(tmp))) {
+            writer.write("test");
+        }
+        Path path = new Path(new Path(fsUri), tmp.getName());
+        fs.moveFromLocalFile(new Path(tmp.getAbsolutePath()), path);
+        getReader(fs, path, readerConfig);
     }
 
     @Test
@@ -97,7 +104,7 @@ public class ParquetFileReaderTest extends HdfsFileReaderTestBase {
         readAllData();
     }
 
-    @Test(expected = DataException.class)
+    @Test
     public void readerWithProjection() throws Throwable {
         Map<String, Object> cfg = new HashMap<String, Object>() {{
             put(ParquetFileReader.FILE_READER_PARQUET_PROJECTION, projectionSchema.toString());
@@ -111,10 +118,10 @@ public class ParquetFileReaderTest extends HdfsFileReaderTestBase {
         }
 
         reader = getReader(FileSystem.newInstance(fsUri, new Configuration()), dataFile, cfg);
-        readAllData();
+        assertThrows(DataException.class, this::readAllData);
     }
 
-    @Test(expected = InvalidRecordException.class)
+    @Test
     public void readerWithInvalidProjection() throws Throwable {
         Schema testSchema = SchemaBuilder.record("test_projection").namespace("test.avro")
                 .fields()
@@ -124,24 +131,25 @@ public class ParquetFileReaderTest extends HdfsFileReaderTestBase {
             put(ParquetFileReader.FILE_READER_PARQUET_PROJECTION, testSchema.toString());
         }};
         reader = getReader(FileSystem.newInstance(fsUri, new Configuration()), dataFile, cfg);
-        readAllData();
+        assertThrows(InvalidRecordException.class, this::readAllData);
     }
 
-    @Test(expected = AvroRuntimeException.class)
+    @Test
     public void readerWithInvalidSchema() throws Throwable {
         Map<String, Object> cfg = new HashMap<String, Object>() {{
             put(ParquetFileReader.FILE_READER_PARQUET_SCHEMA, Schema.create(Schema.Type.STRING).toString());
         }};
         reader = getReader(FileSystem.newInstance(fsUri, new Configuration()), dataFile, cfg);
-        readAllData();
+        assertThrows(AvroRuntimeException.class, this::readAllData);
     }
 
-    @Test(expected = SchemaParseException.class)
-    public void readerWithUnparseableSchema() throws Throwable {
+    @Test
+    public void readerWithUnparseableSchema() {
         Map<String, Object> cfg = new HashMap<String, Object>() {{
             put(ParquetFileReader.FILE_READER_PARQUET_SCHEMA, "invalid schema");
         }};
-        getReader(FileSystem.newInstance(fsUri, new Configuration()), dataFile, cfg);
+        assertThrows(SchemaParseException.class, () ->
+                getReader(FileSystem.newInstance(fsUri, new Configuration()), dataFile, cfg));
     }
 
     @Override
@@ -160,5 +168,4 @@ public class ParquetFileReaderTest extends HdfsFileReaderTestBase {
     protected String getFileExtension() {
         return FILE_EXTENSION;
     }
-
 }

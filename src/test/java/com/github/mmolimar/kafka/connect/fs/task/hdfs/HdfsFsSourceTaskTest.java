@@ -4,7 +4,7 @@ import com.github.mmolimar.kafka.connect.fs.file.reader.TextFileReader;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.source.SourceRecord;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.BeforeAll;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -14,12 +14,12 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class HdfsFsSourceTaskTest extends HdfsFsSourceTaskTestBase {
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() throws IOException {
         directories = new ArrayList<Path>() {{
             add(new Path(fsUri.toString(), UUID.randomUUID().toString()));
@@ -33,7 +33,7 @@ public class HdfsFsSourceTaskTest extends HdfsFsSourceTaskTestBase {
     @Override
     protected void checkRecords(List<SourceRecord> records) {
         records.forEach(record -> {
-            assertTrue(record.topic().equals("topic_test"));
+            assertEquals("topic_test", record.topic());
             assertNotNull(record.sourcePartition());
             assertNotNull(record.sourceOffset());
             assertNotNull(record.value());

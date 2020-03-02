@@ -10,8 +10,8 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.kafka.connect.data.Struct;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,8 +20,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class SequenceFileReaderTest extends HdfsFileReaderTestBase {
 
@@ -29,7 +28,7 @@ public class SequenceFileReaderTest extends HdfsFileReaderTestBase {
     private static final String FIELD_NAME_VALUE = "value";
     private static final String FILE_EXTENSION = "seq";
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() throws IOException {
         readerClass = AgnosticFileReader.class;
         dataFile = createDataFile();
@@ -84,7 +83,7 @@ public class SequenceFileReaderTest extends HdfsFileReaderTestBase {
             checkData(SequenceFileReader.FIELD_NAME_KEY_DEFAULT, SequenceFileReader.FIELD_NAME_VALUE_DEFAULT, record, recordCount);
             recordCount++;
         }
-        assertEquals("The number of records in the file does not match", NUM_RECORDS, recordCount);
+        assertEquals(NUM_RECORDS, recordCount, () -> "The number of records in the file does not match");
     }
 
     @Override
@@ -98,8 +97,10 @@ public class SequenceFileReaderTest extends HdfsFileReaderTestBase {
     }
 
     private void checkData(String keyFieldName, String valueFieldName, Struct record, long index) {
-        assertEquals((int) (Integer) record.get(keyFieldName), index);
-        assertTrue(record.get(valueFieldName).toString().startsWith(index + "_"));
+        assertAll(
+                () -> assertEquals((int) (Integer) record.get(keyFieldName), index),
+                () -> assertTrue(record.get(valueFieldName).toString().startsWith(index + "_"))
+        );
     }
 
     @Override

@@ -4,8 +4,8 @@ import com.github.mmolimar.kafka.connect.fs.task.FsSourceTaskTestBase;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 
 import java.io.IOException;
 import java.net.URI;
@@ -15,21 +15,19 @@ import java.nio.file.Path;
 public abstract class HdfsFsSourceTaskTestBase extends FsSourceTaskTestBase {
 
     private static MiniDFSCluster cluster;
-    private static Configuration clusterConfig;
-    private static Path hdfsDir;
 
-    @BeforeClass
+    @BeforeAll
     public static void initFs() throws IOException {
-        clusterConfig = new Configuration();
-        hdfsDir = Files.createTempDirectory("test-");
+        Configuration clusterConfig = new Configuration();
+        Path hdfsDir = Files.createTempDirectory("test-");
         clusterConfig.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, hdfsDir.toAbsolutePath().toString());
         cluster = new MiniDFSCluster.Builder(clusterConfig).build();
         fsUri = URI.create("hdfs://localhost:" + cluster.getNameNodePort() + "/");
         fs = FileSystem.newInstance(fsUri, clusterConfig);
     }
 
-    @AfterClass
-    public static void finishFs() throws Exception {
+    @AfterAll
+    public static void finishFs() {
         cluster.shutdown(true);
     }
 }

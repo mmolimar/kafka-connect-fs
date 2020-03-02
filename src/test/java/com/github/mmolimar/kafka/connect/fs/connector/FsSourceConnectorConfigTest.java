@@ -2,10 +2,10 @@ package com.github.mmolimar.kafka.connect.fs.connector;
 
 import com.github.mmolimar.kafka.connect.fs.FsSourceConnectorConfig;
 import org.apache.kafka.common.config.ConfigDef;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class FsSourceConnectorConfigTest {
 
@@ -13,9 +13,9 @@ public class FsSourceConnectorConfigTest {
     public void checkDocumentation() {
         ConfigDef config = FsSourceConnectorConfig.conf();
         config.names().forEach(key -> {
-            assertFalse("Property " + key + " should be documented",
-                    config.configKeys().get(key).documentation == null ||
-                            "".equals(config.configKeys().get(key).documentation.trim()));
+            assertFalse(config.configKeys().get(key).documentation == null ||
+                            "".equals(config.configKeys().get(key).documentation.trim()),
+                    () -> "Property " + key + " should be documented");
         });
     }
 
