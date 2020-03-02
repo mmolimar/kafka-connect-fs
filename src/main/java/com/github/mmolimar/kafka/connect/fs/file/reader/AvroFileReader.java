@@ -2,6 +2,7 @@ package com.github.mmolimar.kafka.connect.fs.file.reader;
 
 import com.github.mmolimar.kafka.connect.fs.file.Offset;
 import io.confluent.connect.avro.AvroData;
+import org.apache.avro.AvroRuntimeException;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.generic.GenericRecord;
@@ -41,7 +42,8 @@ public class AvroFileReader extends AbstractFileReader<GenericRecord> {
     }
 
     protected void configure(Map<String, Object> config) {
-        if (config.get(FILE_READER_AVRO_SCHEMA) != null) {
+        if (config.get(FILE_READER_AVRO_SCHEMA) != null &&
+                !config.get(FILE_READER_AVRO_SCHEMA).toString().trim().isEmpty()) {
             this.schema = new Schema.Parser().parse(config.get(FILE_READER_AVRO_SCHEMA).toString());
         } else {
             this.schema = null;
@@ -50,15 +52,23 @@ public class AvroFileReader extends AbstractFileReader<GenericRecord> {
 
     @Override
     public boolean hasNext() {
-        return reader.hasNext();
+        try {
+            return reader.hasNext();
+        } catch (AvroRuntimeException are) {
+            throw new IllegalStateException(are);
+        }
     }
 
     @Override
     protected GenericRecord nextRecord() {
-        GenericRecord record = reader.next();
-        this.offset.inc();
+        try {
+            GenericRecord record = reader.next();
+            this.offset.inc();
 
-        return record;
+            return record;
+        } catch (AvroRuntimeException are) {
+            throw new IllegalStateException(are);
+        }
     }
 
     @Override

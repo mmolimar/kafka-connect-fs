@@ -73,7 +73,7 @@ public class ParquetFileReader extends AbstractFileReader<GenericRecord> {
 
     @Override
     public boolean hasNext() {
-        if (closed) return false;
+        if (closed) throw new IllegalStateException("Reader already closed.");
         if (currentRecord == null) {
             try {
                 currentRecord = reader.read();
