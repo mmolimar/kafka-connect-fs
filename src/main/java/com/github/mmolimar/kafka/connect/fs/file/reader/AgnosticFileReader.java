@@ -20,17 +20,18 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
     private static final String FILE_READER_AGNOSTIC_EXTENSIONS = FILE_READER_AGNOSTIC + "extensions.";
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_PARQUET = FILE_READER_AGNOSTIC_EXTENSIONS + "parquet";
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_AVRO = FILE_READER_AGNOSTIC_EXTENSIONS + "avro";
+    public static final String FILE_READER_AGNOSTIC_EXTENSIONS_JSON = FILE_READER_AGNOSTIC_EXTENSIONS + "json";
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_SEQUENCE = FILE_READER_AGNOSTIC_EXTENSIONS + "sequence";
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_DELIMITED = FILE_READER_AGNOSTIC_EXTENSIONS + "delimited";
 
-    private final AbstractFileReader reader;
-    private List<String> parquetExtensions, avroExtensions, sequenceExtensions, delimitedExtensions;
+    private final AbstractFileReader<Object> reader;
+    private List<String> parquetExtensions, avroExtensions, jsonExtensions, sequenceExtensions, delimitedExtensions;
 
     public AgnosticFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
         super(fs, filePath, new AgnosticAdapter(), config);
 
         try {
-            reader = (AbstractFileReader) readerByExtension(fs, filePath, config);
+            reader = readerByExtension(fs, filePath, config);
         } catch (RuntimeException | IOException e) {
             throw e;
         } catch (Throwable t) {
@@ -38,17 +39,19 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
         }
     }
 
-    private FileReader readerByExtension(FileSystem fs, Path filePath, Map<String, Object> config)
+    private AbstractFileReader<Object> readerByExtension(FileSystem fs, Path filePath, Map<String, Object> config)
             throws Throwable {
         int index = filePath.getName().lastIndexOf('.');
         String extension = index == -1 || index == filePath.getName().length() - 1 ? "" :
                 filePath.getName().substring(index + 1).toLowerCase();
 
-        Class<? extends FileReader> clz;
+        Class<? extends AbstractFileReader> clz;
         if (parquetExtensions.contains(extension)) {
             clz = ParquetFileReader.class;
         } else if (avroExtensions.contains(extension)) {
             clz = AvroFileReader.class;
+        } else if (jsonExtensions.contains(extension)) {
+            clz = JsonFileReader.class;
         } else if (sequenceExtensions.contains(extension)) {
             clz = SequenceFileReader.class;
         } else if (delimitedExtensions.contains(extension)) {
@@ -57,7 +60,7 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
             clz = TextFileReader.class;
         }
 
-        return ReflectionUtils.makeReader(clz, fs, filePath, config);
+        return (AbstractFileReader<Object>) ReflectionUtils.makeReader(clz, fs, filePath, config);
     }
 
     @Override
@@ -68,6 +71,9 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
         this.avroExtensions = config.get(FILE_READER_AGNOSTIC_EXTENSIONS_AVRO) == null ?
                 Collections.singletonList("avro") :
                 Arrays.asList(config.get(FILE_READER_AGNOSTIC_EXTENSIONS_AVRO).toString().toLowerCase().split(","));
+        this.jsonExtensions = config.get(FILE_READER_AGNOSTIC_EXTENSIONS_JSON) == null ?
+                Collections.singletonList("json") :
+                Arrays.asList(config.get(FILE_READER_AGNOSTIC_EXTENSIONS_JSON).toString().toLowerCase().split(","));
         this.sequenceExtensions = config.get(FILE_READER_AGNOSTIC_EXTENSIONS_SEQUENCE) == null ?
                 Collections.singletonList("seq") :
                 Arrays.asList(config.get(FILE_READER_AGNOSTIC_EXTENSIONS_SEQUENCE).toString().toLowerCase().split(","));

@@ -16,6 +16,7 @@
         <hadoop.version>3.2.1</hadoop.version>
         <avro.version>1.9.2</avro.version>
         <parquet.version>1.11.0</parquet.version>
+        <fasterxml-jackson.version>2.10.2</fasterxml-jackson.version>
         <junit.version>4.13</junit.version>
         <easymock.version>4.2</easymock.version>
         <powermock.version>2.0.5</powermock.version>
@@ -51,20 +52,27 @@
         </dependency>
         <dependency>
             <groupId>org.apache.avro</groupId>
-            <artifactId>avro-tools</artifactId>
+            <artifactId>avro</artifactId>
             <version>${avro.version}</version>
-            <classifier>nodeps</classifier>
         </dependency>
         <dependency>
             <groupId>org.apache.avro</groupId>
-            <artifactId>avro</artifactId>
+            <artifactId>avro-tools</artifactId>
             <version>${avro.version}</version>
+            <classifier>nodeps</classifier>
         </dependency>
         <dependency>
             <groupId>org.apache.parquet</groupId>
             <artifactId>parquet-avro</artifactId>
             <version>${parquet.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${fasterxml-jackson.version}</version>
+        </dependency>
+
+        <!-- test dependencies -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
