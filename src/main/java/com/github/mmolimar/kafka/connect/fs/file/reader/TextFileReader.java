@@ -1,6 +1,8 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader;
 
 import com.github.mmolimar.kafka.connect.fs.file.Offset;
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Schema;
@@ -8,10 +10,7 @@ import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.errors.ConnectException;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.LineNumberReader;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
@@ -24,10 +23,14 @@ public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord
 
     private static final String FILE_READER_TEXT = FILE_READER_PREFIX + "text.";
     private static final String FILE_READER_FIELD_NAME_PREFIX = FILE_READER_TEXT + "field_name.";
+    private static final String FILE_READER_TEXT_COMPRESSION = FILE_READER_TEXT + "compression.";
 
     public static final String FIELD_NAME_VALUE_DEFAULT = "value";
+
     public static final String FILE_READER_TEXT_FIELD_NAME_VALUE = FILE_READER_FIELD_NAME_PREFIX + "value";
     public static final String FILE_READER_TEXT_RECORD_PER_LINE = FILE_READER_TEXT + "record_per_line";
+    public static final String FILE_READER_TEXT_COMPRESSION_TYPE = FILE_READER_TEXT_COMPRESSION + "type";
+    public static final String FILE_READER_TEXT_COMPRESSION_CONCATENATED = FILE_READER_TEXT_COMPRESSION + "concatenated";
     public static final String FILE_READER_TEXT_ENCODING = FILE_READER_TEXT + "encoding";
 
     private final TextOffset offset;
@@ -36,11 +39,34 @@ public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord
     private LineNumberReader reader;
     private Schema schema;
     private Charset charset;
+    private CompressionType compression;
     private boolean recordPerLine;
+
+    public enum CompressionType {
+        BZIP2,
+        GZIP,
+        NONE;
+
+        private boolean concatenated;
+
+        CompressionType() {
+            this.concatenated = true;
+        }
+
+        public boolean isConcatenated() {
+            return concatenated;
+        }
+
+        public static CompressionType fromName(String compression, boolean concatenated) {
+            CompressionType ct = CompressionType.valueOf(compression.trim().toUpperCase());
+            ct.concatenated = concatenated;
+            return ct;
+        }
+    }
 
     public TextFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
         super(fs, filePath, new TxtToStruct(), config);
-        this.reader = new LineNumberReader(new InputStreamReader(fs.open(filePath), this.charset));
+        this.reader = new LineNumberReader(getFileReader(fs.open(filePath)));
         this.offset = new TextOffset(0);
     }
 
@@ -52,6 +78,18 @@ public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord
             valueFieldName = FIELD_NAME_VALUE_DEFAULT;
         } else {
             valueFieldName = config.get(FILE_READER_TEXT_FIELD_NAME_VALUE).toString();
+        }
+        if (config.get(FILE_READER_TEXT_COMPRESSION_TYPE) == null ||
+                config.get(FILE_READER_TEXT_COMPRESSION_TYPE).toString().equals("")) {
+            this.compression = CompressionType.NONE;
+        } else {
+            boolean concatenated = true;
+            if (config.get(FILE_READER_TEXT_COMPRESSION_CONCATENATED) != null &&
+                    !config.get(FILE_READER_TEXT_COMPRESSION_CONCATENATED).toString().equals("")) {
+                concatenated = Boolean.parseBoolean(config.get(FILE_READER_TEXT_COMPRESSION_CONCATENATED)
+                        .toString().trim());
+            }
+            this.compression = CompressionType.fromName(config.get(FILE_READER_TEXT_COMPRESSION_TYPE).toString(), concatenated);
         }
         if (config.get(FILE_READER_TEXT_ENCODING) == null ||
                 config.get(FILE_READER_TEXT_ENCODING).toString().equals("")) {
@@ -68,6 +106,24 @@ public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord
         this.schema = SchemaBuilder.struct()
                 .field(valueFieldName, Schema.STRING_SCHEMA)
                 .build();
+    }
+
+    private Reader getFileReader(InputStream inputStream) throws IOException {
+        final InputStreamReader isr;
+        switch (this.compression) {
+            case BZIP2:
+                isr = new InputStreamReader(new BZip2CompressorInputStream(inputStream,
+                        this.compression.isConcatenated()), this.charset);
+                break;
+            case GZIP:
+                isr = new InputStreamReader(new GzipCompressorInputStream(inputStream,
+                        this.compression.isConcatenated()), this.charset);
+                break;
+            default:
+                isr = new InputStreamReader(inputStream, this.charset);
+                break;
+        }
+        return isr;
     }
 
     @Override
@@ -121,7 +177,8 @@ public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord
             current = null;
             if (offset.getRecordOffset() < reader.getLineNumber()) {
                 finished = false;
-                reader = new LineNumberReader(new InputStreamReader(getFs().open(getFilePath())));
+                reader.close();
+                reader = new LineNumberReader(getFileReader(getFs().open(getFilePath())));
             }
             while (reader.getLineNumber() < offset.getRecordOffset()) {
                 reader.readLine();

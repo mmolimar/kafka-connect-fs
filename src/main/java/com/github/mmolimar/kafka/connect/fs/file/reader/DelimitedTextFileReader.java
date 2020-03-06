@@ -16,6 +16,7 @@ import static com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig.FILE_READE
 public class DelimitedTextFileReader extends AbstractFileReader<DelimitedTextFileReader.DelimitedRecord> {
 
     private static final String FILE_READER_DELIMITED = FILE_READER_PREFIX + "delimited.";
+
     public static final String FILE_READER_DELIMITED_HEADER = FILE_READER_DELIMITED + "header";
     public static final String FILE_READER_DELIMITED_TOKEN = FILE_READER_DELIMITED + "token";
     public static final String FILE_READER_DELIMITED_ENCODING = FILE_READER_DELIMITED + "encoding";
