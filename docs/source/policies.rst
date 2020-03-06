@@ -17,7 +17,7 @@ You can learn more about the properties of this policy :ref:`here<config_options
 HDFS file watcher
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-It uses Hadoop notifications events and all create/append/close events will be reported
+It uses Hadoop notifications events and all create/append/rename/close events will be reported
 as new files to be ingested.
 
 Just use it when you have HDFS URIs.

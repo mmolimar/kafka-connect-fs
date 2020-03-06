@@ -91,7 +91,7 @@ Policies
 
 In order to ingest data from the FS(s), the connector needs a **policy** to define the rules to do it.
 
-Basically, the policy tries to connect to each FS included in ``fs.uris`` connector property, list files
+Basically, the policy tries to connect to each FS included in ``fs.uris`` connector property, lists files
 (and filter them using the regular expression provided in the ``policy.regexp`` property) and enables
 a file reader to read records from them.
 

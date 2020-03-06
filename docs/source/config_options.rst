@@ -176,7 +176,7 @@ Avro
 In order to configure custom properties for this reader, the name you must use is ``avro``.
 
 ``file_reader.avro.schema``
-  AVRO schema in JSON format to use when reading a file.
+  Avro schema in JSON format to use when reading a file.
   If not specified, the reader will use the schema defined in the file.
 
   * Type: string
@@ -190,13 +190,13 @@ Parquet
 In order to configure custom properties for this reader, the name you must use is ``parquet``.
 
 ``file_reader.parquet.schema``
-  AVRO schema in JSON format to use when reading a file.
+  Avro schema in JSON format to use when reading a file.
 
   * Type: string
   * Importance: medium
 
 ``file_reader.parquet.projection``
-  AVRO schema in JSON format to use for projecting fields from records in a file.
+  Avro schema in JSON format to use for projecting fields from records in a file.
 
   * Type: string
   * Importance: medium
@@ -208,33 +208,99 @@ SequenceFile
 
 In order to configure custom properties for this reader, the name you must use is ``sequence``.
 
-``file_reader.sequence.buffer_size``
-  Custom buffer size to read data from the Sequence file.
-
-  * Type: int
-  * Default: 4096
-  * Importance: medium
-
 ``file_reader.sequence.field_name.key``
   Custom field name for the output key to include in the Kafka message.
 
   * Type: string
   * Default: key
-  * Importance: low
+  * Importance: medium
 
 ``file_reader.sequence.field_name.value``
   Custom field name for the output value to include in the Kafka message.
 
   * Type: string
   * Default: value
+  * Importance: medium
+
+``file_reader.sequence.buffer_size``
+  Custom buffer size to read data from the Sequence file.
+
+  * Type: int
+  * Default: 4096
   * Importance: low
+
+.. _config_options-filereaders-json:
+
+JSON
+--------------------------------------------
+
+To configure custom properties for this reader, the name you must use is ``json``.
+
+``file_reader.json.record_per_line``
+  If enabled, the reader will read each line as a record. Otherwise, the reader will read the full
+  content of the file as a record.
+
+  * Type: boolean
+  * Default: true
+  * Importance: medium
+
+``file_reader.json.deserialization.<deserialization_feature>``
+  Deserialization feature to use when reading a JSON file. You can add as much as you like
+  based on the ones defined `here. <https://fasterxml.github.io/jackson-databind/javadoc/2.10/com/fasterxml/jackson/databind/DeserializationFeature.html#enum.constant.summary>`__
+
+  * Type: boolean
+  * Importance: medium
+
+``file_reader.json.compression.type``
+  Compression type to use when reading a file.
+
+  * Type: enum (available values ``bzip2``, ``gzip`` and ``none``)
+  * Default: none
+  * Importance: medium
+
+``file_reader.json.compression.concatenated``
+  Flag to specify if the decompression of the reader will finish at the end of the file or after
+  the first compressed stream.
+
+  * Type: boolean
+  * Default: true
+  * Importance: low
+
+``file_reader.json.encoding``
+  Encoding to use for reading a file. If not specified, the reader will use the default encoding.
+
+  * Type: string
+  * Importance: medium
 
 .. _config_options-filereaders-text:
 
 Text
 --------------------------------------------
 
-In order to configure custom properties for this reader, the name you must use is ``text``.
+To configure custom properties for this reader, the name you must use is ``text``.
+
+``file_reader.json.record_per_line``
+  If enabled, the reader will read each line as a record. Otherwise, the reader will read the full
+  content of the file as a record.
+
+  * Type: boolean
+  * Default: true
+  * Importance: medium
+
+``file_reader.json.compression.type``
+  Compression type to use when reading a file.
+
+  * Type: enum (available values ``bzip2``, ``gzip`` and ``none``)
+  * Default: none
+  * Importance: medium
+
+``file_reader.json.compression.concatenated``
+  Flag to specify if the decompression of the reader will finish at the end of the file or after
+  the first compressed stream.
+
+  * Type: boolean
+  * Default: true
+  * Importance: low
 
 ``file_reader.text.field_name.value``
   Custom field name for the output value to include in the Kafka message.
@@ -254,7 +320,7 @@ In order to configure custom properties for this reader, the name you must use i
 Delimited text
 --------------------------------------------
 
-In order to configure custom properties for this reader, the name you must use is ``delimited``.
+To configure custom properties for this reader, the name you must use is ``delimited``.
 
 ``file_reader.delimited.token``
   The token delimiter for columns.
@@ -269,10 +335,12 @@ In order to configure custom properties for this reader, the name you must use i
   * Default: false
   * Importance: medium
 
-``file_reader.delimited.encoding``
-  Encoding to use for reading a file. If not specified, the reader will use the default encoding.
+``file_reader.json.record_per_line``
+  If enabled, the reader will read each line as a record. Otherwise, the reader will read the full
+  content of the file as a record.
 
-  * Type: string
+  * Type: boolean
+  * Default: true
   * Importance: medium
 
 ``file_reader.delimited.default_value``
@@ -280,13 +348,34 @@ In order to configure custom properties for this reader, the name you must use i
   all expected columns).
 
   * Type: string
-  * Default: null
+  * Default: ``null``
+  * Importance: medium
+
+``file_reader.json.compression.type``
+  Compression type to use when reading a file.
+
+  * Type: enum (available values ``bzip2``, ``gzip`` and ``none``)
+  * Default: none
+  * Importance: medium
+
+``file_reader.json.compression.concatenated``
+  Flag to specify if the decompression of the reader will finish at the end of the file or after
+  the first compressed stream.
+
+  * Type: boolean
+  * Default: true
   * Importance: low
+
+``file_reader.delimited.encoding``
+  Encoding to use for reading a file. If not specified, the reader will use the default encoding.
+
+  * Type: string
+  * Importance: medium
 
 Agnostic
 --------------------------------------------
 
-In order to configure custom properties for this reader, the name you must use is ``agnostic``.
+To configure custom properties for this reader, the name you must use is ``agnostic``.
 
 ``file_reader.agnostic.extensions.parquet``
   A comma-separated string list with the accepted extensions for Parquet files.
@@ -309,9 +398,20 @@ In order to configure custom properties for this reader, the name you must use i
   * Default: seq
   * Importance: medium
 
+``file_reader.agnostic.extensions.json``
+  A comma-separated string list with the accepted extensions for JSON files.
+
+  * Type: string
+  * Default: json
+  * Importance: medium
+
 ``file_reader.agnostic.extensions.delimited``
   A comma-separated string list with the accepted extensions for Delimited text files.
 
   * Type: string
   * Default: tsv,csv
   * Importance: medium
+
+.. note:: The Agnostic reader uses the previous ones as inner readers. So, in case of using this
+          reader, you'll probably need to include also the specified properties for those
+          readers in the connector configuration as well.

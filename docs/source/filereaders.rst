@@ -38,12 +38,21 @@ by default but you can customize these field names.
 
 More information about properties of this file reader :ref:`here<config_options-filereaders-sequencefile>`.
 
+JSON
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Reads JSON files which might contain multiple number of fields with their specified
+data types. The schema for this sort of records is inferred reading the first record
+and marked as optional in the schema all the fields contained.
+
+More information about properties of this file reader :ref:`here<config_options-filereaders-json>`.
+
 Text
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Reads plain text files.
 
-Each line represents one record which will be in a field
+Each line represents one record (by default) which will be in a field
 named ``value`` in the message sent to Kafka by default but you can
 customize these field names.
 
@@ -74,6 +83,7 @@ Default extensions for each format:
 * Parquet: .parquet
 * Avro: .avro
 * SequenceFile: .seq
+* JSON: .json
 * Delimited text: .tsv, .csv
 * Text: any other sort of file extension.
 
