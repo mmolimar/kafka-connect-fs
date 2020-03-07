@@ -16,6 +16,7 @@ import org.apache.kafka.connect.errors.ConnectException;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig.FILE_READER_PREFIX;
 
@@ -41,13 +42,10 @@ public class AvroFileReader extends AbstractFileReader<GenericRecord> {
         this.offset = new AvroOffset(0);
     }
 
-    protected void configure(Map<String, Object> config) {
-        if (config.get(FILE_READER_AVRO_SCHEMA) != null &&
-                !config.get(FILE_READER_AVRO_SCHEMA).toString().trim().isEmpty()) {
-            this.schema = new Schema.Parser().parse(config.get(FILE_READER_AVRO_SCHEMA).toString());
-        } else {
-            this.schema = null;
-        }
+    protected void configure(Map<String, String> config) {
+        this.schema = Optional.ofNullable(config.get(FILE_READER_AVRO_SCHEMA))
+                .map(c -> new Schema.Parser().parse(c))
+                .orElse(null);
     }
 
     @Override

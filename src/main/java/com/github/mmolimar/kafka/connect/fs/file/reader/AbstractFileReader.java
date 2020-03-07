@@ -26,14 +26,14 @@ public abstract class AbstractFileReader<T> implements FileReader {
         this.filePath = filePath;
         this.adapter = adapter;
 
-        Map<String, Object> readerConf = config.entrySet().stream()
+        Map<String, String> readerConf = config.entrySet().stream()
                 .filter(entry -> entry.getKey().startsWith(FILE_READER_PREFIX))
                 .filter(entry -> entry.getValue() != null)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().toString()));
         configure(readerConf);
     }
 
-    protected abstract void configure(Map<String, Object> config);
+    protected abstract void configure(Map<String, String> config);
 
     protected FileSystem getFs() {
         return fs;

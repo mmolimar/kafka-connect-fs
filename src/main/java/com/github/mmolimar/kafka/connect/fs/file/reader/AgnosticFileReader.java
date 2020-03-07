@@ -8,7 +8,6 @@ import org.apache.kafka.connect.data.Struct;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -25,7 +24,7 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_DELIMITED = FILE_READER_AGNOSTIC_EXTENSIONS + "delimited";
 
     private final AbstractFileReader<Object> reader;
-    private List<String> parquetExtensions, avroExtensions, jsonExtensions, sequenceExtensions, delimitedExtensions;
+    private List<String> parquetExtensions, avroExtensions, sequenceExtensions, jsonExtensions, delimitedExtensions;
 
     public AgnosticFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
         super(fs, filePath, new AgnosticAdapter(), config);
@@ -50,10 +49,10 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
             clz = ParquetFileReader.class;
         } else if (avroExtensions.contains(extension)) {
             clz = AvroFileReader.class;
-        } else if (jsonExtensions.contains(extension)) {
-            clz = JsonFileReader.class;
         } else if (sequenceExtensions.contains(extension)) {
             clz = SequenceFileReader.class;
+        } else if (jsonExtensions.contains(extension)) {
+            clz = JsonFileReader.class;
         } else if (delimitedExtensions.contains(extension)) {
             clz = DelimitedTextFileReader.class;
         } else {
@@ -64,22 +63,17 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
     }
 
     @Override
-    protected void configure(Map<String, Object> config) {
-        this.parquetExtensions = config.get(FILE_READER_AGNOSTIC_EXTENSIONS_PARQUET) == null ?
-                Collections.singletonList("parquet") :
-                Arrays.asList(config.get(FILE_READER_AGNOSTIC_EXTENSIONS_PARQUET).toString().toLowerCase().split(","));
-        this.avroExtensions = config.get(FILE_READER_AGNOSTIC_EXTENSIONS_AVRO) == null ?
-                Collections.singletonList("avro") :
-                Arrays.asList(config.get(FILE_READER_AGNOSTIC_EXTENSIONS_AVRO).toString().toLowerCase().split(","));
-        this.jsonExtensions = config.get(FILE_READER_AGNOSTIC_EXTENSIONS_JSON) == null ?
-                Collections.singletonList("json") :
-                Arrays.asList(config.get(FILE_READER_AGNOSTIC_EXTENSIONS_JSON).toString().toLowerCase().split(","));
-        this.sequenceExtensions = config.get(FILE_READER_AGNOSTIC_EXTENSIONS_SEQUENCE) == null ?
-                Collections.singletonList("seq") :
-                Arrays.asList(config.get(FILE_READER_AGNOSTIC_EXTENSIONS_SEQUENCE).toString().toLowerCase().split(","));
-        this.delimitedExtensions = config.get(FILE_READER_AGNOSTIC_EXTENSIONS_DELIMITED) == null ?
-                Arrays.asList("tsv", "csv") :
-                Arrays.asList(config.get(FILE_READER_AGNOSTIC_EXTENSIONS_DELIMITED).toString().toLowerCase().split(","));
+    protected void configure(Map<String, String> config) {
+        this.parquetExtensions = Arrays.asList(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_PARQUET, "parquet")
+                .toLowerCase().split(","));
+        this.avroExtensions = Arrays.asList(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_AVRO, "avro")
+                .toLowerCase().split(","));
+        this.sequenceExtensions = Arrays.asList(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_SEQUENCE, "seq")
+                .toLowerCase().split(","));
+        this.jsonExtensions = Arrays.asList(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_JSON, "json")
+                .toLowerCase().split(","));
+        this.delimitedExtensions = Arrays.asList(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_DELIMITED, "tsv,csv")
+                .toLowerCase().split(","));
     }
 
     @Override

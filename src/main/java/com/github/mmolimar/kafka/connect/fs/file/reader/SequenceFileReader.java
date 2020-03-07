@@ -58,19 +58,9 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
     }
 
     @Override
-    protected void configure(Map<String, Object> config) {
-        if (config.get(FILE_READER_SEQUENCE_FIELD_NAME_KEY) == null ||
-                config.get(FILE_READER_SEQUENCE_FIELD_NAME_KEY).toString().equals("")) {
-            this.keyFieldName = FIELD_NAME_KEY_DEFAULT;
-        } else {
-            this.keyFieldName = config.get(FILE_READER_SEQUENCE_FIELD_NAME_KEY).toString();
-        }
-        if (config.get(FILE_READER_SEQUENCE_FIELD_NAME_VALUE) == null ||
-                config.get(FILE_READER_SEQUENCE_FIELD_NAME_VALUE).toString().equals("")) {
-            this.valueFieldName = FIELD_NAME_VALUE_DEFAULT;
-        } else {
-            this.valueFieldName = config.get(FILE_READER_SEQUENCE_FIELD_NAME_VALUE).toString();
-        }
+    protected void configure(Map<String, String> config) {
+        this.keyFieldName = config.getOrDefault(FILE_READER_SEQUENCE_FIELD_NAME_KEY, FIELD_NAME_KEY_DEFAULT);
+        this.valueFieldName = config.getOrDefault(FILE_READER_SEQUENCE_FIELD_NAME_VALUE, FIELD_NAME_VALUE_DEFAULT);
     }
 
     private Schema getSchema(Writable writable) {

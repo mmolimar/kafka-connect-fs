@@ -51,19 +51,18 @@ public class JsonFileReader extends AbstractFileReader<JsonFileReader.JsonRecord
     }
 
     @Override
-    protected void configure(Map<String, Object> config) {
+    protected void configure(Map<String, String> config) {
         mapper = new ObjectMapper();
         Set<String> deserializationFeatures = Arrays.stream(DeserializationFeature.values())
                 .map(Enum::name)
                 .collect(Collectors.toSet());
         config.entrySet().stream()
-                .filter(entry -> entry.getValue() != null)
                 .filter(entry -> entry.getKey().startsWith(FILE_READER_JSON_DESERIALIZATION_CONFIGS))
                 .forEach(entry -> {
                     String feature = entry.getKey().replaceAll(FILE_READER_JSON_DESERIALIZATION_CONFIGS, "");
                     if (deserializationFeatures.contains(feature)) {
                         mapper.configure(DeserializationFeature.valueOf(feature),
-                                Boolean.parseBoolean(entry.getValue().toString()));
+                                Boolean.parseBoolean(entry.getValue()));
                     } else {
                         log.warn("Ignoring deserialization configuration '" + feature + "' due to it does not exist.");
                     }
@@ -189,6 +188,7 @@ public class JsonFileReader extends AbstractFileReader<JsonFileReader.JsonRecord
                         throw new IllegalStateException(ioe);
                     }
                 case OBJECT:
+                case POJO:
                     Struct struct = new Struct(schema);
                     Iterable<Map.Entry<String, JsonNode>> fields = value::fields;
                     StreamSupport.stream(fields.spliterator(), false)
@@ -202,7 +202,6 @@ public class JsonFileReader extends AbstractFileReader<JsonFileReader.JsonRecord
                             .map(elm -> mapValue(schema, elm))
                             .collect(Collectors.toList());
                 case NULL:
-                case POJO:
                 case MISSING:
                 default:
                     return null;

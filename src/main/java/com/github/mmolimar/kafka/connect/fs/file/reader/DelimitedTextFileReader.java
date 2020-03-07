@@ -9,6 +9,7 @@ import org.apache.kafka.connect.data.Struct;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.IntStream;
 
 import static com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig.FILE_READER_PREFIX;
@@ -58,15 +59,14 @@ public class DelimitedTextFileReader extends AbstractFileReader<DelimitedTextFil
     }
 
     @Override
-    protected void configure(Map<String, Object> config) {
-        if (config.get(FILE_READER_DELIMITED_TOKEN) == null ||
-                config.get(FILE_READER_DELIMITED_TOKEN).toString().equals("")) {
-            throw new IllegalArgumentException(FILE_READER_DELIMITED_TOKEN + " property cannot be empty for DelimitedTextFileReader");
-        }
-        this.token = config.get(FILE_READER_DELIMITED_TOKEN).toString();
-        this.defaultValue = config.get(FILE_READER_DELIMITED_DEFAULT_VALUE) == null ?
-                null : config.get(FILE_READER_DELIMITED_DEFAULT_VALUE).toString();
-        this.hasHeader = Boolean.parseBoolean((String) config.get(FILE_READER_DELIMITED_HEADER));
+    protected void configure(Map<String, String> config) {
+        this.token = Optional.ofNullable(config.get(FILE_READER_DELIMITED_TOKEN))
+                .filter(t -> !t.isEmpty())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        FILE_READER_DELIMITED_TOKEN + " property cannot be empty for DelimitedTextFileReader")
+                );
+        this.defaultValue = config.get(FILE_READER_DELIMITED_DEFAULT_VALUE);
+        this.hasHeader = Boolean.parseBoolean(config.getOrDefault(FILE_READER_DELIMITED_HEADER, "false"));
     }
 
     @Override

@@ -71,41 +71,17 @@ public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord
     }
 
     @Override
-    protected void configure(Map<String, Object> config) {
-        String valueFieldName;
-        if (config.get(FILE_READER_TEXT_FIELD_NAME_VALUE) == null ||
-                config.get(FILE_READER_TEXT_FIELD_NAME_VALUE).toString().equals("")) {
-            valueFieldName = FIELD_NAME_VALUE_DEFAULT;
-        } else {
-            valueFieldName = config.get(FILE_READER_TEXT_FIELD_NAME_VALUE).toString();
-        }
-        if (config.get(FILE_READER_TEXT_COMPRESSION_TYPE) == null ||
-                config.get(FILE_READER_TEXT_COMPRESSION_TYPE).toString().equals("")) {
-            this.compression = CompressionType.NONE;
-        } else {
-            boolean concatenated = true;
-            if (config.get(FILE_READER_TEXT_COMPRESSION_CONCATENATED) != null &&
-                    !config.get(FILE_READER_TEXT_COMPRESSION_CONCATENATED).toString().equals("")) {
-                concatenated = Boolean.parseBoolean(config.get(FILE_READER_TEXT_COMPRESSION_CONCATENATED)
-                        .toString().trim());
-            }
-            this.compression = CompressionType.fromName(config.get(FILE_READER_TEXT_COMPRESSION_TYPE).toString(), concatenated);
-        }
-        if (config.get(FILE_READER_TEXT_ENCODING) == null ||
-                config.get(FILE_READER_TEXT_ENCODING).toString().equals("")) {
-            this.charset = Charset.defaultCharset();
-        } else {
-            this.charset = Charset.forName(config.get(FILE_READER_TEXT_ENCODING).toString());
-        }
-        if (config.get(FILE_READER_TEXT_RECORD_PER_LINE) == null ||
-                config.get(FILE_READER_TEXT_RECORD_PER_LINE).toString().equals("")) {
-            this.recordPerLine = true;
-        } else {
-            this.recordPerLine = Boolean.parseBoolean(config.get(FILE_READER_TEXT_RECORD_PER_LINE).toString());
-        }
+    protected void configure(Map<String, String> config) {
         this.schema = SchemaBuilder.struct()
-                .field(valueFieldName, Schema.STRING_SCHEMA)
+                .field(config.getOrDefault(FILE_READER_TEXT_FIELD_NAME_VALUE, FIELD_NAME_VALUE_DEFAULT),
+                        Schema.STRING_SCHEMA)
                 .build();
+        this.recordPerLine = Boolean.parseBoolean(config.getOrDefault(FILE_READER_TEXT_RECORD_PER_LINE, "true"));
+        String cType = config.getOrDefault(FILE_READER_TEXT_COMPRESSION_TYPE, CompressionType.NONE.toString());
+        boolean concatenated = Boolean.parseBoolean(config.getOrDefault(FILE_READER_TEXT_COMPRESSION_CONCATENATED,
+                "true"));
+        this.compression = CompressionType.fromName(cType, concatenated);
+        this.charset = Charset.forName(config.getOrDefault(FILE_READER_TEXT_ENCODING, Charset.defaultCharset().name()));
     }
 
     private Reader getFileReader(InputStream inputStream) throws IOException {
