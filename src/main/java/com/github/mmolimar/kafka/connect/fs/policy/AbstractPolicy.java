@@ -126,14 +126,13 @@ abstract class AbstractPolicy implements Policy {
     protected void preCheck() {
     }
 
-    private void postCheck() {
+    protected void postCheck() {
     }
 
     public Iterator<FileMetadata> listFiles(FileSystem fs) throws IOException {
         return new Iterator<FileMetadata>() {
             RemoteIterator<LocatedFileStatus> it = fs.listFiles(fs.getWorkingDirectory(), recursive);
             LocatedFileStatus current = null;
-            boolean previous = false;
 
             @Override
             public boolean hasNext() {
@@ -188,7 +187,7 @@ abstract class AbstractPolicy implements Policy {
     }
 
     @Override
-    public FileReader offer(FileMetadata metadata, OffsetStorageReader offsetStorageReader) throws IOException {
+    public FileReader offer(FileMetadata metadata, OffsetStorageReader offsetStorageReader) {
         Map<String, Object> partition = new HashMap<String, Object>() {{
             put("path", metadata.getPath());
             //TODO manage blocks
@@ -201,7 +200,8 @@ abstract class AbstractPolicy implements Policy {
 
         FileReader reader;
         try {
-            reader = ReflectionUtils.makeReader((Class<? extends FileReader>) conf.getClass(FsSourceTaskConfig.FILE_READER_CLASS),
+            reader = ReflectionUtils.makeReader(
+                    (Class<? extends FileReader>) conf.getClass(FsSourceTaskConfig.FILE_READER_CLASS),
                     current, new Path(metadata.getPath()), conf.originals());
         } catch (Throwable t) {
             throw new ConnectException("An error has occurred when creating reader for file: " + metadata.getPath(), t);

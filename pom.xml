@@ -14,9 +14,10 @@
         <kafka.version>2.4.0</kafka.version>
         <confluent.version>5.4.0</confluent.version>
         <hadoop.version>3.2.1</hadoop.version>
-        <avro.version>1.9.2</avro.version>
         <parquet.version>1.11.0</parquet.version>
+        <avro.version>1.9.2</avro.version>
         <fasterxml-jackson.version>2.10.2</fasterxml-jackson.version>
+        <cron-utils.version>9.0.2</cron-utils.version>
         <junit-jupiter.version>5.6.0</junit-jupiter.version>
         <easymock.version>4.2</easymock.version>
         <powermock.version>2.0.5</powermock.version>
@@ -54,6 +55,11 @@
             <version>${hadoop.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.apache.parquet</groupId>
+            <artifactId>parquet-avro</artifactId>
+            <version>${parquet.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.avro</groupId>
             <artifactId>avro</artifactId>
             <version>${avro.version}</version>
@@ -65,14 +71,14 @@
             <classifier>nodeps</classifier>
         </dependency>
         <dependency>
-            <groupId>org.apache.parquet</groupId>
-            <artifactId>parquet-avro</artifactId>
-            <version>${parquet.version}</version>
-        </dependency>
-        <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
             <version>${fasterxml-jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cronutils</groupId>
+            <artifactId>cron-utils</artifactId>
+            <version>${cron-utils.version}</version>
         </dependency>
 
         <!-- test dependencies -->

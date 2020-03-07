@@ -18,6 +18,7 @@ import org.apache.parquet.hadoop.util.HadoopInputFile;
 import java.io.IOException;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import static com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig.FILE_READER_PREFIX;
 
@@ -58,17 +59,13 @@ public class ParquetFileReader extends AbstractFileReader<GenericRecord> {
                 .build();
     }
 
-    protected void configure(Map<String, Object> config) {
-        if (config.get(FILE_READER_PARQUET_SCHEMA) != null) {
-            this.schema = new Schema.Parser().parse(config.get(FILE_READER_PARQUET_SCHEMA).toString());
-        } else {
-            this.schema = null;
-        }
-        if (config.get(FILE_READER_PARQUET_PROJECTION) != null) {
-            this.projection = new Schema.Parser().parse(config.get(FILE_READER_PARQUET_PROJECTION).toString());
-        } else {
-            this.projection = null;
-        }
+    protected void configure(Map<String, String> config) {
+        this.schema = Optional.ofNullable(config.get(FILE_READER_PARQUET_SCHEMA))
+                .map(c -> new Schema.Parser().parse(c))
+                .orElse(null);
+        this.projection = Optional.ofNullable(config.get(FILE_READER_PARQUET_PROJECTION))
+                .map(c -> new Schema.Parser().parse(c))
+                .orElse(null);
     }
 
     @Override

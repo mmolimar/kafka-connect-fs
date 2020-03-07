@@ -130,12 +130,6 @@ public abstract class PolicyTestBase {
     }
 
     @Test
-    public void hasEnded() throws IOException {
-        policy.execute();
-        assertTrue(policy.hasEnded());
-    }
-
-    @Test
     public void execPolicyAlreadyEnded() throws IOException {
         policy.execute();
         assertTrue(policy.hasEnded());
