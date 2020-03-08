@@ -112,13 +112,24 @@ public class HdfsFileWatcherPolicy extends AbstractPolicy {
                     for (Event event : batch.getEvents()) {
                         switch (event.getEventType()) {
                             case CREATE:
-                                enqueue(((Event.CreateEvent) event).getPath());
+                                if (!((Event.CreateEvent) event).getPath().endsWith("._COPYING_")) {
+                                    enqueue(((Event.CreateEvent) event).getPath());
+                                }
                                 break;
                             case APPEND:
-                                enqueue(((Event.AppendEvent) event).getPath());
+                                if (!((Event.AppendEvent) event).getPath().endsWith("._COPYING_")) {
+                                    enqueue(((Event.AppendEvent) event).getPath());
+                                }
+                                break;
+                            case RENAME:
+                                if (((Event.RenameEvent) event).getSrcPath().endsWith("._COPYING_")) {
+                                    enqueue(((Event.RenameEvent) event).getDstPath());
+                                }
                                 break;
                             case CLOSE:
-                                enqueue(((Event.CloseEvent) event).getPath());
+                                if (!((Event.CloseEvent) event).getPath().endsWith("._COPYING_")) {
+                                    enqueue(((Event.CloseEvent) event).getPath());
+                                }
                                 break;
                             default:
                                 break;

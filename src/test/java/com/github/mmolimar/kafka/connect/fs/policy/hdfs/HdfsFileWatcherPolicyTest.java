@@ -58,16 +58,6 @@ public class HdfsFileWatcherPolicyTest extends HdfsPolicyTestBase {
         }
     }
 
-    //This policy never ends at least all watchers die
-    @Test
-    @Override
-    public void hasEnded() throws IOException {
-        policy.execute();
-        assertFalse(policy.hasEnded());
-        policy.interrupt();
-        assertTrue(policy.hasEnded());
-    }
-
     //This policy never ends. We have to interrupt it
     @Test
     @Override
