@@ -14,6 +14,16 @@ and wait for the next one. Additionally, its custom properties allow to end it.
 
 You can learn more about the properties of this policy :ref:`here<config_options-policies-sleepy>`.
 
+Cron
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This policy is scheduled based on cron expressions and their format to put in the configuration
+are based on the library `Quartz Scheduler <https://www.quartz-scheduler.org>`__
+
+After finishing each execution, the policy gets slept until the next one is scheduled, if applicable.
+
+You can learn more about the properties of this policy :ref:`here<config_options-policies-cron>`.
+
 HDFS file watcher
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

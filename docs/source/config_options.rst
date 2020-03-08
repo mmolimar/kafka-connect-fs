@@ -75,7 +75,7 @@ General config properties for this connector.
   Flag to activate traversed recursion in subdirectories when listing files.
 
   * Type: boolean
-  * Default: false
+  * Default: ``false``
   * Importance: medium
 
 ``policy.regexp``
@@ -142,7 +142,7 @@ In order to configure custom properties for this policy, the name you must use i
   Sleep fraction to divide the sleep time to allow interrupting the policy faster.
 
   * Type: long
-  * Default: 10
+  * Default: ``10``
   * Importance: medium
 
 ``policy.sleepy.max_execs``
@@ -150,7 +150,28 @@ In order to configure custom properties for this policy, the name you must use i
   An execution represents: listing files from the FS and its corresponding sleep time.
 
   * Type: long
-  * Default: -1
+  * Default: ``-1``
+  * Importance: medium
+
+.. _config_options-policies-cron:
+
+Cron
+--------------------------------------------
+
+In order to configure custom properties for this policy, the name you must use is ``cron``.
+
+``policy.cron.expression``
+  Cron expression to schedule the policy.
+
+  * Type: string
+  * Importance: high
+
+``policy.cron.end_date``
+  End date to finish the policy with `ISO date-time <https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html#ISO_LOCAL_DATE_TIME>`__
+  format.
+
+  * Type: date
+  * Default: ``null``
   * Importance: medium
 
 .. _config_options-policies-hdfs:
@@ -212,21 +233,21 @@ In order to configure custom properties for this reader, the name you must use i
   Custom field name for the output key to include in the Kafka message.
 
   * Type: string
-  * Default: key
+  * Default: ``key``
   * Importance: medium
 
 ``file_reader.sequence.field_name.value``
   Custom field name for the output value to include in the Kafka message.
 
   * Type: string
-  * Default: value
+  * Default: ``value``
   * Importance: medium
 
 ``file_reader.sequence.buffer_size``
   Custom buffer size to read data from the Sequence file.
 
   * Type: int
-  * Default: 4096
+  * Default: ``4096``
   * Importance: low
 
 .. _config_options-filereaders-json:
@@ -241,7 +262,7 @@ To configure custom properties for this reader, the name you must use is ``json`
   content of the file as a record.
 
   * Type: boolean
-  * Default: true
+  * Default: ``true``
   * Importance: medium
 
 ``file_reader.json.deserialization.<deserialization_feature>``
@@ -255,7 +276,7 @@ To configure custom properties for this reader, the name you must use is ``json`
   Compression type to use when reading a file.
 
   * Type: enum (available values ``bzip2``, ``gzip`` and ``none``)
-  * Default: none
+  * Default: ``none``
   * Importance: medium
 
 ``file_reader.json.compression.concatenated``
@@ -263,7 +284,7 @@ To configure custom properties for this reader, the name you must use is ``json`
   the first compressed stream.
 
   * Type: boolean
-  * Default: true
+  * Default: ``true``
   * Importance: low
 
 ``file_reader.json.encoding``
@@ -284,14 +305,14 @@ To configure custom properties for this reader, the name you must use is ``text`
   content of the file as a record.
 
   * Type: boolean
-  * Default: true
+  * Default: ``true``
   * Importance: medium
 
 ``file_reader.json.compression.type``
   Compression type to use when reading a file.
 
   * Type: enum (available values ``bzip2``, ``gzip`` and ``none``)
-  * Default: none
+  * Default: ``none``
   * Importance: medium
 
 ``file_reader.json.compression.concatenated``
@@ -299,14 +320,14 @@ To configure custom properties for this reader, the name you must use is ``text`
   the first compressed stream.
 
   * Type: boolean
-  * Default: true
+  * Default: ``true``
   * Importance: low
 
 ``file_reader.text.field_name.value``
   Custom field name for the output value to include in the Kafka message.
 
   * Type: string
-  * Default: value
+  * Default: ``value``
   * Importance: low
 
 ``file_reader.text.encoding``
@@ -332,7 +353,7 @@ To configure custom properties for this reader, the name you must use is ``delim
   If the file contains header or not.
 
   * Type: boolean
-  * Default: false
+  * Default: ``false``
   * Importance: medium
 
 ``file_reader.json.record_per_line``
@@ -340,7 +361,7 @@ To configure custom properties for this reader, the name you must use is ``delim
   content of the file as a record.
 
   * Type: boolean
-  * Default: true
+  * Default: ``true``
   * Importance: medium
 
 ``file_reader.delimited.default_value``
@@ -355,7 +376,7 @@ To configure custom properties for this reader, the name you must use is ``delim
   Compression type to use when reading a file.
 
   * Type: enum (available values ``bzip2``, ``gzip`` and ``none``)
-  * Default: none
+  * Default: ``none``
   * Importance: medium
 
 ``file_reader.json.compression.concatenated``
@@ -363,7 +384,7 @@ To configure custom properties for this reader, the name you must use is ``delim
   the first compressed stream.
 
   * Type: boolean
-  * Default: true
+  * Default: ``true``
   * Importance: low
 
 ``file_reader.delimited.encoding``
@@ -381,35 +402,35 @@ To configure custom properties for this reader, the name you must use is ``agnos
   A comma-separated string list with the accepted extensions for Parquet files.
 
   * Type: string
-  * Default: parquet
+  * Default: ``parquet``
   * Importance: medium
 
 ``file_reader.agnostic.extensions.avro``
   A comma-separated string list with the accepted extensions for Avro files.
 
   * Type: string
-  * Default: avro
+  * Default: ``avro``
   * Importance: medium
 
 ``file_reader.agnostic.extensions.sequence``
   A comma-separated string list with the accepted extensions for Sequence files.
 
   * Type: string
-  * Default: seq
+  * Default: ``seq``
   * Importance: medium
 
 ``file_reader.agnostic.extensions.json``
   A comma-separated string list with the accepted extensions for JSON files.
 
   * Type: string
-  * Default: json
+  * Default: ``json``
   * Importance: medium
 
 ``file_reader.agnostic.extensions.delimited``
   A comma-separated string list with the accepted extensions for Delimited text files.
 
   * Type: string
-  * Default: tsv,csv
+  * Default: ``tsv,csv``
   * Importance: medium
 
 .. note:: The Agnostic reader uses the previous ones as inner readers. So, in case of using this
