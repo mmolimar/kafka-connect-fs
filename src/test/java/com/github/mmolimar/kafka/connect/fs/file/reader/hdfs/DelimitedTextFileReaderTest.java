@@ -50,7 +50,7 @@ public class DelimitedTextFileReaderTest extends HdfsFileReaderTestBase {
                 String value = String.format("%d_%s", index, UUID.randomUUID());
                 try {
                     writer.append(value + "," + value + "," + value + "," + value + "\n");
-                    if (header) OFFSETS_BY_INDEX.put(index, (long) index);
+                    OFFSETS_BY_INDEX.put(index, (long) index);
                 } catch (IOException ioe) {
                     throw new RuntimeException(ioe);
                 }
@@ -132,10 +132,12 @@ public class DelimitedTextFileReaderTest extends HdfsFileReaderTestBase {
         int recordCount = 0;
         while (reader.hasNext()) {
             Struct record = reader.next();
-            assertEquals("dummy", record.get(FIELD_COLUMN1));
-            assertEquals("custom_value", record.get(FIELD_COLUMN2));
-            assertEquals("custom_value", record.get(FIELD_COLUMN3));
-            assertEquals("custom_value", record.get(FIELD_COLUMN4));
+            assertAll(
+                    () -> assertEquals("dummy", record.get(FIELD_COLUMN1)),
+                    () -> assertEquals("custom_value", record.get(FIELD_COLUMN2)),
+                    () -> assertEquals("custom_value", record.get(FIELD_COLUMN3)),
+                    () -> assertEquals("custom_value", record.get(FIELD_COLUMN4))
+            );
             recordCount++;
         }
         assertEquals(2, recordCount, () -> "The number of records in the file does not match");
@@ -154,19 +156,19 @@ public class DelimitedTextFileReaderTest extends HdfsFileReaderTestBase {
         int recordIndex = NUM_RECORDS / 2;
         reader.seek(getOffset(OFFSETS_BY_INDEX.get(recordIndex), false));
         assertTrue(reader.hasNext());
-        assertEquals(OFFSETS_BY_INDEX.get(recordIndex) + 1, reader.currentOffset().getRecordOffset());
+        assertEquals(OFFSETS_BY_INDEX.get(recordIndex), reader.currentOffset().getRecordOffset());
         checkData(reader.next(), recordIndex);
 
         recordIndex = 0;
         reader.seek(getOffset(OFFSETS_BY_INDEX.get(recordIndex), false));
         assertTrue(reader.hasNext());
-        assertEquals(OFFSETS_BY_INDEX.get(recordIndex) + 1, reader.currentOffset().getRecordOffset());
+        assertEquals(OFFSETS_BY_INDEX.get(recordIndex), reader.currentOffset().getRecordOffset());
         checkData(reader.next(), recordIndex);
 
         recordIndex = NUM_RECORDS - 3;
         reader.seek(getOffset(OFFSETS_BY_INDEX.get(recordIndex), false));
         assertTrue(reader.hasNext());
-        assertEquals(OFFSETS_BY_INDEX.get(recordIndex) + 1, reader.currentOffset().getRecordOffset());
+        assertEquals(OFFSETS_BY_INDEX.get(recordIndex), reader.currentOffset().getRecordOffset());
         checkData(reader.next(), recordIndex);
 
         reader.seek(getOffset(OFFSETS_BY_INDEX.get(NUM_RECORDS - 1) + 1, false));

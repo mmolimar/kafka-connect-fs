@@ -49,11 +49,7 @@ public class DelimitedTextFileReader extends AbstractFileReader<DelimitedTextFil
                 String columnName = hasHeader ? columns[index] : DEFAULT_COLUMN_NAME + "_" + ++index;
                 schemaBuilder.field(columnName, SchemaBuilder.STRING_SCHEMA);
             });
-
-            if (!hasHeader) {
-                //back to the first line
-                inner.seek(this.offset);
-            }
+            inner.seek(this.offset);
         }
         this.schema = schemaBuilder.build();
     }

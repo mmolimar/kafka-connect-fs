@@ -112,14 +112,12 @@ public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord
             try {
                 if (!recordPerLine) {
                     List<String> lines = new BufferedReader(reader).lines().collect(Collectors.toList());
-                    offset.setOffset(lines.size() - 1);
                     current = String.join("\n", lines);
                     finished = true;
                     return true;
                 }
                 for (; ; ) {
                     String line = reader.readLine();
-                    offset.setOffset(reader.getLineNumber());
                     if (line == null) {
                         finished = true;
                         return false;
@@ -140,7 +138,7 @@ public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord
         }
         String aux = current;
         current = null;
-
+        offset.inc();
         return new TextRecord(schema, aux);
     }
 
@@ -159,7 +157,7 @@ public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord
             while (reader.getLineNumber() < offset.getRecordOffset()) {
                 reader.readLine();
             }
-            this.offset.setOffset(reader.getLineNumber() + 1);
+            this.offset.setOffset(reader.getLineNumber());
         } catch (IOException ioe) {
             throw new ConnectException("Error seeking file " + getFilePath(), ioe);
         }
@@ -184,6 +182,10 @@ public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord
 
         public void setOffset(long offset) {
             this.offset = offset;
+        }
+
+        void inc() {
+            this.offset++;
         }
 
         @Override

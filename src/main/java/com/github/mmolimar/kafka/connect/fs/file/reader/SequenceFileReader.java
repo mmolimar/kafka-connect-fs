@@ -91,7 +91,7 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
             if (hasNextIndex == -1 || hasNextIndex == recordIndex) {
                 hasNextIndex++;
                 offset.inc();
-                return hasNext = reader.next(key, value);
+                hasNext = reader.next(key, value);
             }
             return hasNext;
         } catch (EOFException eofe) {
@@ -119,7 +119,7 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
             reader.sync(offset.getRecordOffset());
             hasNextIndex = recordIndex = offset.getRecordOffset();
             hasNext = false;
-            this.offset.setOffset(offset.getRecordOffset());
+            this.offset.setOffset(offset.getRecordOffset() - 1);
         } catch (IOException ioe) {
             throw new ConnectException("Error seeking file " + getFilePath(), ioe);
         }

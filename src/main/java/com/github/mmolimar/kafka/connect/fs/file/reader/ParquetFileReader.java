@@ -74,7 +74,6 @@ public class ParquetFileReader extends AbstractFileReader<GenericRecord> {
         if (currentRecord == null) {
             try {
                 currentRecord = reader.read();
-                if (currentRecord != null) offset.inc();
             } catch (IOException ioe) {
                 throw new ConnectException("Error reading parquet record", ioe);
             }
@@ -95,6 +94,7 @@ public class ParquetFileReader extends AbstractFileReader<GenericRecord> {
             record = currentRecord;
         }
         currentRecord = null;
+        offset.inc();
         return record;
     }
 
@@ -115,7 +115,7 @@ public class ParquetFileReader extends AbstractFileReader<GenericRecord> {
                 throw new ConnectException("Error initializing parquet reader", ioe);
             }
         }
-        while (hasNext() && this.offset.getRecordOffset() <= offset.getRecordOffset()) {
+        while (hasNext() && this.offset.getRecordOffset() < offset.getRecordOffset()) {
             nextRecord();
         }
     }
