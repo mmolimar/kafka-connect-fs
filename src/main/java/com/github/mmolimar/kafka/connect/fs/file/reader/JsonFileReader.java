@@ -23,10 +23,13 @@ import static com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig.FILE_READE
 public class JsonFileReader extends AbstractFileReader<JsonFileReader.JsonRecord> {
 
     private static final String FILE_READER_JSON = FILE_READER_PREFIX + "json.";
+    private static final String FILE_READER_JSON_COMPRESSION = FILE_READER_JSON + "compression.";
 
     public static final String FILE_READER_JSON_DESERIALIZATION_CONFIGS = FILE_READER_JSON + "deserialization.";
     public static final String FILE_READER_JSON_RECORD_PER_LINE = FILE_READER_JSON + "record_per_line";
     public static final String FILE_READER_JSON_ENCODING = FILE_READER_JSON + "encoding";
+    public static final String FILE_READER_JSON_COMPRESSION_TYPE = FILE_READER_JSON_COMPRESSION + "type";
+    public static final String FILE_READER_JSON_COMPRESSION_CONCATENATED = FILE_READER_JSON_COMPRESSION + "concatenated";
 
     private final TextFileReader inner;
     private final Schema schema;
@@ -37,6 +40,8 @@ public class JsonFileReader extends AbstractFileReader<JsonFileReader.JsonRecord
 
         config.put(TextFileReader.FILE_READER_TEXT_ENCODING, config.get(FILE_READER_JSON_ENCODING));
         config.put(TextFileReader.FILE_READER_TEXT_RECORD_PER_LINE, config.get(FILE_READER_JSON_RECORD_PER_LINE));
+        config.put(TextFileReader.FILE_READER_TEXT_COMPRESSION_TYPE, config.get(FILE_READER_JSON_COMPRESSION_TYPE));
+        config.put(TextFileReader.FILE_READER_TEXT_COMPRESSION_CONCATENATED, config.get(FILE_READER_JSON_COMPRESSION_CONCATENATED));
 
         this.inner = new TextFileReader(fs, filePath, config);
 

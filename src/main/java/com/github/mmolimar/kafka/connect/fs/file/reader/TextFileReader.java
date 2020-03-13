@@ -42,28 +42,6 @@ public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord
     private CompressionType compression;
     private boolean recordPerLine;
 
-    public enum CompressionType {
-        BZIP2,
-        GZIP,
-        NONE;
-
-        private boolean concatenated;
-
-        CompressionType() {
-            this.concatenated = true;
-        }
-
-        public boolean isConcatenated() {
-            return concatenated;
-        }
-
-        public static CompressionType fromName(String compression, boolean concatenated) {
-            CompressionType ct = CompressionType.valueOf(compression.trim().toUpperCase());
-            ct.concatenated = concatenated;
-            return ct;
-        }
-    }
-
     public TextFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
         super(fs, filePath, new TxtToStruct(), config);
         this.reader = new LineNumberReader(getFileReader(fs.open(filePath)));

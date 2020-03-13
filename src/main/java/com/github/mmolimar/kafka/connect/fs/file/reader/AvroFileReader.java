@@ -42,6 +42,7 @@ public class AvroFileReader extends AbstractFileReader<GenericRecord> {
         this.offset = new AvroOffset(0);
     }
 
+    @Override
     protected void configure(Map<String, String> config) {
         this.schema = Optional.ofNullable(config.get(FILE_READER_AVRO_SCHEMA))
                 .map(c -> new Schema.Parser().parse(c))

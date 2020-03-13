@@ -16,7 +16,7 @@ public abstract class AbstractFileReader<T> implements FileReader {
 
     private final FileSystem fs;
     private final Path filePath;
-    private ReaderAdapter<T> adapter;
+    private final ReaderAdapter<T> adapter;
 
     public AbstractFileReader(FileSystem fs, Path filePath, ReaderAdapter<T> adapter, Map<String, Object> config) {
         if (fs == null || filePath == null) {
@@ -26,11 +26,14 @@ public abstract class AbstractFileReader<T> implements FileReader {
         this.filePath = filePath;
         this.adapter = adapter;
 
-        Map<String, String> readerConf = config.entrySet().stream()
+        configure(readerConfig(config));
+    }
+
+    protected final Map<String, String> readerConfig(Map<String, Object> config) {
+        return config.entrySet().stream()
                 .filter(entry -> entry.getKey().startsWith(FILE_READER_PREFIX))
                 .filter(entry -> entry.getValue() != null)
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().toString()));
-        configure(readerConf);
     }
 
     protected abstract void configure(Map<String, String> config);

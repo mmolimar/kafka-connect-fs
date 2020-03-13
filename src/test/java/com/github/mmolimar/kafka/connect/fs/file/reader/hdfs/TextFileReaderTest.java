@@ -2,6 +2,7 @@ package com.github.mmolimar.kafka.connect.fs.file.reader.hdfs;
 
 import com.github.mmolimar.kafka.connect.fs.file.Offset;
 import com.github.mmolimar.kafka.connect.fs.file.reader.AgnosticFileReader;
+import com.github.mmolimar.kafka.connect.fs.file.reader.CompressionType;
 import com.github.mmolimar.kafka.connect.fs.file.reader.FileReader;
 import com.github.mmolimar.kafka.connect.fs.file.reader.TextFileReader;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
@@ -25,7 +26,7 @@ public class TextFileReaderTest extends HdfsFileReaderTestBase {
 
     private static final String FIELD_NAME_VALUE = "custom_field_name";
     private static final String FILE_EXTENSION = "txt";
-    private static final TextFileReader.CompressionType COMPRESSION_TYPE = TextFileReader.CompressionType.GZIP;
+    private static final CompressionType COMPRESSION_TYPE = CompressionType.GZIP;
 
     @BeforeAll
     public static void setUp() throws IOException {
@@ -38,7 +39,7 @@ public class TextFileReaderTest extends HdfsFileReaderTestBase {
         }};
     }
 
-    private static OutputStream getOutputStream(File file, TextFileReader.CompressionType compression) throws IOException {
+    private static OutputStream getOutputStream(File file, CompressionType compression) throws IOException {
         final OutputStream os;
         switch (compression) {
             case BZIP2:
@@ -54,7 +55,7 @@ public class TextFileReaderTest extends HdfsFileReaderTestBase {
         return os;
     }
 
-    private static Path createDataFile(TextFileReader.CompressionType compression) throws IOException {
+    private static Path createDataFile(CompressionType compression) throws IOException {
         File txtFile = File.createTempFile("test-", "." + FILE_EXTENSION);
         try (PrintWriter writer = new PrintWriter(getOutputStream(txtFile, compression))) {
             IntStream.range(0, NUM_RECORDS).forEach(index -> {
@@ -112,7 +113,7 @@ public class TextFileReaderTest extends HdfsFileReaderTestBase {
 
     @Test
     public void readDifferentCompressionTypes() {
-        Arrays.stream(TextFileReader.CompressionType.values()).forEach(compressionType -> {
+        Arrays.stream(CompressionType.values()).forEach(compressionType -> {
             try {
                 Path file = createDataFile(compressionType);
                 FileReader reader = getReader(fs, file, new HashMap<String, Object>() {{

@@ -31,7 +31,6 @@ public class FsSourceConnector extends SourceConnector {
         log.info("Starting FsSourceConnector...");
         try {
             config = new FsSourceConnectorConfig(properties);
-
         } catch (ConfigException ce) {
             log.error("Couldn't start FsSourceConnector:", ce);
             throw new ConnectException("Couldn't start FsSourceConnector due to configuration error.", ce);
