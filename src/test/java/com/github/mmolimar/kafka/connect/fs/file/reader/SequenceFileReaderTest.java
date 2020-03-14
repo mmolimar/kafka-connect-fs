@@ -1,8 +1,7 @@
-package com.github.mmolimar.kafka.connect.fs.file.reader.local;
+package com.github.mmolimar.kafka.connect.fs.file.reader;
 
 import com.github.mmolimar.kafka.connect.fs.file.Offset;
-import com.github.mmolimar.kafka.connect.fs.file.reader.AgnosticFileReader;
-import com.github.mmolimar.kafka.connect.fs.file.reader.SequenceFileReader;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.SequenceFile;
@@ -10,8 +9,8 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.kafka.connect.data.Struct;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,28 +21,19 @@ import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class SequenceFileReaderTest extends LocalFileReaderTestBase {
+public class SequenceFileReaderTest extends FileReaderTestBase {
 
     private static final String FIELD_NAME_KEY = "custom_field_key";
     private static final String FIELD_NAME_VALUE = "custom_field_name";
     private static final String FILE_EXTENSION = "sq";
 
-    @BeforeAll
-    public static void setUp() throws IOException {
-        readerClass = AgnosticFileReader.class;
-        dataFile = createDataFile();
-        readerConfig = new HashMap<String, Object>() {{
-            put(SequenceFileReader.FILE_READER_SEQUENCE_FIELD_NAME_KEY, FIELD_NAME_KEY);
-            put(SequenceFileReader.FILE_READER_SEQUENCE_FIELD_NAME_VALUE, FIELD_NAME_VALUE);
-            put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_SEQUENCE, FILE_EXTENSION);
-        }};
-    }
-
-    private static Path createDataFile() throws IOException {
-        File seqFile = File.createTempFile("test-", "." + FILE_EXTENSION);
-        try (SequenceFile.Writer writer = SequenceFile.createWriter(fs.getConf(), SequenceFile.Writer.file(new Path(seqFile.getAbsolutePath())),
+    @Override
+    protected Path createDataFile(FileSystemConfig fsConfig, Object... args) throws IOException {
+        FileSystem fs = fsConfig.getFs();
+        File seqFile = File.createTempFile("test-", "." + getFileExtension());
+        try (SequenceFile.Writer writer = SequenceFile.createWriter(fs.getConf(),
+                SequenceFile.Writer.file(new Path(seqFile.getAbsolutePath())),
                 SequenceFile.Writer.keyClass(IntWritable.class), SequenceFile.Writer.valueClass(Text.class))) {
-
             IntStream.range(0, NUM_RECORDS).forEach(index -> {
                 Writable key = new IntWritable(index);
                 Writable value = new Text(String.format("%d_%s", index, UUID.randomUUID()));
@@ -62,36 +52,51 @@ public class SequenceFileReaderTest extends LocalFileReaderTestBase {
             int index = 0;
             long pos = reader.getPosition() - 1;
             while (reader.next(key, value)) {
-                OFFSETS_BY_INDEX.put(index++, pos);
+                fsConfig.getOffsetsByIndex().put(index++, pos);
                 pos = reader.getPosition();
             }
         }
-        Path path = new Path(new Path(fsUri), seqFile.getName());
+        Path path = new Path(new Path(fsConfig.getFsUri()), seqFile.getName());
         fs.moveFromLocalFile(new Path(seqFile.getAbsolutePath()), path);
         return path;
     }
 
-    @Test
-    public void defaultFieldNames() throws Throwable {
-        Map<String, Object> customReaderCfg = new HashMap<String, Object>() {{
-            put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_SEQUENCE, getFileExtension());
-        }};
-        reader = getReader(fs, dataFile, customReaderCfg);
-        assertEquals(reader.getFilePath(), dataFile);
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void defaultFieldNames(FileSystemConfig fsConfig) throws Throwable {
+        Map<String, Object> readerConfig = getReaderConfig();
+        readerConfig.put(SequenceFileReader.FILE_READER_SEQUENCE_FIELD_NAME_KEY, null);
+        readerConfig.put(SequenceFileReader.FILE_READER_SEQUENCE_FIELD_NAME_VALUE, null);
+        FileReader reader = getReader(fsConfig.getFs(), fsConfig.getDataFile(), readerConfig);
+        assertEquals(reader.getFilePath(), fsConfig.getDataFile());
         assertTrue(reader.hasNext());
 
         int recordCount = 0;
         while (reader.hasNext()) {
             Struct record = reader.next();
-            checkData(SequenceFileReader.FIELD_NAME_KEY_DEFAULT, SequenceFileReader.FIELD_NAME_VALUE_DEFAULT, record, recordCount);
+            checkData(SequenceFileReader.FIELD_NAME_KEY_DEFAULT, SequenceFileReader.FIELD_NAME_VALUE_DEFAULT,
+                    record, recordCount);
             recordCount++;
         }
-        assertEquals(NUM_RECORDS, recordCount, () -> "The number of records in the file does not match");
+        assertEquals(NUM_RECORDS, recordCount, "The number of records in the file does not match");
     }
 
     @Override
     protected Offset getOffset(long offset) {
         return new SequenceFileReader.SeqOffset(offset);
+    }
+
+    @Override
+    protected Class<? extends FileReader> getReaderClass() {
+        return SequenceFileReader.class;
+    }
+
+    @Override
+    protected Map<String, Object> getReaderConfig() {
+        return new HashMap<String, Object>() {{
+            put(SequenceFileReader.FILE_READER_SEQUENCE_FIELD_NAME_KEY, FIELD_NAME_KEY);
+            put(SequenceFileReader.FILE_READER_SEQUENCE_FIELD_NAME_VALUE, FIELD_NAME_VALUE);
+        }};
     }
 
     @Override
