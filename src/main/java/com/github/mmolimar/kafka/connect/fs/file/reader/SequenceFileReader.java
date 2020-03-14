@@ -37,7 +37,7 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
     private String keyFieldName, valueFieldName;
     private long recordIndex, hasNextIndex;
     private boolean hasNext;
-    private boolean isClosed;
+    private boolean closed;
 
     public SequenceFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
         super(fs, filePath, new SeqToStruct(), config);
@@ -54,7 +54,7 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
         this.offset = new SeqOffset(0);
         this.recordIndex = this.hasNextIndex = -1;
         this.hasNext = false;
-        this.isClosed = false;
+        this.closed = false;
     }
 
     @Override
@@ -86,7 +86,7 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
 
     @Override
     public boolean hasNext() {
-        if (isClosed) throw new IllegalStateException("Reader already closed.");
+        if (closed) throw new IllegalStateException("Reader already closed.");
         try {
             if (hasNextIndex == -1 || hasNextIndex == recordIndex) {
                 hasNextIndex++;
@@ -132,7 +132,7 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
 
     @Override
     public void close() throws IOException {
-        isClosed = true;
+        closed = true;
         reader.close();
     }
 
