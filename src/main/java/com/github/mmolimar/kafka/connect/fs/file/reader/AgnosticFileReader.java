@@ -17,14 +17,18 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
 
     private static final String FILE_READER_AGNOSTIC = FILE_READER_PREFIX + "agnostic.";
     private static final String FILE_READER_AGNOSTIC_EXTENSIONS = FILE_READER_AGNOSTIC + "extensions.";
+
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_PARQUET = FILE_READER_AGNOSTIC_EXTENSIONS + "parquet";
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_AVRO = FILE_READER_AGNOSTIC_EXTENSIONS + "avro";
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_JSON = FILE_READER_AGNOSTIC_EXTENSIONS + "json";
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_SEQUENCE = FILE_READER_AGNOSTIC_EXTENSIONS + "sequence";
-    public static final String FILE_READER_AGNOSTIC_EXTENSIONS_DELIMITED = FILE_READER_AGNOSTIC_EXTENSIONS + "delimited";
+    public static final String FILE_READER_AGNOSTIC_EXTENSIONS_TEXT = FILE_READER_AGNOSTIC_EXTENSIONS + "text";
+    public static final String FILE_READER_AGNOSTIC_EXTENSIONS_CSV = FILE_READER_AGNOSTIC_EXTENSIONS + "csv";
+    public static final String FILE_READER_AGNOSTIC_EXTENSIONS_TSV = FILE_READER_AGNOSTIC_EXTENSIONS + "tsv";
 
     private final AbstractFileReader<Object> reader;
-    private List<String> parquetExtensions, avroExtensions, sequenceExtensions, jsonExtensions, delimitedExtensions;
+    private List<String> parquetExtensions, avroExtensions, sequenceExtensions,
+            jsonExtensions, csvExtensions, tsvExtensions;
 
     public AgnosticFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
         super(fs, filePath, new AgnosticAdapter(), config);
@@ -53,8 +57,10 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
             clz = SequenceFileReader.class;
         } else if (jsonExtensions.contains(extension)) {
             clz = JsonFileReader.class;
-        } else if (delimitedExtensions.contains(extension)) {
-            clz = DelimitedTextFileReader.class;
+        } else if (csvExtensions.contains(extension)) {
+            clz = CsvFileReader.class;
+        } else if (tsvExtensions.contains(extension)) {
+            clz = TsvFileReader.class;
         } else {
             clz = TextFileReader.class;
         }
@@ -72,7 +78,9 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
                 .toLowerCase().split(","));
         this.jsonExtensions = Arrays.asList(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_JSON, "json")
                 .toLowerCase().split(","));
-        this.delimitedExtensions = Arrays.asList(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_DELIMITED, "tsv,csv")
+        this.csvExtensions = Arrays.asList(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_CSV, "csv")
+                .toLowerCase().split(","));
+        this.tsvExtensions = Arrays.asList(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_TSV, "tsv")
                 .toLowerCase().split(","));
     }
 
@@ -102,9 +110,6 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
     }
 
     static class AgnosticAdapter implements ReaderAdapter<AgnosticRecord> {
-
-        AgnosticAdapter() {
-        }
 
         @Override
         public Struct apply(AgnosticRecord ag) {
