@@ -29,7 +29,7 @@ interface FileSystemConfig extends Closeable {
 
     FileReader getReader();
 
-    Map<Integer, Long> getOffsetsByIndex();
+    Map<Integer, Long> offsetsByIndex();
 
 }
 
@@ -80,7 +80,7 @@ class LocalFsConfig implements FileSystemConfig {
     }
 
     @Override
-    public Map<Integer, Long> getOffsetsByIndex() {
+    public Map<Integer, Long> offsetsByIndex() {
         return offsetsByIndex;
     }
 
@@ -141,7 +141,7 @@ class HdfsFsConfig implements FileSystemConfig {
     }
 
     @Override
-    public Map<Integer, Long> getOffsetsByIndex() {
+    public Map<Integer, Long> offsetsByIndex() {
         return offsetsByIndex;
     }
 

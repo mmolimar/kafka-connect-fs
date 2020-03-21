@@ -1,6 +1,9 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.mmolimar.kafka.connect.fs.file.Offset;
@@ -41,6 +44,7 @@ public class JsonFileReaderTest extends FileReaderTestBase {
         CompressionType compression = args.length < 3 ? COMPRESSION_TYPE_DEFAULT : (CompressionType) args[2];
         File txtFile = File.createTempFile("test-", "." + getFileExtension());
         try (PrintWriter writer = new PrintWriter(getOutputStream(txtFile, compression))) {
+            ObjectWriter jsonWriter = new ObjectMapper().writerWithDefaultPrettyPrinter();
             IntStream.range(0, numRecords).forEach(index -> {
                 ObjectNode json = JsonNodeFactory.instance.objectNode()
                         .put(FIELD_INTEGER, index)
@@ -51,7 +55,7 @@ public class JsonFileReaderTest extends FileReaderTestBase {
                         .put(FIELD_NULL, (String) null);
                 json.putArray(FIELD_ARRAY)
                         .add("elm[" + index + "]")
-                        .add("elm[" + index + "]");
+                        .add("elm[" + (index + 1) + "]");
                 json.putObject(FIELD_STRUCT)
                         .put(FIELD_INTEGER, (short) index)
                         .put(FIELD_LONG, Long.MAX_VALUE)
@@ -59,8 +63,12 @@ public class JsonFileReaderTest extends FileReaderTestBase {
                         .put(FIELD_BOOLEAN, true)
                         .put(FIELD_DECIMAL, Double.parseDouble(index + "." + index))
                         .put(FIELD_NULL, (String) null);
-                writer.append(recordPerLine ? json.toString() + "\n" : json.toPrettyString());
-                fsConfig.getOffsetsByIndex().put(index, (long) index);
+                try {
+                    writer.append(recordPerLine ? json.toString() + "\n" : jsonWriter.writeValueAsString(json));
+                } catch (JsonProcessingException jpe) {
+                    throw new RuntimeException(jpe);
+                }
+                fsConfig.offsetsByIndex().put(index, (long) index);
             });
         }
         Path path = new Path(new Path(fsConfig.getFsUri()), txtFile.getName());
@@ -181,7 +189,7 @@ public class JsonFileReaderTest extends FileReaderTestBase {
                 () -> assertEquals((Double) record.get(FIELD_DECIMAL), Double.parseDouble(index + "." + index), 0),
                 () -> assertNull(record.get(FIELD_NULL)),
                 () -> assertNotNull(record.schema().field(FIELD_NULL)),
-                () -> assertEquals(record.get(FIELD_ARRAY), Arrays.asList("elm[" + index + "]", "elm[" + index + "]")),
+                () -> assertEquals(record.get(FIELD_ARRAY), Arrays.asList("elm[" + index + "]", "elm[" + (index + 1) + "]")),
                 () -> assertEquals((int) (Integer) subrecord.get(FIELD_INTEGER), index),
                 () -> assertEquals((long) (Long) subrecord.get(FIELD_LONG), Long.MAX_VALUE),
                 () -> assertTrue(subrecord.get(FIELD_STRING).toString().startsWith(index + "_")),

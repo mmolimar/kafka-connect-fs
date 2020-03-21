@@ -32,7 +32,7 @@ public class TextFileReaderTest extends FileReaderTestBase {
             IntStream.range(0, NUM_RECORDS).forEach(index -> {
                 String value = String.format("%d_%s", index, UUID.randomUUID());
                 writer.append(value + "\n");
-                fsConfig.getOffsetsByIndex().put(index, (long) index);
+                fsConfig.offsetsByIndex().put(index, (long) index);
             });
         }
         Path path = new Path(new Path(fsConfig.getFsUri()), txtFile.getName());

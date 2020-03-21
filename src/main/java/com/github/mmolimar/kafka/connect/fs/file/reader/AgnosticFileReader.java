@@ -20,11 +20,11 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
 
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_PARQUET = FILE_READER_AGNOSTIC_EXTENSIONS + "parquet";
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_AVRO = FILE_READER_AGNOSTIC_EXTENSIONS + "avro";
-    public static final String FILE_READER_AGNOSTIC_EXTENSIONS_JSON = FILE_READER_AGNOSTIC_EXTENSIONS + "json";
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_SEQUENCE = FILE_READER_AGNOSTIC_EXTENSIONS + "sequence";
-    public static final String FILE_READER_AGNOSTIC_EXTENSIONS_TEXT = FILE_READER_AGNOSTIC_EXTENSIONS + "text";
+    public static final String FILE_READER_AGNOSTIC_EXTENSIONS_JSON = FILE_READER_AGNOSTIC_EXTENSIONS + "json";
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_CSV = FILE_READER_AGNOSTIC_EXTENSIONS + "csv";
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_TSV = FILE_READER_AGNOSTIC_EXTENSIONS + "tsv";
+    public static final String FILE_READER_AGNOSTIC_EXTENSIONS_TEXT = FILE_READER_AGNOSTIC_EXTENSIONS + "text";
 
     private final AbstractFileReader<Object> reader;
     private List<String> parquetExtensions, avroExtensions, sequenceExtensions,

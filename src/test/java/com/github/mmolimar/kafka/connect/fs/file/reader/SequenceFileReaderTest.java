@@ -52,7 +52,7 @@ public class SequenceFileReaderTest extends FileReaderTestBase {
             int index = 0;
             long pos = reader.getPosition() - 1;
             while (reader.next(key, value)) {
-                fsConfig.getOffsetsByIndex().put(index++, pos);
+                fsConfig.offsetsByIndex().put(index++, pos);
                 pos = reader.getPosition();
             }
         }

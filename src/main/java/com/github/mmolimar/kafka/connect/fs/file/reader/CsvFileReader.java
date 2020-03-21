@@ -11,13 +11,13 @@ import java.util.Map;
 
 public class CsvFileReader extends UnivocityFileReader<CsvParserSettings> {
 
-    public static final String FILE_READER_DELIMITED_SETTINGS_DELIMITER_DETECTION = FILE_READER_DELIMITED_SETTINGS + "delimiter_detection";
     public static final String FILE_READER_DELIMITED_SETTINGS_EMPTY_VALUE = FILE_READER_DELIMITED_SETTINGS + "empty_value";
+    public static final String FILE_READER_DELIMITED_SETTINGS_DELIMITER_DETECTION = FILE_READER_DELIMITED_SETTINGS + "delimiter_detection";
     public static final String FILE_READER_DELIMITED_SETTINGS_ESCAPE_UNQUOTED = FILE_READER_DELIMITED_SETTINGS + "escape_unquoted";
-    public static final String FILE_READER_DELIMITED_SETTINGS_FORMAT_DELIMITER = FILE_READER_DELIMITED_SETTINGS_FORMAT + "delimiter";
 
+    public static final String FILE_READER_DELIMITED_SETTINGS_FORMAT_DELIMITER = FILE_READER_DELIMITED_SETTINGS_FORMAT + "delimiter";
     public static final String FILE_READER_DELIMITED_SETTINGS_FORMAT_QUOTE = FILE_READER_DELIMITED_SETTINGS_FORMAT + "quote";
-    public static final String FILE_READER_DELIMITED_SETTINGS_FORMAT_QUOTE_ESCAPE = FILE_READER_DELIMITED_SETTINGS_FORMAT + "quote_scape";
+    public static final String FILE_READER_DELIMITED_SETTINGS_FORMAT_QUOTE_ESCAPE = FILE_READER_DELIMITED_SETTINGS_FORMAT + "quote_escape";
 
     public CsvFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
         super(fs, filePath, config);
@@ -26,8 +26,8 @@ public class CsvFileReader extends UnivocityFileReader<CsvParserSettings> {
     @Override
     protected CsvParserSettings parserSettings(Map<String, String> config) {
         CsvParserSettings settings = new CsvParserSettings();
-        settings.setDelimiterDetectionEnabled(getBoolean(config, FILE_READER_DELIMITED_SETTINGS_DELIMITER_DETECTION, false));
         settings.setEmptyValue(config.get(FILE_READER_DELIMITED_SETTINGS_EMPTY_VALUE));
+        settings.setDelimiterDetectionEnabled(getBoolean(config, FILE_READER_DELIMITED_SETTINGS_DELIMITER_DETECTION, false));
         settings.setEscapeUnquotedValues(getBoolean(config, FILE_READER_DELIMITED_SETTINGS_ESCAPE_UNQUOTED, false));
         settings.getFormat().setDelimiter(config.getOrDefault(FILE_READER_DELIMITED_SETTINGS_FORMAT_DELIMITER, ","));
         settings.getFormat().setQuote(config.getOrDefault(FILE_READER_DELIMITED_SETTINGS_FORMAT_QUOTE, "\"").charAt(0));

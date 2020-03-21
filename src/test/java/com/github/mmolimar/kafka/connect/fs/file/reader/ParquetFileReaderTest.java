@@ -63,7 +63,7 @@ public class ParquetFileReaderTest extends FileReaderTestBase {
                 datum.put(FIELD_NAME, String.format("%d_name_%s", index, uuid));
                 datum.put(FIELD_SURNAME, String.format("%d_surname_%s", index, uuid));
                 try {
-                    fsConfig.getOffsetsByIndex().put(index, (long) index);
+                    fsConfig.offsetsByIndex().put(index, (long) index);
                     writer.write(datum);
                 } catch (IOException ioe) {
                     throw new RuntimeException(ioe);

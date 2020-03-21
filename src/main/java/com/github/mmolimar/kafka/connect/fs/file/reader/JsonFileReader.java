@@ -25,11 +25,12 @@ public class JsonFileReader extends AbstractFileReader<JsonFileReader.JsonRecord
     private static final String FILE_READER_JSON = FILE_READER_PREFIX + "json.";
     private static final String FILE_READER_JSON_COMPRESSION = FILE_READER_JSON + "compression.";
 
-    public static final String FILE_READER_JSON_DESERIALIZATION_CONFIGS = FILE_READER_JSON + "deserialization.";
     public static final String FILE_READER_JSON_RECORD_PER_LINE = FILE_READER_JSON + "record_per_line";
-    public static final String FILE_READER_JSON_ENCODING = FILE_READER_JSON + "encoding";
+    public static final String FILE_READER_JSON_DESERIALIZATION_CONFIGS = FILE_READER_JSON + "deserialization.";
+
     public static final String FILE_READER_JSON_COMPRESSION_TYPE = FILE_READER_JSON_COMPRESSION + "type";
     public static final String FILE_READER_JSON_COMPRESSION_CONCATENATED = FILE_READER_JSON_COMPRESSION + "concatenated";
+    public static final String FILE_READER_JSON_ENCODING = FILE_READER_JSON + "encoding";
 
     private final TextFileReader inner;
     private final Schema schema;
@@ -79,8 +80,8 @@ public class JsonFileReader extends AbstractFileReader<JsonFileReader.JsonRecord
         try {
             JsonNode value = mapper.readTree(inner.nextRecord().getValue());
             return new JsonRecord(schema, value);
-        } catch (JsonProcessingException jpe) {
-            throw new IllegalStateException(jpe);
+        } catch (IOException ioe) {
+            throw new IllegalStateException(ioe);
         }
     }
 

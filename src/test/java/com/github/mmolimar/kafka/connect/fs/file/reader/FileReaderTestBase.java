@@ -130,24 +130,24 @@ abstract class FileReaderTestBase {
     public void seekFile(FileSystemConfig fsConfig) {
         FileReader reader = fsConfig.getReader();
         int recordIndex = NUM_RECORDS / 2;
-        reader.seek(getOffset(fsConfig.getOffsetsByIndex().get(recordIndex)));
+        reader.seek(getOffset(fsConfig.offsetsByIndex().get(recordIndex)));
         assertTrue(reader.hasNext());
-        assertEquals(fsConfig.getOffsetsByIndex().get(recordIndex), reader.currentOffset().getRecordOffset());
+        assertEquals(fsConfig.offsetsByIndex().get(recordIndex), reader.currentOffset().getRecordOffset());
         checkData(reader.next(), recordIndex);
 
         recordIndex = 0;
-        reader.seek(getOffset(fsConfig.getOffsetsByIndex().get(recordIndex)));
+        reader.seek(getOffset(fsConfig.offsetsByIndex().get(recordIndex)));
         assertTrue(reader.hasNext());
-        assertEquals(fsConfig.getOffsetsByIndex().get(recordIndex), reader.currentOffset().getRecordOffset());
+        assertEquals(fsConfig.offsetsByIndex().get(recordIndex), reader.currentOffset().getRecordOffset());
         checkData(reader.next(), recordIndex);
 
         recordIndex = NUM_RECORDS - 3;
-        reader.seek(getOffset(fsConfig.getOffsetsByIndex().get(recordIndex)));
+        reader.seek(getOffset(fsConfig.offsetsByIndex().get(recordIndex)));
         assertTrue(reader.hasNext());
-        assertEquals(fsConfig.getOffsetsByIndex().get(recordIndex), reader.currentOffset().getRecordOffset());
+        assertEquals(fsConfig.offsetsByIndex().get(recordIndex), reader.currentOffset().getRecordOffset());
         checkData(reader.next(), recordIndex);
 
-        reader.seek(getOffset(fsConfig.getOffsetsByIndex().get(NUM_RECORDS - 1) + 1));
+        reader.seek(getOffset(fsConfig.offsetsByIndex().get(NUM_RECORDS - 1) + 1));
         assertFalse(reader.hasNext());
     }
 
@@ -162,7 +162,7 @@ abstract class FileReaderTestBase {
     @MethodSource("fileSystemConfigProvider")
     public void exceededSeek(FileSystemConfig fsConfig) {
         FileReader reader = fsConfig.getReader();
-        reader.seek(getOffset(fsConfig.getOffsetsByIndex().get(NUM_RECORDS - 1) + 1));
+        reader.seek(getOffset(fsConfig.offsetsByIndex().get(NUM_RECORDS - 1) + 1));
         assertFalse(reader.hasNext());
         assertThrows(NoSuchElementException.class, reader::next);
     }

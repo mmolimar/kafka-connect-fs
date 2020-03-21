@@ -55,7 +55,7 @@ public class AvroFileReaderTest extends FileReaderTestBase {
                 datum.put(FIELD_NAME, String.format("%d_name_%s", index, UUID.randomUUID()));
                 datum.put(FIELD_SURNAME, String.format("%d_surname_%s", index, UUID.randomUUID()));
                 try {
-                    fsConfig.getOffsetsByIndex().put(index, dataFileWriter.sync() - 16L);
+                    fsConfig.offsetsByIndex().put(index, dataFileWriter.sync() - 16L);
                     dataFileWriter.append(datum);
                 } catch (IOException ioe) {
                     throw new RuntimeException(ioe);
