@@ -47,6 +47,27 @@ and marked as optional in the schema all the fields contained.
 
 More information about properties of this file reader :ref:`here<config_options-filereaders-json>`.
 
+CSV
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+CSV file reader using a custom token to distinguish different columns on each line.
+
+It allows to distinguish a header in the files and set the name of their columns
+in the message sent to Kafka. If there is no header, the value of each column will be in
+the field named ``column_N`` (**N** represents the column index) in the message.
+Also, the token delimiter for columns is configurable.
+
+More information about properties of this file reader :ref:`here<config_options-filereaders-csv>`.
+
+TSV
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+TSV file reader using a tab (``\t``) to distinguish different columns on each line.
+
+Its behaviour is the same one for the CSV file reader regarding the header and the column names.
+
+More information about properties of this file reader :ref:`here<config_options-filereaders-tsv>`.
+
 Text
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -58,33 +79,22 @@ customize these field names.
 
 More information about properties of this file reader :ref:`here<config_options-filereaders-text>`.
 
-Delimited text
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Text file reader using a custom token to distinguish different columns on each line.
-
-It allows to distinguish a header in the files and set the name of their columns
-in the message sent to Kafka. If there is no header, the value of each column will be in
-the field named ``column_N`` (**N** represents the column index) in the message.
-Also, the token delimiter for columns is configurable.
-
-More information about properties of this file reader :ref:`here<config_options-filereaders-delimited>`.
-
 Agnostic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Actually, this reader is a wrapper of the readers listing above.
 
 It tries to read any kind of file format using an internal reader based on the file extension,
-applying the proper one (Parquet, Avro, SecuenceFile, Text or Delimited text). In case of no
+applying the proper one (Parquet, Avro, SecuenceFile, CSV, TSV or Text). In case of no
 extension has been matched, the Text file reader will be applied.
 
-Default extensions for each format:
-* Parquet: .parquet
-* Avro: .avro
-* SequenceFile: .seq
-* JSON: .json
-* Delimited text: .tsv, .csv
+Default extensions for each format (configurable):
+* Parquet: ``.parquet``
+* Avro: ``.avro``
+* SequenceFile: ``.seq``
+* JSON: ``.json``
+* CSV: ``.csv``
+* TSV: ``.tsv``
 * Text: any other sort of file extension.
 
 More information about properties of this file reader :ref:`here<config_options-filereaders-agnostic>`.
