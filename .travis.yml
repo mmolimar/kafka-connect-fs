@@ -1,6 +1,6 @@
 language: java
 jdk:
- - oraclejdk8
+ - openjdk8
 sudo: false
 install:
   - mvn test-compile -DskipTests=true -Dmaven.javadoc.skip=true -B -V
