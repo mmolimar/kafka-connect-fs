@@ -276,6 +276,7 @@ To configure custom properties for this reader, the name you must use is ``json`
   Encoding to use for reading a file. If not specified, the reader will use the default encoding.
 
   * Type: string
+  * Default: based on the locale and charset of the underlying operating system.
   * Importance: medium
 
 ``file_reader.json.compression.type``
@@ -416,6 +417,7 @@ To configure custom properties for this reader, the name you must use is ``delim
   Encoding to use for reading a file. If not specified, the reader will use the default encoding.
 
   * Type: string
+  * Default: based on the locale and charset of the underlying operating system.
   * Importance: medium
 
 ``file_reader.delimited.compression.type``
@@ -536,6 +538,7 @@ To configure custom properties for this reader, the name you must use is ``delim
   Encoding to use for reading a file. If not specified, the reader will use the default encoding.
 
   * Type: string
+  * Default: based on the locale and charset of the underlying operating system.
   * Importance: medium
 
 ``file_reader.delimited.compression.type``
@@ -579,6 +582,7 @@ To configure custom properties for this reader, the name you must use is ``text`
   Encoding to use for reading a file. If not specified, the reader will use the default encoding.
 
   * Type: string
+  * Default: based on the locale and charset of the underlying operating system.
   * Importance: medium
 
 ``file_reader.json.compression.type``

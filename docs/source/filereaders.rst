@@ -85,10 +85,11 @@ Agnostic
 Actually, this reader is a wrapper of the readers listing above.
 
 It tries to read any kind of file format using an internal reader based on the file extension,
-applying the proper one (Parquet, Avro, SecuenceFile, CSV, TSV or Text). In case of no
+applying the proper one (Parquet, Avro, SequenceFile, CSV, TSV or Text). In case of no
 extension has been matched, the Text file reader will be applied.
 
 Default extensions for each format (configurable):
+
 * Parquet: ``.parquet``
 * Avro: ``.avro``
 * SequenceFile: ``.seq``
