@@ -38,7 +38,7 @@ public class JsonFileReaderTest extends FileReaderTestBase {
     private static final CompressionType COMPRESSION_TYPE_DEFAULT = CompressionType.NONE;
 
     @Override
-    protected Path createDataFile(FileSystemConfig fsConfig, Object... args) throws IOException {
+    protected Path createDataFile(ReaderFsTestConfig fsConfig, Object... args) throws IOException {
         int numRecords = args.length < 1 ? NUM_RECORDS : (int) args[0];
         boolean recordPerLine = args.length < 2 || (boolean) args[1];
         CompressionType compression = args.length < 3 ? COMPRESSION_TYPE_DEFAULT : (CompressionType) args[2];
@@ -78,7 +78,7 @@ public class JsonFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void emptyFile(FileSystemConfig fsConfig) throws Throwable {
+    public void emptyFile(ReaderFsTestConfig fsConfig) throws Throwable {
         File tmp = File.createTempFile("test-", "." + getFileExtension());
         Path path = new Path(new Path(fsConfig.getFsUri()), tmp.getName());
         fsConfig.getFs().moveFromLocalFile(new Path(tmp.getAbsolutePath()), path);
@@ -88,7 +88,7 @@ public class JsonFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void validFileEncoding(FileSystemConfig fsConfig) throws Throwable {
+    public void validFileEncoding(ReaderFsTestConfig fsConfig) throws Throwable {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(JsonFileReader.FILE_READER_JSON_ENCODING, "Cp1252");
         fsConfig.setReader(getReader(fsConfig.getFs(), fsConfig.getDataFile(), readerConfig));
@@ -97,7 +97,7 @@ public class JsonFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void invalidDeserializationConfig(FileSystemConfig fsConfig) throws Throwable {
+    public void invalidDeserializationConfig(ReaderFsTestConfig fsConfig) throws Throwable {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(JsonFileReader.FILE_READER_JSON_DESERIALIZATION_CONFIGS + "invalid", "false");
         fsConfig.setReader(getReader(fsConfig.getFs(), fsConfig.getDataFile(), readerConfig));
@@ -106,7 +106,7 @@ public class JsonFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void invalidFileEncoding(FileSystemConfig fsConfig) {
+    public void invalidFileEncoding(ReaderFsTestConfig fsConfig) {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(JsonFileReader.FILE_READER_JSON_ENCODING, "invalid_charset");
         assertThrows(UnsupportedCharsetException.class, () -> getReader(fsConfig.getFs(),
@@ -115,7 +115,7 @@ public class JsonFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readDataWithRecordPerLineDisabled(FileSystemConfig fsConfig) throws Throwable {
+    public void readDataWithRecordPerLineDisabled(ReaderFsTestConfig fsConfig) throws Throwable {
         Path file = createDataFile(fsConfig, 1, false);
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(JsonFileReader.FILE_READER_JSON_RECORD_PER_LINE, "false");
@@ -135,7 +135,7 @@ public class JsonFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readDifferentCompressionTypes(FileSystemConfig fsConfig) {
+    public void readDifferentCompressionTypes(ReaderFsTestConfig fsConfig) {
         Arrays.stream(CompressionType.values()).forEach(compressionType -> {
             try {
                 Path file = createDataFile(fsConfig, NUM_RECORDS, true, compressionType);

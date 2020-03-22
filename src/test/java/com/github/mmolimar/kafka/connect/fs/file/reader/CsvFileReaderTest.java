@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class CsvFileReaderTest extends UnivocityFileReaderTest<CsvFileReader> {
 
     @Override
-    protected Path createDataFile(FileSystemConfig fsConfig, Object... args) throws IOException {
+    protected Path createDataFile(ReaderFsTestConfig fsConfig, Object... args) throws IOException {
         boolean header = args.length < 1 || (boolean) args[0];
         CompressionType compression = args.length < 2 ? COMPRESSION_TYPE_DEFAULT : (CompressionType) args[1];
         File txtFile = File.createTempFile("test-", "." + getFileExtension());
@@ -40,7 +40,7 @@ public class CsvFileReaderTest extends UnivocityFileReaderTest<CsvFileReader> {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readAllDataWithMalformedRows(FileSystemConfig fsConfig) throws Throwable {
+    public void readAllDataWithMalformedRows(ReaderFsTestConfig fsConfig) throws Throwable {
         File tmp = File.createTempFile("test-", "." + getFileExtension());
         try (FileWriter writer = new FileWriter(tmp)) {
             writer.append(FIELD_COLUMN1 + "," + FIELD_COLUMN2 + "," + FIELD_COLUMN3 + "," + FIELD_COLUMN4 + "\n");

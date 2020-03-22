@@ -1,35 +1,23 @@
-package com.github.mmolimar.kafka.connect.fs.policy.local;
+package com.github.mmolimar.kafka.connect.fs.policy;
 
 import com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig;
 import com.github.mmolimar.kafka.connect.fs.file.reader.TextFileReader;
-import com.github.mmolimar.kafka.connect.fs.policy.Policy;
-import com.github.mmolimar.kafka.connect.fs.policy.SleepyPolicy;
 import com.github.mmolimar.kafka.connect.fs.util.ReflectionUtils;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.common.config.ConfigException;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class SleepyPolicyTest extends LocalPolicyTestBase {
+public class SleepyPolicyTest extends PolicyTestBase {
 
-    @BeforeAll
-    public static void setUp() throws IOException {
-        directories = new ArrayList<Path>() {{
-            add(new Path(fsUri.toString(), UUID.randomUUID().toString()));
-            add(new Path(fsUri.toString(), UUID.randomUUID().toString()));
-        }};
-        for (Path dir : directories) {
-            fs.mkdirs(dir);
-        }
-
+    @Override
+    protected FsSourceTaskConfig buildSourceTaskConfig(List<Path> directories) {
         Map<String, String> cfg = new HashMap<String, String>() {{
             String[] uris = directories.stream().map(Path::toString)
                     .toArray(String[]::new);
@@ -43,45 +31,49 @@ public class SleepyPolicyTest extends LocalPolicyTestBase {
             put(SleepyPolicy.SLEEPY_POLICY_SLEEP_MS, "100");
             put(SleepyPolicy.SLEEPY_POLICY_MAX_EXECS, "1");
         }};
-        taskConfig = new FsSourceTaskConfig(cfg);
+        return new FsSourceTaskConfig(cfg);
     }
 
-    @Test
-    public void invalidSleepTime() {
-        Map<String, String> originals = taskConfig.originalsStrings();
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void invalidSleepTime(PolicyFsTestConfig fsConfig) {
+        Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
         originals.put(SleepyPolicy.SLEEPY_POLICY_SLEEP_MS, "invalid");
         FsSourceTaskConfig cfg = new FsSourceTaskConfig(originals);
         assertThrows(ConfigException.class, () -> ReflectionUtils.makePolicy(
-                (Class<? extends Policy>) taskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS), cfg));
+                (Class<? extends Policy>) fsConfig.getSourceTaskConfig().getClass(FsSourceTaskConfig.POLICY_CLASS), cfg));
     }
 
-    @Test
-    public void invalidMaxExecs() {
-        Map<String, String> originals = taskConfig.originalsStrings();
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void invalidMaxExecs(PolicyFsTestConfig fsConfig) {
+        Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
         originals.put(SleepyPolicy.SLEEPY_POLICY_MAX_EXECS, "invalid");
         FsSourceTaskConfig cfg = new FsSourceTaskConfig(originals);
         assertThrows(ConfigException.class, () -> ReflectionUtils.makePolicy(
-                (Class<? extends Policy>) taskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS), cfg));
+                (Class<? extends Policy>) fsConfig.getSourceTaskConfig().getClass(FsSourceTaskConfig.POLICY_CLASS), cfg));
     }
 
-    @Test
-    public void invalidSleepFraction() {
-        Map<String, String> originals = taskConfig.originalsStrings();
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void invalidSleepFraction(PolicyFsTestConfig fsConfig) {
+        Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
         originals.put(SleepyPolicy.SLEEPY_POLICY_SLEEP_FRACTION, "invalid");
         FsSourceTaskConfig cfg = new FsSourceTaskConfig(originals);
         assertThrows(ConfigException.class, () -> ReflectionUtils.makePolicy(
-                (Class<? extends Policy>) taskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS), cfg));
+                (Class<? extends Policy>) fsConfig.getSourceTaskConfig().getClass(FsSourceTaskConfig.POLICY_CLASS), cfg));
     }
 
-    @Test
-    public void sleepExecution() throws Throwable {
-        Map<String, String> tConfig = taskConfig.originalsStrings();
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void sleepExecution(PolicyFsTestConfig fsConfig) throws Throwable {
+        Map<String, String> tConfig = fsConfig.getSourceTaskConfig().originalsStrings();
         tConfig.put(SleepyPolicy.SLEEPY_POLICY_SLEEP_MS, "1000");
         tConfig.put(SleepyPolicy.SLEEPY_POLICY_MAX_EXECS, "2");
         FsSourceTaskConfig sleepConfig = new FsSourceTaskConfig(tConfig);
 
-        policy = ReflectionUtils.makePolicy(
-                (Class<? extends Policy>) taskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS), sleepConfig);
+        Policy policy = ReflectionUtils.makePolicy(
+                (Class<? extends Policy>) fsConfig.getSourceTaskConfig().getClass(FsSourceTaskConfig.POLICY_CLASS), sleepConfig);
         assertFalse(policy.hasEnded());
         policy.execute();
         assertFalse(policy.hasEnded());
@@ -89,15 +81,16 @@ public class SleepyPolicyTest extends LocalPolicyTestBase {
         assertTrue(policy.hasEnded());
     }
 
-    @Test
-    public void defaultExecutions() throws Throwable {
-        Map<String, String> tConfig = taskConfig.originalsStrings();
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void defaultExecutions(PolicyFsTestConfig fsConfig) throws Throwable {
+        Map<String, String> tConfig = fsConfig.getSourceTaskConfig().originalsStrings();
         tConfig.put(SleepyPolicy.SLEEPY_POLICY_SLEEP_MS, "1");
         tConfig.remove(SleepyPolicy.SLEEPY_POLICY_MAX_EXECS);
         FsSourceTaskConfig sleepConfig = new FsSourceTaskConfig(tConfig);
 
-        policy = ReflectionUtils.makePolicy(
-                (Class<? extends Policy>) taskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS), sleepConfig);
+        Policy policy = ReflectionUtils.makePolicy(
+                (Class<? extends Policy>) fsConfig.getSourceTaskConfig().getClass(FsSourceTaskConfig.POLICY_CLASS), sleepConfig);
 
         //it never ends
         for (int i = 0; i < 100; i++) {
@@ -107,4 +100,5 @@ public class SleepyPolicyTest extends LocalPolicyTestBase {
         policy.interrupt();
         assertTrue(policy.hasEnded());
     }
+
 }

@@ -50,7 +50,7 @@ public class ParquetFileReaderTest extends FileReaderTestBase {
     }
 
     @Override
-    protected Path createDataFile(FileSystemConfig fsConfig, Object... args) throws IOException {
+    protected Path createDataFile(ReaderFsTestConfig fsConfig, Object... args) throws IOException {
         FileSystem fs = fsConfig.getFs();
         File parquetFile = File.createTempFile("test-", "." + getFileExtension());
 
@@ -77,7 +77,7 @@ public class ParquetFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void emptyFile(FileSystemConfig fsConfig) throws Throwable {
+    public void emptyFile(ReaderFsTestConfig fsConfig) throws Throwable {
         File tmp = File.createTempFile("test-", "." + getFileExtension());
         Path path = new Path(new Path(fsConfig.getFsUri()), tmp.getName());
         fsConfig.getFs().moveFromLocalFile(new Path(tmp.getAbsolutePath()), path);
@@ -86,7 +86,7 @@ public class ParquetFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void invalidFileFormat(FileSystemConfig fsConfig) throws Throwable {
+    public void invalidFileFormat(ReaderFsTestConfig fsConfig) throws Throwable {
         File tmp = File.createTempFile("test-", "." + getFileExtension());
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(tmp))) {
             writer.write("test");
@@ -98,7 +98,7 @@ public class ParquetFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readerWithSchema(FileSystemConfig fsConfig) throws Throwable {
+    public void readerWithSchema(ReaderFsTestConfig fsConfig) throws Throwable {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(ParquetFileReader.FILE_READER_PARQUET_SCHEMA, readerSchema.toString());
         readerConfig.put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_PARQUET, getFileExtension());
@@ -109,7 +109,7 @@ public class ParquetFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readerWithProjection(FileSystemConfig fsConfig) throws Throwable {
+    public void readerWithProjection(ReaderFsTestConfig fsConfig) throws Throwable {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(ParquetFileReader.FILE_READER_PARQUET_PROJECTION, projectionSchema.toString());
         readerConfig.put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_PARQUET, getFileExtension());
@@ -127,7 +127,7 @@ public class ParquetFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readerWithInvalidProjection(FileSystemConfig fsConfig) throws Throwable {
+    public void readerWithInvalidProjection(ReaderFsTestConfig fsConfig) throws Throwable {
         Schema testSchema = SchemaBuilder.record("test_projection").namespace("test.avro")
                 .fields()
                 .name("field1").type("string").noDefault()
@@ -142,7 +142,7 @@ public class ParquetFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readerWithInvalidSchema(FileSystemConfig fsConfig) throws Throwable {
+    public void readerWithInvalidSchema(ReaderFsTestConfig fsConfig) throws Throwable {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(ParquetFileReader.FILE_READER_PARQUET_SCHEMA, Schema.create(Schema.Type.STRING).toString());
         readerConfig.put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_PARQUET, getFileExtension());
@@ -153,7 +153,7 @@ public class ParquetFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readerWithUnparseableSchema(FileSystemConfig fsConfig) {
+    public void readerWithUnparseableSchema(ReaderFsTestConfig fsConfig) {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(ParquetFileReader.FILE_READER_PARQUET_SCHEMA, "invalid schema");
         readerConfig.put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_PARQUET, getFileExtension());

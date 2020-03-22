@@ -28,7 +28,7 @@ public class SequenceFileReaderTest extends FileReaderTestBase {
     private static final String FILE_EXTENSION = "sq";
 
     @Override
-    protected Path createDataFile(FileSystemConfig fsConfig, Object... args) throws IOException {
+    protected Path createDataFile(ReaderFsTestConfig fsConfig, Object... args) throws IOException {
         FileSystem fs = fsConfig.getFs();
         File seqFile = File.createTempFile("test-", "." + getFileExtension());
         try (SequenceFile.Writer writer = SequenceFile.createWriter(fs.getConf(),
@@ -63,7 +63,7 @@ public class SequenceFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void defaultFieldNames(FileSystemConfig fsConfig) throws Throwable {
+    public void defaultFieldNames(ReaderFsTestConfig fsConfig) throws Throwable {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(SequenceFileReader.FILE_READER_SEQUENCE_FIELD_NAME_KEY, null);
         readerConfig.put(SequenceFileReader.FILE_READER_SEQUENCE_FIELD_NAME_VALUE, null);

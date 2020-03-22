@@ -1,33 +1,44 @@
-package com.github.mmolimar.kafka.connect.fs.policy.hdfs;
+package com.github.mmolimar.kafka.connect.fs;
 
-import com.github.mmolimar.kafka.connect.fs.policy.PolicyTestBase;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
-import java.nio.file.Path;
 
-public abstract class HdfsPolicyTestBase extends PolicyTestBase {
+public abstract class AbstractHdfsFsConfig implements FsTestConfig {
+    private MiniDFSCluster cluster;
+    private FileSystem fs;
+    private URI fsUri;
 
-    private static MiniDFSCluster cluster;
-
-    @BeforeAll
-    public static void initFs() throws IOException {
+    @Override
+    public final void initFs() throws IOException {
         Configuration clusterConfig = new Configuration();
-        Path hdfsDir = Files.createTempDirectory("test-");
+        java.nio.file.Path hdfsDir = Files.createTempDirectory("test-");
         clusterConfig.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, hdfsDir.toAbsolutePath().toString());
         cluster = new MiniDFSCluster.Builder(clusterConfig).build();
         fsUri = URI.create("hdfs://localhost:" + cluster.getNameNodePort() + "/");
         fs = FileSystem.newInstance(fsUri, new Configuration());
+        init();
     }
 
-    @AfterAll
-    public static void finishFs() {
+    protected abstract void init() throws IOException;
+
+    @Override
+    public FileSystem getFs() {
+        return fs;
+    }
+
+    @Override
+    public URI getFsUri() {
+        return fsUri;
+    }
+
+    @Override
+    public void close() throws IOException {
+        fs.close();
         cluster.shutdown(true);
     }
 }

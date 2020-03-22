@@ -29,7 +29,7 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void emptyFile(FileSystemConfig fsConfig) throws Throwable {
+    public void emptyFile(ReaderFsTestConfig fsConfig) throws Throwable {
         File tmp = File.createTempFile("test-", "." + getFileExtension());
         Path path = new Path(new Path(fsConfig.getFsUri()), tmp.getName());
         fsConfig.getFs().moveFromLocalFile(new Path(tmp.getAbsolutePath()), path);
@@ -38,7 +38,7 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void invalidFileFormat(FileSystemConfig fsConfig) throws Throwable {
+    public void invalidFileFormat(ReaderFsTestConfig fsConfig) throws Throwable {
         File tmp = File.createTempFile("test-", "." + getFileExtension());
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(tmp))) {
             writer.write("test");
@@ -50,7 +50,7 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void invaliConfigArgs(FileSystemConfig fsConfig) {
+    public void invaliConfigArgs(ReaderFsTestConfig fsConfig) {
         try {
             getReaderClass().getConstructor(FileSystem.class, Path.class, Map.class)
                     .newInstance(fsConfig.getFs(), fsConfig.getDataFile(), new HashMap<String, Object>());
@@ -63,7 +63,7 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readAllDataWithoutHeader(FileSystemConfig fsConfig) throws Throwable {
+    public void readAllDataWithoutHeader(ReaderFsTestConfig fsConfig) throws Throwable {
         Path file = createDataFile(fsConfig, false);
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(T.FILE_READER_DELIMITED_SETTINGS_HEADER, "false");
@@ -82,7 +82,7 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readDifferentCompressionTypes(FileSystemConfig fsConfig) {
+    public void readDifferentCompressionTypes(ReaderFsTestConfig fsConfig) {
         Arrays.stream(CompressionType.values()).forEach(compressionType -> {
             try {
                 Path file = createDataFile(fsConfig, true, compressionType);
@@ -110,7 +110,7 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void seekFileWithoutHeader(FileSystemConfig fsConfig) throws Throwable {
+    public void seekFileWithoutHeader(ReaderFsTestConfig fsConfig) throws Throwable {
         Path file = createDataFile(fsConfig, false);
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(T.FILE_READER_DELIMITED_SETTINGS_HEADER, "false");
@@ -142,7 +142,7 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void validFileEncoding(FileSystemConfig fsConfig) throws Throwable {
+    public void validFileEncoding(ReaderFsTestConfig fsConfig) throws Throwable {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(T.FILE_READER_DELIMITED_SETTINGS_HEADER, "true");
         readerConfig.put(T.FILE_READER_DELIMITED_ENCODING, "Cp1252");
@@ -151,7 +151,7 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void invalidFileEncoding(FileSystemConfig fsConfig) {
+    public void invalidFileEncoding(ReaderFsTestConfig fsConfig) {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(T.FILE_READER_DELIMITED_SETTINGS_HEADER, "true");
         readerConfig.put(T.FILE_READER_DELIMITED_ENCODING, "invalid_charset");

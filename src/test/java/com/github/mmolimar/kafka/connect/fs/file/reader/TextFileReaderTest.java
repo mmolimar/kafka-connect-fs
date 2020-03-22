@@ -25,7 +25,7 @@ public class TextFileReaderTest extends FileReaderTestBase {
     private static final CompressionType COMPRESSION_TYPE_DEFAULT = CompressionType.GZIP;
 
     @Override
-    protected Path createDataFile(FileSystemConfig fsConfig, Object... args) throws IOException {
+    protected Path createDataFile(ReaderFsTestConfig fsConfig, Object... args) throws IOException {
         CompressionType compression = args.length < 1 ? COMPRESSION_TYPE_DEFAULT : (CompressionType) args[0];
         File txtFile = File.createTempFile("test-", "." + FILE_EXTENSION);
         try (PrintWriter writer = new PrintWriter(getOutputStream(txtFile, compression))) {
@@ -42,7 +42,7 @@ public class TextFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void validFileEncoding(FileSystemConfig fsConfig) throws Throwable {
+    public void validFileEncoding(ReaderFsTestConfig fsConfig) throws Throwable {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(TextFileReader.FILE_READER_TEXT_FIELD_NAME_VALUE, FIELD_NAME_VALUE);
         readerConfig.put(TextFileReader.FILE_READER_TEXT_ENCODING, "Cp1252");
@@ -54,7 +54,7 @@ public class TextFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void invalidFileEncoding(FileSystemConfig fsConfig) {
+    public void invalidFileEncoding(ReaderFsTestConfig fsConfig) {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(TextFileReader.FILE_READER_TEXT_FIELD_NAME_VALUE, FIELD_NAME_VALUE);
         readerConfig.put(TextFileReader.FILE_READER_TEXT_ENCODING, "invalid_charset");
@@ -65,7 +65,7 @@ public class TextFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readDataWithRecordPerLineDisabled(FileSystemConfig fsConfig) throws Throwable {
+    public void readDataWithRecordPerLineDisabled(ReaderFsTestConfig fsConfig) throws Throwable {
         Path file = createDataFile(fsConfig, COMPRESSION_TYPE_DEFAULT);
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(TextFileReader.FILE_READER_TEXT_FIELD_NAME_VALUE, FIELD_NAME_VALUE);
@@ -87,7 +87,7 @@ public class TextFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readDifferentCompressionTypes(FileSystemConfig fsConfig) {
+    public void readDifferentCompressionTypes(ReaderFsTestConfig fsConfig) {
         Arrays.stream(CompressionType.values()).forEach(compressionType -> {
             try {
                 Path file = createDataFile(fsConfig, compressionType);

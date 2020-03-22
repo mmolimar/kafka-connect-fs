@@ -1,37 +1,26 @@
-package com.github.mmolimar.kafka.connect.fs.policy.hdfs;
+package com.github.mmolimar.kafka.connect.fs.policy;
 
 import com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig;
 import com.github.mmolimar.kafka.connect.fs.file.reader.TextFileReader;
-import com.github.mmolimar.kafka.connect.fs.policy.CronPolicy;
-import com.github.mmolimar.kafka.connect.fs.policy.Policy;
 import com.github.mmolimar.kafka.connect.fs.util.ReflectionUtils;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.connect.errors.IllegalWorkerStateException;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class CronPolicyTest extends HdfsPolicyTestBase {
+public class CronPolicyTest extends PolicyTestBase {
 
-    @BeforeAll
-    public static void setUp() throws IOException {
-        directories = new ArrayList<Path>() {{
-            add(new Path(fsUri.toString(), UUID.randomUUID().toString()));
-            add(new Path(fsUri.toString(), UUID.randomUUID().toString()));
-        }};
-        for (Path dir : directories) {
-            fs.mkdirs(dir);
-        }
-
+    @Override
+    protected FsSourceTaskConfig buildSourceTaskConfig(List<Path> directories) {
         Map<String, String> cfg = new HashMap<String, String>() {{
             String[] uris = directories.stream().map(Path::toString)
                     .toArray(String[]::new);
@@ -45,40 +34,45 @@ public class CronPolicyTest extends HdfsPolicyTestBase {
             put(CronPolicy.CRON_POLICY_EXPRESSION, "0/2 * * * * ?");
             put(CronPolicy.CRON_POLICY_END_DATE, LocalDateTime.now().plusDays(1).toString());
         }};
-        taskConfig = new FsSourceTaskConfig(cfg);
+        return new FsSourceTaskConfig(cfg);
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
     @Override
-    public void execPolicyAlreadyEnded() throws IOException {
-        policy.execute();
-        policy.interrupt();
-        assertTrue(policy.hasEnded());
-        assertThrows(IllegalWorkerStateException.class, () -> policy.execute());
+    public void execPolicyAlreadyEnded(PolicyFsTestConfig fsConfig) throws IOException {
+        fsConfig.getPolicy().execute();
+        fsConfig.getPolicy().interrupt();
+        assertTrue(fsConfig.getPolicy().hasEnded());
+        assertThrows(IllegalWorkerStateException.class, () -> fsConfig.getPolicy().execute());
     }
 
-    @Test
-    public void invalidCronExpression() {
-        Map<String, String> originals = taskConfig.originalsStrings();
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void invalidCronExpression(PolicyFsTestConfig fsConfig) {
+        Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
         originals.put(CronPolicy.CRON_POLICY_EXPRESSION, "invalid");
         FsSourceTaskConfig cfg = new FsSourceTaskConfig(originals);
         assertThrows(ConfigException.class, () -> ReflectionUtils.makePolicy(
-                (Class<? extends Policy>) taskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS), cfg));
+                (Class<? extends Policy>) fsConfig.getSourceTaskConfig().getClass(FsSourceTaskConfig.POLICY_CLASS), cfg));
     }
 
-    @Test
-    public void invalidEndDate() {
-        Map<String, String> originals = taskConfig.originalsStrings();
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void invalidEndDate(PolicyFsTestConfig fsConfig) {
+        Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
         originals.put(CronPolicy.CRON_POLICY_END_DATE, "invalid");
         FsSourceTaskConfig cfg = new FsSourceTaskConfig(originals);
         assertThrows(ConfigException.class, () -> ReflectionUtils.makePolicy(
-                (Class<? extends Policy>) taskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS), cfg));
+                (Class<? extends Policy>) fsConfig.getSourceTaskConfig().getClass(FsSourceTaskConfig.POLICY_CLASS), cfg));
     }
 
-    @Test
-    public void canBeInterrupted() throws Throwable {
-        policy = ReflectionUtils.makePolicy(
-                (Class<? extends Policy>) taskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS), taskConfig);
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void canBeInterrupted(PolicyFsTestConfig fsConfig) throws Throwable {
+        Policy policy = ReflectionUtils.makePolicy(
+                (Class<? extends Policy>) fsConfig.getSourceTaskConfig().getClass(FsSourceTaskConfig.POLICY_CLASS),
+                fsConfig.getSourceTaskConfig());
 
         for (int i = 0; i < 5; i++) {
             assertFalse(policy.hasEnded());

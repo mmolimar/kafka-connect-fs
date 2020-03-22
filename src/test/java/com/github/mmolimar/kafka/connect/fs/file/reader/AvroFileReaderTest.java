@@ -41,7 +41,7 @@ public class AvroFileReaderTest extends FileReaderTestBase {
     }
 
     @Override
-    protected Path createDataFile(FileSystemConfig fsConfig, Object... args) throws IOException {
+    protected Path createDataFile(ReaderFsTestConfig fsConfig, Object... args) throws IOException {
         File avroFile = File.createTempFile("test-", "." + getFileExtension());
         DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema);
         try (DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<>(writer)) {
@@ -69,7 +69,7 @@ public class AvroFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readerWithSchema(FileSystemConfig fsConfig) throws Throwable {
+    public void readerWithSchema(ReaderFsTestConfig fsConfig) throws Throwable {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(AvroFileReader.FILE_READER_AVRO_SCHEMA, schema.toString());
         FileSystem testFs = FileSystem.newInstance(fsConfig.getFsUri(), new Configuration());
@@ -79,7 +79,7 @@ public class AvroFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readerWithInvalidSchema(FileSystemConfig fsConfig) throws Throwable {
+    public void readerWithInvalidSchema(ReaderFsTestConfig fsConfig) throws Throwable {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(AvroFileReader.FILE_READER_AVRO_SCHEMA, Schema.create(Schema.Type.STRING).toString());
         FileSystem testFs = FileSystem.newInstance(fsConfig.getFsUri(), new Configuration());
@@ -96,7 +96,7 @@ public class AvroFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readerWithUnparseableSchema(FileSystemConfig fsConfig) throws IOException {
+    public void readerWithUnparseableSchema(ReaderFsTestConfig fsConfig) throws IOException {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(AvroFileReader.FILE_READER_AVRO_SCHEMA, "invalid schema");
         FileSystem testFs = FileSystem.newInstance(fsConfig.getFsUri(), new Configuration());

@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 abstract class FileReaderTestBase {
 
-    private static final List<FileSystemConfig> TEST_FILE_SYSTEMS = Arrays.asList(
+    private static final List<ReaderFsTestConfig> TEST_FILE_SYSTEMS = Arrays.asList(
             new LocalFsConfig(),
             new HdfsFsConfig()
     );
@@ -31,21 +31,21 @@ abstract class FileReaderTestBase {
 
     @BeforeAll
     public static void initFs() throws IOException {
-        for (FileSystemConfig fsConfig : TEST_FILE_SYSTEMS) {
+        for (ReaderFsTestConfig fsConfig : TEST_FILE_SYSTEMS) {
             fsConfig.initFs();
         }
     }
 
     @AfterAll
     public static void finishFs() throws IOException {
-        for (FileSystemConfig fsConfig : TEST_FILE_SYSTEMS) {
+        for (ReaderFsTestConfig fsConfig : TEST_FILE_SYSTEMS) {
             fsConfig.close();
         }
     }
 
     @BeforeEach
     public void openReader() throws Throwable {
-        for (FileSystemConfig fsConfig : TEST_FILE_SYSTEMS) {
+        for (ReaderFsTestConfig fsConfig : TEST_FILE_SYSTEMS) {
             fsConfig.setDataFile(createDataFile(fsConfig));
             FileReader reader = ReflectionUtils.makeReader(getReaderClass(), fsConfig.getFs(),
                     fsConfig.getDataFile(), getReaderConfig());
@@ -56,7 +56,7 @@ abstract class FileReaderTestBase {
 
     @AfterEach
     public void closeReader() {
-        for (FileSystemConfig fsConfig : TEST_FILE_SYSTEMS) {
+        for (ReaderFsTestConfig fsConfig : TEST_FILE_SYSTEMS) {
             try {
                 fsConfig.getReader().close();
             } catch (Exception e) {
@@ -71,7 +71,7 @@ abstract class FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void invalidArgs(FileSystemConfig fsConfig) {
+    public void invalidArgs(ReaderFsTestConfig fsConfig) {
         try {
             fsConfig.getReader().getClass().getConstructor(FileSystem.class, Path.class, Map.class)
                     .newInstance(null, null, null);
@@ -84,14 +84,14 @@ abstract class FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void fileDoesNotExist(FileSystemConfig fsConfig) {
+    public void fileDoesNotExist(ReaderFsTestConfig fsConfig) {
         Path path = new Path(new Path(fsConfig.getFsUri()), UUID.randomUUID().toString());
         assertThrows(FileNotFoundException.class, () -> getReader(fsConfig.getFs(), path, getReaderConfig()));
     }
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void emptyFile(FileSystemConfig fsConfig) throws Throwable {
+    public void emptyFile(ReaderFsTestConfig fsConfig) throws Throwable {
         File tmp = File.createTempFile("test-", "." + getFileExtension());
         Path path = new Path(new Path(fsConfig.getFsUri()), tmp.getName());
         fsConfig.getFs().moveFromLocalFile(new Path(tmp.getAbsolutePath()), path);
@@ -100,7 +100,7 @@ abstract class FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void invalidFileFormat(FileSystemConfig fsConfig) throws Throwable {
+    public void invalidFileFormat(ReaderFsTestConfig fsConfig) throws Throwable {
         File tmp = File.createTempFile("test-", "." + getFileExtension());
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(tmp))) {
             writer.write("test");
@@ -112,7 +112,7 @@ abstract class FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readAllData(FileSystemConfig fsConfig) {
+    public void readAllData(ReaderFsTestConfig fsConfig) {
         FileReader reader = fsConfig.getReader();
         assertTrue(reader.hasNext());
 
@@ -127,7 +127,7 @@ abstract class FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void seekFile(FileSystemConfig fsConfig) {
+    public void seekFile(ReaderFsTestConfig fsConfig) {
         FileReader reader = fsConfig.getReader();
         int recordIndex = NUM_RECORDS / 2;
         reader.seek(getOffset(fsConfig.offsetsByIndex().get(recordIndex)));
@@ -153,14 +153,14 @@ abstract class FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void negativeSeek(FileSystemConfig fsConfig) {
+    public void negativeSeek(ReaderFsTestConfig fsConfig) {
         FileReader reader = fsConfig.getReader();
         assertThrows(RuntimeException.class, () -> reader.seek(getOffset(-1)));
     }
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void exceededSeek(FileSystemConfig fsConfig) {
+    public void exceededSeek(ReaderFsTestConfig fsConfig) {
         FileReader reader = fsConfig.getReader();
         reader.seek(getOffset(fsConfig.offsetsByIndex().get(NUM_RECORDS - 1) + 1));
         assertFalse(reader.hasNext());
@@ -169,7 +169,7 @@ abstract class FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readFileAlreadyClosed(FileSystemConfig fsConfig) throws IOException {
+    public void readFileAlreadyClosed(ReaderFsTestConfig fsConfig) throws IOException {
         FileReader reader = fsConfig.getReader();
         reader.close();
         assertThrows(IllegalStateException.class, reader::hasNext);
@@ -202,7 +202,7 @@ abstract class FileReaderTestBase {
 
     protected abstract Class<? extends FileReader> getReaderClass();
 
-    protected abstract Path createDataFile(FileSystemConfig fsConfig, Object... args) throws IOException;
+    protected abstract Path createDataFile(ReaderFsTestConfig fsConfig, Object... args) throws IOException;
 
     protected abstract Map<String, Object> getReaderConfig();
 

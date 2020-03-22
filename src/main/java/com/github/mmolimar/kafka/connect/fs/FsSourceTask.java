@@ -89,7 +89,9 @@ public class FsSourceTask extends SourceTask {
                     .collect(Collectors.toList());
         } catch (IOException | ConnectException e) {
             //when an exception happens executing the policy, the connector continues
-            log.error("Cannot retrieve files to process from FS: " + policy.getURIs() + ". Keep going...", e);
+            log.error("Cannot retrieve files to process from the FS: " + policy.getURIs() + ". " +
+                    "There was an error executing the policy but the task tolerates this and continues. " +
+                    "Error message: " + e.getMessage());
             return Collections.emptyList();
         }
     }

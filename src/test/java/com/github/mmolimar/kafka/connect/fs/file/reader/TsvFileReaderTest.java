@@ -13,7 +13,7 @@ import java.util.stream.IntStream;
 public class TsvFileReaderTest extends UnivocityFileReaderTest<TsvFileReader> {
 
     @Override
-    protected Path createDataFile(FileSystemConfig fsConfig, Object... args) throws IOException {
+    protected Path createDataFile(ReaderFsTestConfig fsConfig, Object... args) throws IOException {
         boolean header = args.length < 1 || (boolean) args[0];
         CompressionType compression = args.length < 2 ? COMPRESSION_TYPE_DEFAULT : (CompressionType) args[1];
         File txtFile = File.createTempFile("test-", "." + getFileExtension());
