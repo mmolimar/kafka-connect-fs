@@ -37,6 +37,7 @@ abstract class UnivocityFileReader<T extends CommonParserSettings<?>>
     protected static final String FILE_READER_DELIMITED_SETTINGS_FORMAT = FILE_READER_DELIMITED_SETTINGS + "format.";
 
     public static final String FILE_READER_DELIMITED_SETTINGS_HEADER = FILE_READER_DELIMITED_SETTINGS + "header";
+    public static final String FILE_READER_DELIMITED_SETTINGS_HEADER_NAMES = FILE_READER_DELIMITED_SETTINGS + "header_names";
     public static final String FILE_READER_DELIMITED_SETTINGS_LINE_SEPARATOR_DETECTION = FILE_READER_DELIMITED_SETTINGS + "line_separator_detection";
     public static final String FILE_READER_DELIMITED_SETTINGS_NULL_VALUE = FILE_READER_DELIMITED_SETTINGS + "null_value";
     public static final String FILE_READER_DELIMITED_SETTINGS_MAX_COLUMNS = FILE_READER_DELIMITED_SETTINGS + "max_columns";
@@ -100,6 +101,8 @@ abstract class UnivocityFileReader<T extends CommonParserSettings<?>>
     private T allSettings(Map<String, String> config) {
         T settings = parserSettings(config);
         settings.setHeaderExtractionEnabled(getBoolean(config, FILE_READER_DELIMITED_SETTINGS_HEADER, false));
+        settings.setHeaders(Optional.ofNullable(config.get(FILE_READER_DELIMITED_SETTINGS_HEADER_NAMES))
+                .map(headers -> headers.split(",")).orElse(null));
         settings.setLineSeparatorDetectionEnabled(getBoolean(config, FILE_READER_DELIMITED_SETTINGS_LINE_SEPARATOR_DETECTION, false));
         settings.setNullValue(config.get(FILE_READER_DELIMITED_SETTINGS_NULL_VALUE));
         settings.setMaxColumns(Integer.parseInt(config.getOrDefault(FILE_READER_DELIMITED_SETTINGS_MAX_COLUMNS, "512")));
