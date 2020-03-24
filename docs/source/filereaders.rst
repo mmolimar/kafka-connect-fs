@@ -57,6 +57,8 @@ in the message sent to Kafka. If there is no header, the value of each column wi
 the field named ``column_N`` (**N** represents the column index) in the message.
 Also, the token delimiter for columns is configurable.
 
+This reader is based on the `Univocity CSV parser <https://www.univocity.com/pages/univocity_parsers_csv.html#working-with-csv>`__.
+
 More information about properties of this file reader :ref:`here<config_options-filereaders-csv>`.
 
 TSV
@@ -66,7 +68,20 @@ TSV file reader using a tab (``\t``) to distinguish different columns on each li
 
 Its behaviour is the same one for the CSV file reader regarding the header and the column names.
 
+This reader is based on the `Univocity TSV parser <https://www.univocity.com/pages/univocity_parsers_tsv.html#working-with-tsv>`__.
+
 More information about properties of this file reader :ref:`here<config_options-filereaders-tsv>`.
+
+FixedWidth
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+FixedWidth is a plain text file reader which distinguishes each column based on the length of each field.
+
+Its behaviour is the same one for the CSV/TSV file readers regarding the header and the column names.
+
+This reader is based on the `Univocity Fixed-Width parser <https://www.univocity.com/pages/univocity_parsers_fixed_width.html#working-with-fixed-width>`__.
+
+More information about properties of this file reader :ref:`here<config_options-filereaders-fixedwidth>`.
 
 Text
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -96,6 +111,7 @@ Default extensions for each format (configurable):
 * JSON: ``.json``
 * CSV: ``.csv``
 * TSV: ``.tsv``
+* FixedWidth: ``.fixed``
 * Text: any other sort of file extension.
 
 More information about properties of this file reader :ref:`here<config_options-filereaders-agnostic>`.

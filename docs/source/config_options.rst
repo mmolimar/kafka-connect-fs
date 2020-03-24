@@ -301,6 +301,13 @@ CSV
 
 To configure custom properties for this reader, the name you must use is ``delimited`` (even though it's for CSV).
 
+``file_reader.delimited.settings.format.delimiter``
+  Field delimiter.
+
+  * Type: string
+  * Default: ``,``
+  * Importance: high
+
 ``file_reader.delimited.settings.header``
   If the file contains header or not.
 
@@ -308,12 +315,12 @@ To configure custom properties for this reader, the name you must use is ``delim
   * Default: ``false``
   * Importance: high
 
-``file_reader.delimited.settings.format.delimiter``
-  Field delimiter.
+``file_reader.delimited.settings.header_names``
+  A comma-separated list of ordered field names to set when reading a file.
 
-  * Type: string
-  * Default: ``,``
-  * Importance: high
+  * Type: string[]
+  * Default: ``null``
+  * Importance: medium
 
 ``file_reader.delimited.settings.null_value``
   Default value for ``null`` values.
@@ -362,14 +369,14 @@ To configure custom properties for this reader, the name you must use is ``delim
 
   * Type: boolean
   * Default: ``false``
-  * Importance: medium
+  * Importance: low
 
 ``file_reader.delimited.settings.delimiter_detection``
   If the reader should detect the delimiter automatically.
 
   * Type: boolean
   * Default: ``false``
-  * Importance: medium
+  * Importance: low
 
 ``file_reader.delimited.settings.ignore_leading_whitespaces``
   Flag to enable/disable skipping leading whitespaces from values.
@@ -449,6 +456,13 @@ To configure custom properties for this reader, the name you must use is ``delim
   * Default: ``false``
   * Importance: high
 
+``file_reader.delimited.settings.header_names``
+  A comma-separated list of ordered field names to set when reading a file.
+
+  * Type: string[]
+  * Default: ``null``
+  * Importance: medium
+
 ``file_reader.delimited.settings.null_value``
   Default value for ``null`` values.
 
@@ -489,18 +503,18 @@ To configure custom properties for this reader, the name you must use is ``delim
 
   * Type: boolean
   * Default: ``false``
-  * Importance: medium
-
-``file_reader.delimited.settings.line_separator_detection``
-  If the reader should detect the line separator automatically.
-
-  * Type: boolean
-  * Default: ``false``
   * Importance: low
 
 ``file_reader.delimited.settings.line_joining``
   Identifies whether or lines ending with the escape character and followed by a line
   separator character should be joined with the following line.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: low
+
+``file_reader.delimited.settings.ignore_leading_whitespaces``
+  Flag to enable/disable skipping leading whitespaces from values.
 
   * Type: boolean
   * Default: ``true``
@@ -532,6 +546,153 @@ To configure custom properties for this reader, the name you must use is ``delim
 
   * Type: char
   * Default: ``t``
+  * Importance: low
+
+``file_reader.delimited.encoding``
+  Encoding to use for reading a file. If not specified, the reader will use the default encoding.
+
+  * Type: string
+  * Default: based on the locale and charset of the underlying operating system.
+  * Importance: medium
+
+``file_reader.delimited.compression.type``
+  Compression type to use when reading a file.
+
+  * Type: enum (available values ``bzip2``, ``gzip`` and ``none``)
+  * Default: ``none``
+  * Importance: medium
+
+``file_reader.delimited.compression.concatenated``
+  Flag to specify if the decompression of the reader will finish at the end of the file or after
+  the first compressed stream.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: low
+
+.. _config_options-filereaders-fixedwidth:
+
+FixedWidth
+--------------------------------------------
+
+To configure custom properties for this reader, the name you must use is ``delimited`` (even though it's for FixedWidth).
+
+``file_reader.delimited.settings.field_lengths``
+  A comma-separated ordered list of integers with the lengths of each field.
+
+  * Type: int[]
+  * Importance: high
+
+``file_reader.delimited.settings.header``
+  If the file contains header or not.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: high
+
+``file_reader.delimited.settings.header_names``
+  A comma-separated list of ordered field names to set when reading a file.
+
+  * Type: string[]
+  * Default: ``null``
+  * Importance: medium
+
+``file_reader.delimited.settings.keep_padding``
+  If the padding character should be kept in each value.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: medium
+
+``file_reader.delimited.settings.padding_for_headers``
+  If headers have the default padding specified.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: medium
+
+``file_reader.delimited.settings.null_value``
+  Default value for ``null`` values.
+
+  * Type: string
+  * Default: ``null``
+  * Importance: medium
+
+``file_reader.delimited.settings.format.ends_on_new_line``
+  Line separator to be used.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: medium
+
+``file_reader.delimited.settings.format.line_separator``
+  Line separator to be used.
+
+  * Type: string
+  * Default: ``\n``
+  * Importance: medium
+
+``file_reader.delimited.settings.format.padding``
+  The padding character used to represent unwritten spaces.
+
+  * Type: char
+  * Default: `` ``
+  * Importance: medium
+
+``file_reader.delimited.settings.max_columns``
+  Default value for ``null`` values.
+
+  * Type: int
+  * Default: ``512``
+  * Importance: low
+
+``file_reader.delimited.settings.max_chars_per_column``
+  Default value for ``null`` values.
+
+  * Type: int
+  * Default: ``4096``
+  * Importance: low
+
+``file_reader.delimited.settings.skip_trailing_chars``
+  If the trailing characters beyond the record's length should be skipped.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: low
+
+``file_reader.delimited.settings.rows_to_skip``
+  Number of rows to skip.
+
+  * Type: long
+  * Default: ``0``
+  * Importance: low
+
+``file_reader.delimited.settings.line_separator_detection``
+  If the reader should detect the line separator automatically.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: low
+
+``file_reader.delimited.settings.ignore_leading_whitespaces``
+  Flag to enable/disable skipping leading whitespaces from values.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: low
+
+``file_reader.delimited.settings.ignore_trailing_whitespaces``
+  Flag to enable/disable skipping trailing whitespaces from values.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: low
+
+``file_reader.delimited.settings.format.comment``
+  Character that represents a line comment at the beginning of a line.
+
+  * Type: char
+  * Default: ``#``
   * Importance: low
 
 ``file_reader.delimited.encoding``
@@ -647,6 +808,13 @@ To configure custom properties for this reader, the name you must use is ``agnos
 
   * Type: string
   * Default: ``tsv``
+  * Importance: medium
+
+``file_reader.agnostic.extensions.fixed``
+ A comma-separated string list with the accepted extensions for fixed-width files.
+
+  * Type: string
+  * Default: ``fixed``
   * Importance: medium
 
 .. note:: The Agnostic reader uses the previous ones as inner readers. So, in case of using this
