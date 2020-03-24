@@ -72,6 +72,27 @@ public class AgnosticFileReaderTest {
     }
 
     @Nested
+    class AgnosticFixedWidthFileReaderTest extends FixedWidthFileReaderTest {
+
+        @Override
+        protected Map<String, Object> getReaderConfig() {
+            Map<String, Object> config = super.getReaderConfig();
+            config.put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_FIXED, getFileExtension());
+            return config;
+        }
+
+        @Override
+        public Class<? extends FileReader> getReaderClass() {
+            return AgnosticFileReader.class;
+        }
+
+        @Override
+        public String getFileExtension() {
+            return FILE_EXTENSION;
+        }
+    }
+
+    @Nested
     class AgnosticJsonFileReaderTest extends JsonFileReaderTest {
 
         @Override

@@ -8,8 +8,9 @@ import org.apache.kafka.connect.data.Struct;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig.FILE_READER_PREFIX;
 
@@ -24,11 +25,12 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_JSON = FILE_READER_AGNOSTIC_EXTENSIONS + "json";
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_CSV = FILE_READER_AGNOSTIC_EXTENSIONS + "csv";
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_TSV = FILE_READER_AGNOSTIC_EXTENSIONS + "tsv";
+    public static final String FILE_READER_AGNOSTIC_EXTENSIONS_FIXED = FILE_READER_AGNOSTIC_EXTENSIONS + "fixed";
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_TEXT = FILE_READER_AGNOSTIC_EXTENSIONS + "text";
 
     private final AbstractFileReader<Object> reader;
-    private List<String> parquetExtensions, avroExtensions, sequenceExtensions,
-            jsonExtensions, csvExtensions, tsvExtensions;
+    private Set<String> parquetExtensions, avroExtensions, sequenceExtensions,
+            jsonExtensions, csvExtensions, tsvExtensions, fixedExtensions;
 
     public AgnosticFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
         super(fs, filePath, new AgnosticAdapter(), config);
@@ -61,6 +63,8 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
             clz = CsvFileReader.class;
         } else if (tsvExtensions.contains(extension)) {
             clz = TsvFileReader.class;
+        } else if (fixedExtensions.contains(extension)) {
+            clz = FixedWidthFileReader.class;
         } else {
             clz = TextFileReader.class;
         }
@@ -70,18 +74,20 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
 
     @Override
     protected void configure(Map<String, String> config) {
-        this.parquetExtensions = Arrays.asList(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_PARQUET, "parquet")
-                .toLowerCase().split(","));
-        this.avroExtensions = Arrays.asList(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_AVRO, "avro")
-                .toLowerCase().split(","));
-        this.sequenceExtensions = Arrays.asList(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_SEQUENCE, "seq")
-                .toLowerCase().split(","));
-        this.jsonExtensions = Arrays.asList(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_JSON, "json")
-                .toLowerCase().split(","));
-        this.csvExtensions = Arrays.asList(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_CSV, "csv")
-                .toLowerCase().split(","));
-        this.tsvExtensions = Arrays.asList(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_TSV, "tsv")
-                .toLowerCase().split(","));
+        this.parquetExtensions = Arrays.stream(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_PARQUET, "parquet")
+                .toLowerCase().split(",")).collect(Collectors.toSet());
+        this.avroExtensions = Arrays.stream(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_AVRO, "avro")
+                .toLowerCase().split(",")).collect(Collectors.toSet());
+        this.sequenceExtensions = Arrays.stream(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_SEQUENCE, "seq")
+                .toLowerCase().split(",")).collect(Collectors.toSet());
+        this.jsonExtensions = Arrays.stream(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_JSON, "json")
+                .toLowerCase().split(",")).collect(Collectors.toSet());
+        this.csvExtensions = Arrays.stream(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_CSV, "csv")
+                .toLowerCase().split(",")).collect(Collectors.toSet());
+        this.tsvExtensions = Arrays.stream(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_TSV, "tsv")
+                .toLowerCase().split(",")).collect(Collectors.toSet());
+        this.fixedExtensions = Arrays.stream(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_FIXED, "fixed")
+                .toLowerCase().split(",")).collect(Collectors.toSet());
     }
 
     @Override
