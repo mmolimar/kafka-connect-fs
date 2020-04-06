@@ -4,6 +4,7 @@ import com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig;
 import com.github.mmolimar.kafka.connect.fs.file.FileMetadata;
 import com.github.mmolimar.kafka.connect.fs.file.reader.FileReader;
 import com.github.mmolimar.kafka.connect.fs.util.ReflectionUtils;
+import com.github.mmolimar.kafka.connect.fs.util.TailCall;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
@@ -134,23 +135,29 @@ abstract class AbstractPolicy implements Policy {
             RemoteIterator<LocatedFileStatus> it = fs.listFiles(fs.getWorkingDirectory(), recursive);
             LocatedFileStatus current = null;
 
-            @Override
-            public boolean hasNext() {
+            private TailCall<Boolean> hasNextRec() {
                 try {
                     if (current == null) {
-                        if (!it.hasNext()) return false;
+                        if (!it.hasNext()) {
+                            return TailCall.done(false);
+                        }
                         current = it.next();
-                        return hasNext();
+                        return this::hasNextRec;
                     }
-                    if (current.isFile() &&
+                    if (current.isFile() &
                             fileRegexp.matcher(current.getPath().getName()).find()) {
-                        return true;
+                        return TailCall.done(true);
                     }
                     current = null;
-                    return hasNext();
+                    return this::hasNextRec;
                 } catch (IOException ioe) {
                     throw new ConnectException(ioe);
                 }
+            }
+
+            @Override
+            public boolean hasNext() {
+                return hasNextRec().invoke();
             }
 
             @Override
