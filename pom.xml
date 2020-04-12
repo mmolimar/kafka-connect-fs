@@ -17,9 +17,9 @@
         <parquet.version>1.11.0</parquet.version>
         <univocity.version>2.8.4</univocity.version>
         <cron-utils.version>9.0.2</cron-utils.version>
-        <junit-jupiter.version>5.6.0</junit-jupiter.version>
+        <junit-jupiter.version>5.6.2</junit-jupiter.version>
         <easymock.version>4.2</easymock.version>
-        <powermock.version>2.0.5</powermock.version>
+        <powermock.version>2.0.7</powermock.version>
         <maven-compiler.source>1.8</maven-compiler.source>
         <maven-compiler.target>${maven-compiler.source}</maven-compiler.target>
         <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
