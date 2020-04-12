@@ -166,6 +166,11 @@ public class AgnosticFileReaderTest {
         }
 
         @Override
+        public void schemaMapper(ReaderFsTestConfig fsConfig) {
+
+        }
+
+        @Override
         public Class<? extends FileReader> getReaderClass() {
             return AgnosticFileReader.class;
         }

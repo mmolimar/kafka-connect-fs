@@ -1,6 +1,5 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader;
 
-import com.github.mmolimar.kafka.connect.fs.file.Offset;
 import org.apache.avro.AvroRuntimeException;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
@@ -165,11 +164,6 @@ public class ParquetFileReaderTest extends FileReaderTestBase {
     @Override
     protected Map<String, Object> getReaderConfig() {
         return new HashMap<>();
-    }
-
-    @Override
-    protected Offset getOffset(long offset) {
-        return new ParquetFileReader.ParquetOffset(offset);
     }
 
     @Override

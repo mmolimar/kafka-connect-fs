@@ -1,6 +1,5 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader;
 
-import com.github.mmolimar.kafka.connect.fs.file.Offset;
 import com.univocity.parsers.common.AbstractParser;
 import com.univocity.parsers.common.CommonParserSettings;
 import com.univocity.parsers.common.ParsingContext;
@@ -55,7 +54,6 @@ abstract class UnivocityFileReader<T extends CommonParserSettings<?>>
 
     private static final String DEFAULT_COLUMN_NAME = "column_";
 
-    private final UnivocityOffset offset;
     private T settings;
     private Schema schema;
     private Charset charset;
@@ -67,7 +65,6 @@ abstract class UnivocityFileReader<T extends CommonParserSettings<?>>
     public UnivocityFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
         super(fs, filePath, new UnivocityToStruct(), config);
 
-        this.offset = new UnivocityOffset(0);
         this.iterator = iterateRecords();
         this.schema = buildSchema(this.iterator, settings.isHeaderExtractionEnabled());
     }
@@ -78,7 +75,7 @@ abstract class UnivocityFileReader<T extends CommonParserSettings<?>>
             Record first = it.next();
             IntStream.range(0, first.getValues().length)
                     .forEach(index -> builder.field(DEFAULT_COLUMN_NAME + ++index, SchemaBuilder.STRING_SCHEMA));
-            seek(new UnivocityOffset(0));
+            seek(0);
         } else if (hasHeader) {
             Optional.ofNullable(it.getContext().headers()).ifPresent(headers -> {
                 IntStream.range(0, headers.length)
@@ -150,7 +147,7 @@ abstract class UnivocityFileReader<T extends CommonParserSettings<?>>
     protected final UnivocityRecord nextRecord() {
         if (!hasNext()) throw new NoSuchElementException("There are no more records in file: " + getFilePath());
 
-        offset.inc();
+        incrementOffset();
         Record record = iterator.next();
         return new UnivocityRecord(schema, record.getValues());
     }
@@ -163,56 +160,30 @@ abstract class UnivocityFileReader<T extends CommonParserSettings<?>>
     }
 
     @Override
-    public final void seek(Offset offset) {
-        if (offset.getRecordOffset() < 0) {
+    public final void seek(long offset) {
+        if (offset < 0) {
             throw new IllegalArgumentException("Record offset must be greater than 0");
         }
         try {
-            if (offset.getRecordOffset() > this.offset.getRecordOffset()) {
+            if (offset > currentOffset()) {
                 iterator.hasNext();
-                iterator.getContext().skipLines(offset.getRecordOffset() - this.offset.getRecordOffset() - 1);
+                iterator.getContext().skipLines(offset - currentOffset() - 1);
                 iterator.next();
             } else {
                 iterator = iterateRecords();
                 iterator.hasNext();
-                iterator.getContext().skipLines(offset.getRecordOffset());
+                iterator.getContext().skipLines(offset);
             }
-            this.offset.setOffset(offset.getRecordOffset());
+            setOffset(offset);
         } catch (IOException ioe) {
             throw new ConnectException("Error seeking file " + getFilePath(), ioe);
         }
     }
 
     @Override
-    public final Offset currentOffset() {
-        return offset;
-    }
-
-    @Override
     public final void close() {
         iterator.getContext().stop();
         closed = true;
-    }
-
-    public static class UnivocityOffset implements Offset {
-        private long offset;
-
-        public UnivocityOffset(long offset) {
-            this.offset = offset;
-        }
-
-        public void setOffset(long offset) {
-            this.offset = offset;
-        }
-
-        void inc() {
-            this.offset++;
-        }
-
-        @Override
-        public long getRecordOffset() {
-            return offset;
-        }
     }
 
     static class UnivocityToStruct implements ReaderAdapter<UnivocityRecord> {

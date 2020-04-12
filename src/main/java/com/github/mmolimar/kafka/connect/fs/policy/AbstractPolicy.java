@@ -186,8 +186,7 @@ abstract class AbstractPolicy implements Policy {
     FileMetadata toMetadata(LocatedFileStatus fileStatus) {
 
         List<FileMetadata.BlockInfo> blocks = Arrays.stream(fileStatus.getBlockLocations())
-                .map(block ->
-                        new FileMetadata.BlockInfo(block.getOffset(), block.getLength(), block.isCorrupt()))
+                .map(block -> new FileMetadata.BlockInfo(block.getOffset(), block.getLength(), block.isCorrupt()))
                 .collect(Collectors.toList());
 
         return new FileMetadata(fileStatus.getPath().toString(), fileStatus.getLen(), blocks);
@@ -195,30 +194,24 @@ abstract class AbstractPolicy implements Policy {
 
     @Override
     public FileReader offer(FileMetadata metadata, OffsetStorageReader offsetStorageReader) {
-        Map<String, Object> partition = new HashMap<String, Object>() {{
-            put("path", metadata.getPath());
-            //TODO manage blocks
-            //put("blocks", metadata.getBlocks().toString());
-        }};
-
         FileSystem current = fileSystems.stream()
                 .filter(fs -> metadata.getPath().startsWith(fs.getWorkingDirectory().toString()))
-                .findFirst().orElse(null);
+                .findFirst()
+                .orElse(null);
 
-        FileReader reader;
         try {
-            reader = ReflectionUtils.makeReader(
+            FileReader reader = ReflectionUtils.makeReader(
                     (Class<? extends FileReader>) conf.getClass(FsSourceTaskConfig.FILE_READER_CLASS),
                     current, new Path(metadata.getPath()), conf.originals());
+            Map<String, Object> partition = Collections.singletonMap("path", metadata.getPath());
+            Map<String, Object> offset = offsetStorageReader.offset(partition);
+            if (offset != null && offset.get("offset") != null) {
+                reader.seek((Long) offset.get("offset"));
+            }
+            return reader;
         } catch (Throwable t) {
             throw new ConnectException("An error has occurred when creating reader for file: " + metadata.getPath(), t);
         }
-
-        Map<String, Object> offset = offsetStorageReader.offset(partition);
-        if (offset != null && offset.get("offset") != null) {
-            reader.seek(() -> (Long) offset.get("offset"));
-        }
-        return reader;
     }
 
     private Iterator<FileMetadata> concat(final Iterator<FileMetadata> it1,

@@ -1,6 +1,5 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader;
 
-import com.github.mmolimar.kafka.connect.fs.file.Offset;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -33,7 +32,6 @@ public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord
     public static final String FILE_READER_TEXT_COMPRESSION_CONCATENATED = FILE_READER_TEXT_COMPRESSION + "concatenated";
     public static final String FILE_READER_TEXT_ENCODING = FILE_READER_TEXT + "encoding";
 
-    private final TextOffset offset;
     private String current;
     private boolean finished = false;
     private LineNumberReader reader;
@@ -45,7 +43,6 @@ public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord
     public TextFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
         super(fs, filePath, new TxtToStruct(), config);
         this.reader = new LineNumberReader(getFileReader(fs.open(filePath)));
-        this.offset = new TextOffset(0);
     }
 
     @Override
@@ -116,60 +113,34 @@ public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord
         }
         String aux = current;
         current = null;
-        offset.inc();
+        incrementOffset();
         return new TextRecord(schema, aux);
     }
 
     @Override
-    public void seek(Offset offset) {
-        if (offset.getRecordOffset() < 0) {
+    public void seek(long offset) {
+        if (offset < 0) {
             throw new IllegalArgumentException("Record offset must be greater than 0");
         }
         try {
             current = null;
-            if (offset.getRecordOffset() < reader.getLineNumber()) {
+            if (offset < reader.getLineNumber()) {
                 finished = false;
                 reader.close();
                 reader = new LineNumberReader(getFileReader(getFs().open(getFilePath())));
             }
-            while (reader.getLineNumber() < offset.getRecordOffset()) {
+            while (reader.getLineNumber() < offset) {
                 reader.readLine();
             }
-            this.offset.setOffset(reader.getLineNumber());
+            setOffset(reader.getLineNumber());
         } catch (IOException ioe) {
             throw new ConnectException("Error seeking file " + getFilePath(), ioe);
         }
     }
 
     @Override
-    public Offset currentOffset() {
-        return offset;
-    }
-
-    @Override
     public void close() throws IOException {
         reader.close();
-    }
-
-    public static class TextOffset implements Offset {
-        private long offset;
-
-        public TextOffset(long offset) {
-            this.offset = offset;
-        }
-
-        public void setOffset(long offset) {
-            this.offset = offset;
-        }
-
-        void inc() {
-            this.offset++;
-        }
-
-        @Override
-        public long getRecordOffset() {
-            return offset;
-        }
     }
 
     static class TxtToStruct implements ReaderAdapter<TextRecord> {

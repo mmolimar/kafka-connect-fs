@@ -1,10 +1,8 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.mmolimar.kafka.connect.fs.file.Offset;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Schema;
@@ -50,7 +48,7 @@ public class JsonFileReader extends AbstractFileReader<JsonFileReader.JsonRecord
             String line = inner.nextRecord().getValue();
             this.schema = extractSchema(mapper.readTree(line));
             //back to the first line
-            inner.seek(() -> 0);
+            inner.seek(0);
         } else {
             this.schema = SchemaBuilder.struct().build();
         }
@@ -91,12 +89,12 @@ public class JsonFileReader extends AbstractFileReader<JsonFileReader.JsonRecord
     }
 
     @Override
-    public void seek(Offset offset) {
+    public void seek(long offset) {
         inner.seek(offset);
     }
 
     @Override
-    public Offset currentOffset() {
+    public long currentOffset() {
         return inner.currentOffset();
     }
 

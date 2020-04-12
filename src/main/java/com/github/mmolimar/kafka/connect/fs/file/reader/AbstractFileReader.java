@@ -17,6 +17,7 @@ public abstract class AbstractFileReader<T> implements FileReader {
     private final FileSystem fs;
     private final Path filePath;
     private final ReaderAdapter<T> adapter;
+    private long offset;
 
     public AbstractFileReader(FileSystem fs, Path filePath, ReaderAdapter<T> adapter, Map<String, Object> config) {
         if (fs == null || filePath == null) {
@@ -25,6 +26,7 @@ public abstract class AbstractFileReader<T> implements FileReader {
         this.fs = fs;
         this.filePath = filePath;
         this.adapter = adapter;
+        this.offset = 0;
 
         configure(readerConfig(config));
     }
@@ -47,8 +49,22 @@ public abstract class AbstractFileReader<T> implements FileReader {
         return filePath;
     }
 
+    @Override
     public final Struct next() {
         return adapter.apply(nextRecord());
+    }
+
+    @Override
+    public long currentOffset() {
+        return offset;
+    }
+
+    protected void incrementOffset() {
+        this.offset++;
+    }
+
+    protected void setOffset(long offset) {
+        this.offset = offset;
     }
 
     protected abstract T nextRecord();

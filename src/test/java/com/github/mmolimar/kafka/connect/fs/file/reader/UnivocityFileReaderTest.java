@@ -1,6 +1,5 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader;
 
-import com.github.mmolimar.kafka.connect.fs.file.Offset;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
@@ -119,24 +118,24 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
         assertTrue(reader.hasNext());
 
         int recordIndex = NUM_RECORDS / 2;
-        reader.seek(getOffset(fsConfig.offsetsByIndex().get(recordIndex)));
+        reader.seek(fsConfig.offsetsByIndex().get(recordIndex));
         assertTrue(reader.hasNext());
-        assertEquals(fsConfig.offsetsByIndex().get(recordIndex), reader.currentOffset().getRecordOffset());
+        assertEquals(fsConfig.offsetsByIndex().get(recordIndex), reader.currentOffset());
         checkData(reader.next(), recordIndex);
 
         recordIndex = 0;
-        reader.seek(getOffset(fsConfig.offsetsByIndex().get(recordIndex)));
+        reader.seek(fsConfig.offsetsByIndex().get(recordIndex));
         assertTrue(reader.hasNext());
-        assertEquals(fsConfig.offsetsByIndex().get(recordIndex), reader.currentOffset().getRecordOffset());
+        assertEquals(fsConfig.offsetsByIndex().get(recordIndex), reader.currentOffset());
         checkData(reader.next(), recordIndex);
 
         recordIndex = NUM_RECORDS - 3;
-        reader.seek(getOffset(fsConfig.offsetsByIndex().get(recordIndex)));
+        reader.seek(fsConfig.offsetsByIndex().get(recordIndex));
         assertTrue(reader.hasNext());
-        assertEquals(fsConfig.offsetsByIndex().get(recordIndex), reader.currentOffset().getRecordOffset());
+        assertEquals(fsConfig.offsetsByIndex().get(recordIndex), reader.currentOffset());
         checkData(reader.next(), recordIndex);
 
-        reader.seek(getOffset(fsConfig.offsetsByIndex().get(NUM_RECORDS - 1) + 1));
+        reader.seek(fsConfig.offsetsByIndex().get(NUM_RECORDS - 1) + 1);
         assertFalse(reader.hasNext());
     }
 
@@ -157,11 +156,6 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
         readerConfig.put(T.FILE_READER_DELIMITED_ENCODING, "invalid_charset");
         assertThrows(UnsupportedCharsetException.class, () -> getReader(fsConfig.getFs(),
                 fsConfig.getDataFile(), readerConfig));
-    }
-
-    @Override
-    protected Offset getOffset(long offset) {
-        return new T.UnivocityOffset(offset);
     }
 
     @Override

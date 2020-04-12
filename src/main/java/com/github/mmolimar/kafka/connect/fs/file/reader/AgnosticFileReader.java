@@ -1,6 +1,5 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader;
 
-import com.github.mmolimar.kafka.connect.fs.file.Offset;
 import com.github.mmolimar.kafka.connect.fs.util.ReflectionUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -96,12 +95,12 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
     }
 
     @Override
-    public void seek(Offset offset) {
+    public void seek(long offset) {
         reader.seek(offset);
     }
 
     @Override
-    public Offset currentOffset() {
+    public long currentOffset() {
         return reader.currentOffset();
     }
 

@@ -1,6 +1,5 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader;
 
-import com.github.mmolimar.kafka.connect.fs.file.Offset;
 import io.confluent.connect.avro.AvroData;
 import org.apache.avro.AvroRuntimeException;
 import org.apache.avro.Schema;
@@ -26,7 +25,6 @@ public class AvroFileReader extends AbstractFileReader<GenericRecord> {
 
     public static final String FILE_READER_AVRO_SCHEMA = FILE_READER_AVRO + "schema";
 
-    private final AvroOffset offset;
     private final DataFileReader<GenericRecord> reader;
     private Schema schema;
 
@@ -39,7 +37,6 @@ public class AvroFileReader extends AbstractFileReader<GenericRecord> {
         } else {
             this.reader = new DataFileReader<>(input, new SpecificDatumReader<>(this.schema));
         }
-        this.offset = new AvroOffset(0);
     }
 
     @Override
@@ -62,7 +59,7 @@ public class AvroFileReader extends AbstractFileReader<GenericRecord> {
     protected GenericRecord nextRecord() {
         try {
             GenericRecord record = reader.next();
-            this.offset.inc();
+            incrementOffset();
 
             return record;
         } catch (AvroRuntimeException are) {
@@ -71,45 +68,19 @@ public class AvroFileReader extends AbstractFileReader<GenericRecord> {
     }
 
     @Override
-    public void seek(Offset offset) {
+    public void seek(long offset) {
         try {
-            reader.sync(offset.getRecordOffset());
-            this.offset.setOffset(reader.previousSync() - 16);
+            reader.sync(offset);
+            setOffset(reader.previousSync() - 16L);
         } catch (IOException ioe) {
             throw new ConnectException("Error seeking file " + getFilePath(), ioe);
         }
     }
 
     @Override
-    public Offset currentOffset() {
-        return offset;
-    }
-
-    @Override
     public void close() throws IOException {
         reader.sync(0);
         reader.close();
-    }
-
-    public static class AvroOffset implements Offset {
-        private long offset;
-
-        public AvroOffset(long offset) {
-            this.offset = offset;
-        }
-
-        public void setOffset(long offset) {
-            this.offset = offset;
-        }
-
-        void inc() {
-            this.offset++;
-        }
-
-        @Override
-        public long getRecordOffset() {
-            return offset;
-        }
     }
 
     static class GenericRecordToStruct implements ReaderAdapter<GenericRecord> {

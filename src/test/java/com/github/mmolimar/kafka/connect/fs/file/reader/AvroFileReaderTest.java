@@ -1,6 +1,5 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader;
 
-import com.github.mmolimar.kafka.connect.fs.file.Offset;
 import org.apache.avro.AvroTypeException;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaParseException;
@@ -101,11 +100,6 @@ public class AvroFileReaderTest extends FileReaderTestBase {
         readerConfig.put(AvroFileReader.FILE_READER_AVRO_SCHEMA, "invalid schema");
         FileSystem testFs = FileSystem.newInstance(fsConfig.getFsUri(), new Configuration());
         assertThrows(SchemaParseException.class, () -> getReader(testFs, fsConfig.getDataFile(), readerConfig));
-    }
-
-    @Override
-    protected Offset getOffset(long offset) {
-        return new AvroFileReader.AvroOffset(offset);
     }
 
     @Override

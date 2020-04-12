@@ -1,7 +1,6 @@
 package com.github.mmolimar.kafka.connect.fs;
 
 import com.github.mmolimar.kafka.connect.fs.file.FileMetadata;
-import com.github.mmolimar.kafka.connect.fs.file.Offset;
 import com.github.mmolimar.kafka.connect.fs.file.reader.FileReader;
 import com.github.mmolimar.kafka.connect.fs.policy.Policy;
 import com.github.mmolimar.kafka.connect.fs.util.ReflectionUtils;
@@ -101,16 +100,10 @@ public class FsSourceTask extends SourceTask {
         return StreamSupport.stream(iterable.spliterator(), false);
     }
 
-    private SourceRecord convert(FileMetadata metadata, Offset offset, Struct struct) {
+    private SourceRecord convert(FileMetadata metadata, long offset, Struct struct) {
         return new SourceRecord(
-                new HashMap<String, Object>() {
-                    {
-                        put("path", metadata.getPath());
-                        //TODO manage blocks
-                        //put("blocks", metadata.getBlocks().toString());
-                    }
-                },
-                Collections.singletonMap("offset", offset.getRecordOffset()),
+                Collections.singletonMap("path", metadata.getPath()),
+                Collections.singletonMap("offset", offset),
                 config.getTopic(),
                 struct.schema(),
                 struct

@@ -1,6 +1,5 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader;
 
-import com.github.mmolimar.kafka.connect.fs.file.Offset;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.*;
@@ -32,7 +31,6 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
 
     private final SequenceFile.Reader reader;
     private final Writable key, value;
-    private final SeqOffset offset;
     private final Schema schema;
     private String keyFieldName, valueFieldName;
     private long recordIndex, hasNextIndex;
@@ -51,7 +49,6 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
                 .field(keyFieldName, getSchema(this.key))
                 .field(valueFieldName, getSchema(this.value))
                 .build();
-        this.offset = new SeqOffset(0);
         this.recordIndex = this.hasNextIndex = -1;
         this.hasNext = false;
         this.closed = false;
@@ -63,7 +60,7 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
         this.valueFieldName = config.getOrDefault(FILE_READER_SEQUENCE_FIELD_NAME_VALUE, FIELD_NAME_VALUE_DEFAULT);
     }
 
-    private Schema getSchema(Writable writable) {
+    Schema getSchema(Writable writable) {
         if (writable instanceof ByteWritable) {
             return SchemaBuilder.INT8_SCHEMA;
         } else if (writable instanceof ShortWritable) {
@@ -75,7 +72,7 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
         } else if (writable instanceof FloatWritable) {
             return SchemaBuilder.FLOAT32_SCHEMA;
         } else if (writable instanceof DoubleWritable) {
-            return SchemaBuilder.INT64_SCHEMA;
+            return SchemaBuilder.FLOAT64_SCHEMA;
         } else if (writable instanceof BytesWritable) {
             return SchemaBuilder.BYTES_SCHEMA;
         } else if (writable instanceof BooleanWritable) {
@@ -90,7 +87,7 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
         try {
             if (hasNextIndex == -1 || hasNextIndex == recordIndex) {
                 hasNextIndex++;
-                offset.inc();
+                incrementOffset();
                 hasNext = reader.next(key, value);
             }
             return hasNext;
@@ -111,50 +108,24 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
     }
 
     @Override
-    public void seek(Offset offset) {
-        if (offset.getRecordOffset() < 0) {
+    public void seek(long offset) {
+        if (offset < 0) {
             throw new IllegalArgumentException("Record offset must be greater than 0");
         }
         try {
-            reader.sync(offset.getRecordOffset());
-            hasNextIndex = recordIndex = offset.getRecordOffset();
+            reader.sync(offset);
+            hasNextIndex = recordIndex = offset;
             hasNext = false;
-            this.offset.setOffset(offset.getRecordOffset() - 1);
+            setOffset(offset - 1);
         } catch (IOException ioe) {
             throw new ConnectException("Error seeking file " + getFilePath(), ioe);
         }
     }
 
     @Override
-    public Offset currentOffset() {
-        return offset;
-    }
-
-    @Override
     public void close() throws IOException {
         closed = true;
         reader.close();
-    }
-
-    public static class SeqOffset implements Offset {
-        private long offset;
-
-        public SeqOffset(long offset) {
-            this.offset = offset;
-        }
-
-        public void setOffset(long offset) {
-            this.offset = offset;
-        }
-
-        void inc() {
-            this.offset++;
-        }
-
-        @Override
-        public long getRecordOffset() {
-            return offset;
-        }
     }
 
     static class SeqToStruct implements ReaderAdapter<SequenceRecord<Writable, Writable>> {
@@ -166,7 +137,7 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
                     .put(record.valueFieldName, toSchemaValue(record.value));
         }
 
-        private Object toSchemaValue(Writable writable) {
+        Object toSchemaValue(Writable writable) {
             if (writable instanceof ByteWritable) {
                 return ((ByteWritable) writable).get();
             } else if (writable instanceof ShortWritable) {

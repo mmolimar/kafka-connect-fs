@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.github.mmolimar.kafka.connect.fs.file.Offset;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -158,11 +157,6 @@ public class JsonFileReaderTest extends FileReaderTestBase {
                 throw new RuntimeException(e);
             }
         });
-    }
-
-    @Override
-    protected Offset getOffset(long offset) {
-        return () -> offset;
     }
 
     @Override

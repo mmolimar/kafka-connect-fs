@@ -1,6 +1,5 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader;
 
-import com.github.mmolimar.kafka.connect.fs.file.Offset;
 import io.confluent.connect.avro.AvroData;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
@@ -29,19 +28,15 @@ public class ParquetFileReader extends AbstractFileReader<GenericRecord> {
     public static final String FILE_READER_PARQUET_SCHEMA = FILE_READER_PARQUET + "schema";
     public static final String FILE_READER_PARQUET_PROJECTION = FILE_READER_PARQUET + "projection";
 
-    private final ParquetOffset offset;
-
     private ParquetReader<GenericRecord> reader;
     private GenericRecord currentRecord;
     private Schema schema;
     private Schema projection;
     private boolean closed;
 
-
     public ParquetFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
         super(fs, filePath, new GenericRecordToStruct(), config);
 
-        this.offset = new ParquetOffset(0);
         this.reader = initReader();
         this.closed = false;
     }
@@ -94,62 +89,36 @@ public class ParquetFileReader extends AbstractFileReader<GenericRecord> {
             record = currentRecord;
         }
         currentRecord = null;
-        offset.inc();
+        incrementOffset();
         return record;
     }
 
     @Override
-    public void seek(Offset offset) {
+    public void seek(long offset) {
         if (closed) {
             throw new ConnectException("Stream is closed!");
         }
-        if (offset.getRecordOffset() < 0) {
+        if (offset < 0) {
             throw new IllegalArgumentException("Record offset must be greater than 0");
         }
-        if (this.offset.getRecordOffset() > offset.getRecordOffset()) {
+        if (currentOffset() > offset) {
             try {
                 this.reader = initReader();
-                this.offset.setOffset(0);
+                setOffset(0);
                 this.closed = false;
             } catch (IOException ioe) {
                 throw new ConnectException("Error initializing parquet reader", ioe);
             }
         }
-        while (hasNext() && this.offset.getRecordOffset() < offset.getRecordOffset()) {
+        while (hasNext() && currentOffset() < offset) {
             nextRecord();
         }
-    }
-
-    @Override
-    public Offset currentOffset() {
-        return offset;
     }
 
     @Override
     public void close() throws IOException {
         this.closed = true;
         reader.close();
-    }
-
-    public static class ParquetOffset implements Offset {
-        private long offset;
-
-        public ParquetOffset(long offset) {
-            this.offset = offset;
-        }
-
-        public void setOffset(long offset) {
-            this.offset = offset;
-        }
-
-        void inc() {
-            this.offset++;
-        }
-
-        @Override
-        public long getRecordOffset() {
-            return offset;
-        }
     }
 
     static class GenericRecordToStruct implements ReaderAdapter<GenericRecord> {
