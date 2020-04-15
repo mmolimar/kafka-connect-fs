@@ -2,6 +2,7 @@ package com.github.mmolimar.kafka.connect.fs.file.reader;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
+import org.apache.kafka.connect.errors.ConnectException;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -41,7 +42,7 @@ public class TextFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void validFileEncoding(ReaderFsTestConfig fsConfig) throws Throwable {
+    public void validFileEncoding(ReaderFsTestConfig fsConfig) {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(TextFileReader.FILE_READER_TEXT_FIELD_NAME_VALUE, FIELD_NAME_VALUE);
         readerConfig.put(TextFileReader.FILE_READER_TEXT_ENCODING, "Cp1252");
@@ -58,13 +59,19 @@ public class TextFileReaderTest extends FileReaderTestBase {
         readerConfig.put(TextFileReader.FILE_READER_TEXT_FIELD_NAME_VALUE, FIELD_NAME_VALUE);
         readerConfig.put(TextFileReader.FILE_READER_TEXT_ENCODING, "invalid_charset");
         readerConfig.put(TextFileReader.FILE_READER_TEXT_COMPRESSION_TYPE, COMPRESSION_TYPE_DEFAULT);
-        assertThrows(UnsupportedCharsetException.class, () -> getReader(fsConfig.getFs(),
-                fsConfig.getDataFile(), readerConfig));
+        assertThrows(ConnectException.class, () -> getReader(fsConfig.getFs(), fsConfig.getDataFile(), readerConfig));
+        assertThrows(UnsupportedCharsetException.class, () -> {
+            try {
+                getReader(fsConfig.getFs(), fsConfig.getDataFile(), readerConfig);
+            } catch (Exception e) {
+                throw e.getCause();
+            }
+        });
     }
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readDataWithRecordPerLineDisabled(ReaderFsTestConfig fsConfig) throws Throwable {
+    public void readDataWithRecordPerLineDisabled(ReaderFsTestConfig fsConfig) throws IOException {
         Path file = createDataFile(fsConfig, COMPRESSION_TYPE_DEFAULT);
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(TextFileReader.FILE_READER_TEXT_FIELD_NAME_VALUE, FIELD_NAME_VALUE);
@@ -105,7 +112,7 @@ public class TextFileReaderTest extends FileReaderTestBase {
                 }
                 reader.close();
                 assertEquals(NUM_RECORDS, recordCount, "The number of records in the file does not match");
-            } catch (Throwable e) {
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         });

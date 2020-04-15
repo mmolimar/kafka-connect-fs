@@ -3,15 +3,19 @@ package com.github.mmolimar.kafka.connect.fs.file.reader;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
+import org.apache.kafka.connect.errors.ConnectException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import static com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig.FILE_READER_PREFIX;
 
 public abstract class AbstractFileReader<T> implements FileReader {
+
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
     private final FileSystem fs;
@@ -21,7 +25,7 @@ public abstract class AbstractFileReader<T> implements FileReader {
 
     public AbstractFileReader(FileSystem fs, Path filePath, ReaderAdapter<T> adapter, Map<String, Object> config) {
         if (fs == null || filePath == null) {
-            throw new IllegalArgumentException("fileSystem and filePath are required");
+            throw new IllegalArgumentException("File system and file path are required.");
         }
         this.fs = fs;
         this.filePath = filePath;
@@ -29,6 +33,7 @@ public abstract class AbstractFileReader<T> implements FileReader {
         this.offset = 0;
 
         configure(readerConfig(config));
+        log.trace("Initialized file reader {} for file {}", getClass(), filePath);
     }
 
     protected final Map<String, String> readerConfig(Map<String, Object> config) {
@@ -51,7 +56,16 @@ public abstract class AbstractFileReader<T> implements FileReader {
 
     @Override
     public final Struct next() {
-        return adapter.apply(nextRecord());
+        if (!hasNext()) {
+            throw new NoSuchElementException("There are no more records in file: " + getFilePath());
+        }
+        try {
+            return adapter.apply(nextRecord());
+        } catch (ConnectException ce) {
+            throw ce;
+        } catch (Exception e) {
+            throw new ConnectException("Error processing next record in file: " + getFilePath(), e);
+        }
     }
 
     @Override
@@ -67,9 +81,50 @@ public abstract class AbstractFileReader<T> implements FileReader {
         this.offset = offset;
     }
 
-    protected abstract T nextRecord();
+    @Override
+    public final void seek(long offset) {
+        if (offset < 0) {
+            throw new IllegalArgumentException("Record offset must be greater than 0.");
+        }
+        checkClosed();
+        try {
+            log.debug("Seeking file {} to offset {}.", filePath, offset);
+            seekFile(offset);
+        } catch (ConnectException ce) {
+            throw ce;
+        } catch (IOException ioe) {
+            throw new ConnectException("Error seeking file: " + getFilePath(), ioe);
+        }
+    }
+
+    @Override
+    public final boolean hasNext() {
+        checkClosed();
+        try {
+            return hasNextRecord();
+        } catch (ConnectException ce) {
+            throw ce;
+        } catch (Exception e) {
+            throw new ConnectException("Error when checking if the reader has more records.", e);
+        }
+    }
 
     protected ReaderAdapter<T> getAdapter() {
         return adapter;
     }
+
+    private void checkClosed() {
+        if (isClosed()) {
+            throw new ConnectException("File stream is closed!");
+        }
+    }
+
+    protected abstract T nextRecord() throws IOException;
+
+    protected abstract boolean hasNextRecord() throws IOException;
+
+    protected abstract void seekFile(long offset) throws IOException;
+
+    protected abstract boolean isClosed();
+
 }

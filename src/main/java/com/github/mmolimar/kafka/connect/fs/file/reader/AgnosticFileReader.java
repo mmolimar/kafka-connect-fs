@@ -4,6 +4,7 @@ import com.github.mmolimar.kafka.connect.fs.util.ReflectionUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
+import org.apache.kafka.connect.errors.ConnectException;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -31,20 +32,17 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
     private Set<String> parquetExtensions, avroExtensions, sequenceExtensions,
             jsonExtensions, csvExtensions, tsvExtensions, fixedExtensions;
 
-    public AgnosticFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
+    public AgnosticFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws Exception {
         super(fs, filePath, new AgnosticAdapter(), config);
 
         try {
             reader = readerByExtension(fs, filePath, config);
-        } catch (RuntimeException | IOException e) {
-            throw e;
-        } catch (Throwable t) {
-            throw new IOException("An error has occurred when creating a concrete reader", t);
+        } catch (ConnectException ce) {
+            throw (Exception) ce.getCause();
         }
     }
 
-    private AbstractFileReader<Object> readerByExtension(FileSystem fs, Path filePath, Map<String, Object> config)
-            throws Throwable {
+    private AbstractFileReader<Object> readerByExtension(FileSystem fs, Path filePath, Map<String, Object> config) {
         int index = filePath.getName().lastIndexOf('.');
         String extension = index == -1 || index == filePath.getName().length() - 1 ? "" :
                 filePath.getName().substring(index + 1).toLowerCase();
@@ -90,12 +88,12 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
     }
 
     @Override
-    public boolean hasNext() {
+    public boolean hasNextRecord() {
         return reader.hasNext();
     }
 
     @Override
-    public void seek(long offset) {
+    public void seekFile(long offset) {
         reader.seek(offset);
     }
 
@@ -110,7 +108,12 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
     }
 
     @Override
-    protected AgnosticRecord nextRecord() {
+    public boolean isClosed() {
+        return reader.isClosed();
+    }
+
+    @Override
+    protected AgnosticRecord nextRecord() throws IOException {
         return new AgnosticRecord(reader.getAdapter(), reader.nextRecord());
     }
 

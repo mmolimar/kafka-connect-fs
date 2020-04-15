@@ -88,7 +88,6 @@ abstract class AbstractPolicy implements Policy {
                 throw new IllegalArgumentException("Cannot convert dynamic URI: " + matcher.group(1), e);
             }
         }
-
         return converted;
     }
 
@@ -104,7 +103,7 @@ abstract class AbstractPolicy implements Policy {
     @Override
     public final Iterator<FileMetadata> execute() throws IOException {
         if (hasEnded()) {
-            throw new IllegalWorkerStateException("Policy has ended. Cannot be retried");
+            throw new IllegalWorkerStateException("Policy has ended. Cannot be retried.");
         }
         preCheck();
 
@@ -163,7 +162,7 @@ abstract class AbstractPolicy implements Policy {
             @Override
             public FileMetadata next() {
                 if (!hasNext() && current == null) {
-                    throw new NoSuchElementException("There are no more items");
+                    throw new NoSuchElementException("There are no more items.");
                 }
                 FileMetadata metadata = toMetadata(current);
                 current = null;
@@ -198,7 +197,6 @@ abstract class AbstractPolicy implements Policy {
                 .filter(fs -> metadata.getPath().startsWith(fs.getWorkingDirectory().toString()))
                 .findFirst()
                 .orElse(null);
-
         try {
             FileReader reader = ReflectionUtils.makeReader(
                     (Class<? extends FileReader>) conf.getClass(FsSourceTaskConfig.FILE_READER_CLASS),
@@ -209,8 +207,8 @@ abstract class AbstractPolicy implements Policy {
                 reader.seek((Long) offset.get("offset"));
             }
             return reader;
-        } catch (Throwable t) {
-            throw new ConnectException("An error has occurred when creating reader for file: " + metadata.getPath(), t);
+        } catch (Exception e) {
+            throw new ConnectException("An error has occurred when creating reader for file: " + metadata.getPath(), e);
         }
     }
 

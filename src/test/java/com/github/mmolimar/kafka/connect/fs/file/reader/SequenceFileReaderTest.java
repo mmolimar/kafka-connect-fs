@@ -62,7 +62,7 @@ public class SequenceFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void defaultFieldNames(ReaderFsTestConfig fsConfig) throws Throwable {
+    public void defaultFieldNames(ReaderFsTestConfig fsConfig) {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(SequenceFileReader.FILE_READER_SEQUENCE_FIELD_NAME_KEY, null);
         readerConfig.put(SequenceFileReader.FILE_READER_SEQUENCE_FIELD_NAME_VALUE, null);

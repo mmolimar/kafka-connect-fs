@@ -1,7 +1,6 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader;
 
 import io.confluent.connect.avro.AvroData;
-import org.apache.avro.AvroRuntimeException;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.generic.GenericRecord;
@@ -11,7 +10,6 @@ import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
-import org.apache.kafka.connect.errors.ConnectException;
 
 import java.io.IOException;
 import java.util.Map;
@@ -27,6 +25,7 @@ public class AvroFileReader extends AbstractFileReader<GenericRecord> {
 
     private final DataFileReader<GenericRecord> reader;
     private Schema schema;
+    private boolean closed;
 
     public AvroFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
         super(fs, filePath, new GenericRecordToStruct(), config);
@@ -37,6 +36,7 @@ public class AvroFileReader extends AbstractFileReader<GenericRecord> {
         } else {
             this.reader = new DataFileReader<>(input, new SpecificDatumReader<>(this.schema));
         }
+        this.closed = false;
     }
 
     @Override
@@ -47,40 +47,34 @@ public class AvroFileReader extends AbstractFileReader<GenericRecord> {
     }
 
     @Override
-    public boolean hasNext() {
-        try {
-            return reader.hasNext();
-        } catch (AvroRuntimeException are) {
-            throw new IllegalStateException(are);
-        }
+    public boolean hasNextRecord() {
+        return reader.hasNext();
     }
 
     @Override
     protected GenericRecord nextRecord() {
-        try {
-            GenericRecord record = reader.next();
-            incrementOffset();
+        GenericRecord record = reader.next();
+        incrementOffset();
 
-            return record;
-        } catch (AvroRuntimeException are) {
-            throw new IllegalStateException(are);
-        }
+        return record;
     }
 
     @Override
-    public void seek(long offset) {
-        try {
-            reader.sync(offset);
-            setOffset(reader.previousSync() - 16L);
-        } catch (IOException ioe) {
-            throw new ConnectException("Error seeking file " + getFilePath(), ioe);
-        }
+    public void seekFile(long offset) throws IOException {
+        reader.sync(offset);
+        setOffset(reader.previousSync() - 16L);
     }
 
     @Override
     public void close() throws IOException {
+        closed = true;
         reader.sync(0);
         reader.close();
+    }
+
+    @Override
+    public boolean isClosed() {
+        return closed;
     }
 
     static class GenericRecordToStruct implements ReaderAdapter<GenericRecord> {

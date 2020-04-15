@@ -7,13 +7,11 @@ import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
-import org.apache.kafka.connect.errors.ConnectException;
 
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import static com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig.FILE_READER_PREFIX;
@@ -39,10 +37,12 @@ public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord
     private Charset charset;
     private CompressionType compression;
     private boolean recordPerLine;
+    private boolean closed;
 
     public TextFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
         super(fs, filePath, new TxtToStruct(), config);
         this.reader = new LineNumberReader(getFileReader(fs.open(filePath)));
+        this.closed = false;
     }
 
     @Override
@@ -78,39 +78,32 @@ public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord
     }
 
     @Override
-    public boolean hasNext() {
+    public boolean hasNextRecord() throws IOException {
         if (current != null) {
             return true;
         } else if (finished) {
             return false;
         } else {
-            try {
-                if (!recordPerLine) {
-                    List<String> lines = new BufferedReader(reader).lines().collect(Collectors.toList());
-                    current = String.join("\n", lines);
+            if (!recordPerLine) {
+                List<String> lines = new BufferedReader(reader).lines().collect(Collectors.toList());
+                current = String.join("\n", lines);
+                finished = true;
+                return true;
+            }
+            for (; ; ) {
+                String line = reader.readLine();
+                if (line == null) {
                     finished = true;
-                    return true;
+                    return false;
                 }
-                for (; ; ) {
-                    String line = reader.readLine();
-                    if (line == null) {
-                        finished = true;
-                        return false;
-                    }
-                    current = line;
-                    return true;
-                }
-            } catch (IOException ioe) {
-                throw new IllegalStateException(ioe);
+                current = line;
+                return true;
             }
         }
     }
 
     @Override
     protected TextRecord nextRecord() {
-        if (!hasNext()) {
-            throw new NoSuchElementException("There are no more records in file: " + getFilePath());
-        }
         String aux = current;
         current = null;
         incrementOffset();
@@ -118,29 +111,28 @@ public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord
     }
 
     @Override
-    public void seek(long offset) {
-        if (offset < 0) {
-            throw new IllegalArgumentException("Record offset must be greater than 0");
+    public void seekFile(long offset) throws IOException {
+        current = null;
+        if (offset < reader.getLineNumber()) {
+            finished = false;
+            reader.close();
+            reader = new LineNumberReader(getFileReader(getFs().open(getFilePath())));
         }
-        try {
-            current = null;
-            if (offset < reader.getLineNumber()) {
-                finished = false;
-                reader.close();
-                reader = new LineNumberReader(getFileReader(getFs().open(getFilePath())));
-            }
-            while (reader.getLineNumber() < offset) {
-                reader.readLine();
-            }
-            setOffset(reader.getLineNumber());
-        } catch (IOException ioe) {
-            throw new ConnectException("Error seeking file " + getFilePath(), ioe);
+        while (reader.getLineNumber() < offset) {
+            reader.readLine();
         }
+        setOffset(reader.getLineNumber());
     }
 
     @Override
     public void close() throws IOException {
+        closed = true;
         reader.close();
+    }
+
+    @Override
+    public boolean isClosed() {
+        return closed;
     }
 
     static class TxtToStruct implements ReaderAdapter<TextRecord> {

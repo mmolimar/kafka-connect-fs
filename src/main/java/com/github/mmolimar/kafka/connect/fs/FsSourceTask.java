@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public class FsSourceTask extends SourceTask {
+
     private static final Logger log = LoggerFactory.getLogger(FsSourceTask.class);
 
     private final AtomicBoolean stop = new AtomicBoolean(false);
@@ -34,15 +35,16 @@ public class FsSourceTask extends SourceTask {
 
     @Override
     public void start(Map<String, String> properties) {
+        log.info("Starting FS source task...");
         try {
             config = new FsSourceTaskConfig(properties);
             if (config.getClass(FsSourceTaskConfig.POLICY_CLASS).isAssignableFrom(Policy.class)) {
                 throw new ConfigException("Policy class " +
-                        config.getClass(FsSourceTaskConfig.POLICY_CLASS) + "is not a sublass of " + Policy.class);
+                        config.getClass(FsSourceTaskConfig.POLICY_CLASS) + "is not a subclass of " + Policy.class);
             }
             if (config.getClass(FsSourceTaskConfig.FILE_READER_CLASS).isAssignableFrom(FileReader.class)) {
                 throw new ConfigException("FileReader class " +
-                        config.getClass(FsSourceTaskConfig.FILE_READER_CLASS) + "is not a sublass of " + FileReader.class);
+                        config.getClass(FsSourceTaskConfig.FILE_READER_CLASS) + "is not a subclass of " + FileReader.class);
             }
 
             Class<Policy> policyClass = (Class<Policy>) Class.forName(properties.get(FsSourceTaskConfig.POLICY_CLASS));
@@ -51,10 +53,11 @@ public class FsSourceTask extends SourceTask {
         } catch (ConfigException ce) {
             log.error("Couldn't start FsSourceTask:", ce);
             throw new ConnectException("Couldn't start FsSourceTask due to configuration error", ce);
-        } catch (Throwable t) {
-            log.error("Couldn't start FsSourceConnector:", t);
-            throw new ConnectException("A problem has occurred reading configuration:" + t.getMessage());
+        } catch (Exception e) {
+            log.error("Couldn't start FsSourceConnector:", e);
+            throw new ConnectException("A problem has occurred reading configuration: " + e.getMessage());
         }
+        log.info("FS source task started with policy {}", policy.getClass().getName());
     }
 
     @Override
@@ -62,36 +65,35 @@ public class FsSourceTask extends SourceTask {
         while (!stop.get() && policy != null && !policy.hasEnded()) {
             log.trace("Polling for new data");
 
-            final List<SourceRecord> results = new ArrayList<>();
-            List<FileMetadata> files = filesToProcess();
-            files.forEach(metadata -> {
+            return filesToProcess().map(metadata -> {
+                List<SourceRecord> records = new ArrayList<>();
                 try (FileReader reader = policy.offer(metadata, context.offsetStorageReader())) {
                     log.info("Processing records for file {}", metadata);
                     while (reader.hasNext()) {
-                        results.add(convert(metadata, reader.currentOffset(), reader.next()));
+                        records.add(convert(metadata, reader.currentOffset(), reader.next()));
                     }
                 } catch (ConnectException | IOException e) {
                     //when an exception happens reading a file, the connector continues
                     log.error("Error reading file from FS: " + metadata.getPath() + ". Keep going...", e);
                 }
-            });
-            return results;
+                return records;
+            }).flatMap(Collection::stream).collect(Collectors.toList());
         }
-
         return null;
     }
 
-    private List<FileMetadata> filesToProcess() {
+    private Stream<FileMetadata> filesToProcess() {
         try {
             return asStream(policy.execute())
                     .filter(metadata -> metadata.getLen() > 0)
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toList())
+                    .stream();
         } catch (IOException | ConnectException e) {
             //when an exception happens executing the policy, the connector continues
-            log.error("Cannot retrieve files to process from the FS: " + policy.getURIs() + ". " +
+            log.error("Cannot retrieve files to process from the FS: {}. " +
                     "There was an error executing the policy but the task tolerates this and continues. " +
-                    "Error message: " + e.getMessage());
-            return Collections.emptyList();
+                    e.getMessage(), policy.getURIs(), e);
+            return Stream.empty();
         }
     }
 
@@ -112,6 +114,7 @@ public class FsSourceTask extends SourceTask {
 
     @Override
     public void stop() {
+        log.info("Stopping FS source task.");
         stop.set(true);
         if (policy != null) {
             policy.interrupt();

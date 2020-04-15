@@ -6,6 +6,7 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
+import org.apache.kafka.connect.errors.ConnectException;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -43,7 +44,7 @@ abstract class FileReaderTestBase {
     }
 
     @BeforeEach
-    public void openReader() throws Throwable {
+    public void openReader() throws IOException {
         for (ReaderFsTestConfig fsConfig : TEST_FILE_SYSTEMS) {
             fsConfig.setDataFile(createDataFile(fsConfig));
             FileReader reader = ReflectionUtils.makeReader(getReaderClass(), fsConfig.getFs(),
@@ -85,28 +86,49 @@ abstract class FileReaderTestBase {
     @MethodSource("fileSystemConfigProvider")
     public void fileDoesNotExist(ReaderFsTestConfig fsConfig) {
         Path path = new Path(new Path(fsConfig.getFsUri()), UUID.randomUUID().toString());
-        assertThrows(FileNotFoundException.class, () -> getReader(fsConfig.getFs(), path, getReaderConfig()));
+        assertThrows(ConnectException.class, () -> getReader(fsConfig.getFs(), path, getReaderConfig()));
+        assertThrows(FileNotFoundException.class, () -> {
+            try {
+                getReader(fsConfig.getFs(), path, getReaderConfig());
+            } catch (Exception e) {
+                throw e.getCause();
+            }
+        });
     }
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void emptyFile(ReaderFsTestConfig fsConfig) throws Throwable {
+    public void emptyFile(ReaderFsTestConfig fsConfig) throws IOException {
         File tmp = File.createTempFile("test-", "." + getFileExtension());
         Path path = new Path(new Path(fsConfig.getFsUri()), tmp.getName());
         fsConfig.getFs().moveFromLocalFile(new Path(tmp.getAbsolutePath()), path);
-        assertThrows(IOException.class, () -> getReader(fsConfig.getFs(), path, getReaderConfig()));
+        assertThrows(ConnectException.class, () -> getReader(fsConfig.getFs(), path, getReaderConfig()));
+        assertThrows(IOException.class, () -> {
+            try {
+                getReader(fsConfig.getFs(), path, getReaderConfig());
+            } catch (Exception e) {
+                throw e.getCause();
+            }
+        });
     }
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void invalidFileFormat(ReaderFsTestConfig fsConfig) throws Throwable {
+    public void invalidFileFormat(ReaderFsTestConfig fsConfig) throws IOException {
         File tmp = File.createTempFile("test-", "." + getFileExtension());
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(tmp))) {
             writer.write("test");
         }
         Path path = new Path(new Path(fsConfig.getFsUri()), tmp.getName());
         fsConfig.getFs().moveFromLocalFile(new Path(tmp.getAbsolutePath()), path);
-        assertThrows(IOException.class, () -> getReader(fsConfig.getFs(), path, getReaderConfig()));
+        assertThrows(ConnectException.class, () -> getReader(fsConfig.getFs(), path, getReaderConfig()));
+        assertThrows(IOException.class, () -> {
+            try {
+                getReader(fsConfig.getFs(), path, getReaderConfig());
+            } catch (Exception e) {
+                throw e.getCause();
+            }
+        });
     }
 
     @ParameterizedTest
@@ -154,7 +176,7 @@ abstract class FileReaderTestBase {
     @MethodSource("fileSystemConfigProvider")
     public void negativeSeek(ReaderFsTestConfig fsConfig) {
         FileReader reader = fsConfig.getReader();
-        assertThrows(RuntimeException.class, () -> reader.seek(-1));
+        assertThrows(IllegalArgumentException.class, () -> reader.seek(-1));
     }
 
     @ParameterizedTest
@@ -171,11 +193,12 @@ abstract class FileReaderTestBase {
     public void readFileAlreadyClosed(ReaderFsTestConfig fsConfig) throws IOException {
         FileReader reader = fsConfig.getReader();
         reader.close();
-        assertThrows(IllegalStateException.class, reader::hasNext);
-        assertThrows(IllegalStateException.class, reader::next);
+        assertThrows(ConnectException.class, reader::hasNext);
+        assertThrows(ConnectException.class, reader::next);
+        assertThrows(ConnectException.class, () -> reader.seek(1));
     }
 
-    protected final FileReader getReader(FileSystem fs, Path path, Map<String, Object> config) throws Throwable {
+    protected final FileReader getReader(FileSystem fs, Path path, Map<String, Object> config) {
         return ReflectionUtils.makeReader(getReaderClass(), fs, path, config);
     }
 

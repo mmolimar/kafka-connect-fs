@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
+import org.apache.kafka.connect.errors.ConnectException;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -77,7 +78,7 @@ public class JsonFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void emptyFile(ReaderFsTestConfig fsConfig) throws Throwable {
+    public void emptyFile(ReaderFsTestConfig fsConfig) throws IOException {
         File tmp = File.createTempFile("test-", "." + getFileExtension());
         Path path = new Path(new Path(fsConfig.getFsUri()), tmp.getName());
         fsConfig.getFs().moveFromLocalFile(new Path(tmp.getAbsolutePath()), path);
@@ -87,7 +88,7 @@ public class JsonFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void validFileEncoding(ReaderFsTestConfig fsConfig) throws Throwable {
+    public void validFileEncoding(ReaderFsTestConfig fsConfig) {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(JsonFileReader.FILE_READER_JSON_ENCODING, "Cp1252");
         fsConfig.setReader(getReader(fsConfig.getFs(), fsConfig.getDataFile(), readerConfig));
@@ -96,7 +97,7 @@ public class JsonFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void invalidDeserializationConfig(ReaderFsTestConfig fsConfig) throws Throwable {
+    public void invalidDeserializationConfig(ReaderFsTestConfig fsConfig) {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(JsonFileReader.FILE_READER_JSON_DESERIALIZATION_CONFIGS + "invalid", "false");
         fsConfig.setReader(getReader(fsConfig.getFs(), fsConfig.getDataFile(), readerConfig));
@@ -108,13 +109,19 @@ public class JsonFileReaderTest extends FileReaderTestBase {
     public void invalidFileEncoding(ReaderFsTestConfig fsConfig) {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(JsonFileReader.FILE_READER_JSON_ENCODING, "invalid_charset");
-        assertThrows(UnsupportedCharsetException.class, () -> getReader(fsConfig.getFs(),
-                fsConfig.getDataFile(), readerConfig));
+        assertThrows(ConnectException.class, () -> getReader(fsConfig.getFs(), fsConfig.getDataFile(), readerConfig));
+        assertThrows(UnsupportedCharsetException.class, () -> {
+            try {
+                getReader(fsConfig.getFs(), fsConfig.getDataFile(), readerConfig);
+            } catch (Exception e) {
+                throw e.getCause();
+            }
+        });
     }
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readDataWithRecordPerLineDisabled(ReaderFsTestConfig fsConfig) throws Throwable {
+    public void readDataWithRecordPerLineDisabled(ReaderFsTestConfig fsConfig) throws IOException {
         Path file = createDataFile(fsConfig, 1, false);
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(JsonFileReader.FILE_READER_JSON_RECORD_PER_LINE, "false");
@@ -153,7 +160,7 @@ public class JsonFileReaderTest extends FileReaderTestBase {
                 }
                 reader.close();
                 assertEquals(NUM_RECORDS, recordCount, "The number of records in the file does not match");
-            } catch (Throwable e) {
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         });

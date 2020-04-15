@@ -32,11 +32,9 @@ public class FsSourceConnector extends SourceConnector {
         try {
             config = new FsSourceConnectorConfig(properties);
         } catch (ConfigException ce) {
-            log.error("Couldn't start FsSourceConnector:", ce);
             throw new ConnectException("Couldn't start FsSourceConnector due to configuration error.", ce);
         } catch (Exception ce) {
-            log.error("Couldn't start FsSourceConnector:", ce);
-            throw new ConnectException("An error has occurred when starting FsSourceConnector" + ce);
+            throw new ConnectException("An error has occurred when starting FsSourceConnector." + ce);
         }
     }
 
@@ -48,9 +46,9 @@ public class FsSourceConnector extends SourceConnector {
     @Override
     public List<Map<String, String>> taskConfigs(int maxTasks) {
         if (config == null) {
-            throw new ConnectException("Connector config has not been initialized");
+            throw new ConnectException("Connector config has not been initialized.");
         }
-        List<Map<String, String>> taskConfigs = new ArrayList<>();
+        final List<Map<String, String>> taskConfigs = new ArrayList<>();
 
         int groups = Math.min(config.getFsUris().size(), maxTasks);
         ConnectorUtils.groupPartitions(config.getFsUris(), groups)
@@ -67,6 +65,7 @@ public class FsSourceConnector extends SourceConnector {
 
     @Override
     public void stop() {
+        log.info("Stopping FsSourceConnector.");
         //Nothing to do
     }
 

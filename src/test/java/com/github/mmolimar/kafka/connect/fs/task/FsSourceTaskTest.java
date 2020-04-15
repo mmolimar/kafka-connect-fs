@@ -81,11 +81,11 @@ public class FsSourceTaskTest {
 
             EasyMock.expect(offsetStorageReader.offset(EasyMock.anyObject()))
                     .andReturn(new HashMap<String, Object>() {{
-                        put("offset", 5L);
+                        put("offset", (long) (NUM_RECORDS / 2));
                     }});
             EasyMock.expect(offsetStorageReader.offset(EasyMock.anyObject()))
                     .andReturn(new HashMap<String, Object>() {{
-                        put("offset", 5L);
+                        put("offset", (long) (NUM_RECORDS / 2));
                     }});
 
             EasyMock.checkOrder(taskContext, false);
@@ -152,7 +152,7 @@ public class FsSourceTaskTest {
 
         fsConfig.getTask().start(fsConfig.getTaskConfig());
         List<SourceRecord> records = fsConfig.getTask().poll();
-        assertEquals(10, records.size());
+        assertEquals((NUM_RECORDS * fsConfig.getDirectories().size()) / 2, records.size());
         checkRecords(records);
         //policy has ended
         assertNull(fsConfig.getTask().poll());

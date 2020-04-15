@@ -40,7 +40,7 @@ public class CsvFileReaderTest extends UnivocityFileReaderTest<CsvFileReader> {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readAllDataWithMalformedRows(ReaderFsTestConfig fsConfig) throws Throwable {
+    public void readAllDataWithMalformedRows(ReaderFsTestConfig fsConfig) throws IOException {
         File tmp = File.createTempFile("test-", "." + getFileExtension());
         try (FileWriter writer = new FileWriter(tmp)) {
             writer.append(FIELD_COLUMN1 + "," + FIELD_COLUMN2 + "," + FIELD_COLUMN3 + "," + FIELD_COLUMN4 + "\n");

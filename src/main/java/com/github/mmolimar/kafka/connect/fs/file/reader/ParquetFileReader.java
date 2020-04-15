@@ -8,7 +8,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
-import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.parquet.avro.AvroParquetReader;
 import org.apache.parquet.avro.AvroReadSupport;
 import org.apache.parquet.hadoop.ParquetReader;
@@ -16,7 +15,6 @@ import org.apache.parquet.hadoop.util.HadoopInputFile;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig.FILE_READER_PREFIX;
@@ -64,23 +62,15 @@ public class ParquetFileReader extends AbstractFileReader<GenericRecord> {
     }
 
     @Override
-    public boolean hasNext() {
-        if (closed) throw new IllegalStateException("Reader already closed.");
+    public boolean hasNextRecord() throws IOException {
         if (currentRecord == null) {
-            try {
-                currentRecord = reader.read();
-            } catch (IOException ioe) {
-                throw new ConnectException("Error reading parquet record", ioe);
-            }
+            currentRecord = reader.read();
         }
         return currentRecord != null;
     }
 
     @Override
     protected GenericRecord nextRecord() {
-        if (!hasNext()) {
-            throw new NoSuchElementException("There are no more records in file: " + getFilePath());
-        }
         GenericRecord record;
         if (this.projection != null) {
             record = new GenericData.Record(this.projection);
@@ -94,21 +84,11 @@ public class ParquetFileReader extends AbstractFileReader<GenericRecord> {
     }
 
     @Override
-    public void seek(long offset) {
-        if (closed) {
-            throw new ConnectException("Stream is closed!");
-        }
-        if (offset < 0) {
-            throw new IllegalArgumentException("Record offset must be greater than 0");
-        }
+    public void seekFile(long offset) throws IOException {
         if (currentOffset() > offset) {
-            try {
-                this.reader = initReader();
-                setOffset(0);
-                this.closed = false;
-            } catch (IOException ioe) {
-                throw new ConnectException("Error initializing parquet reader", ioe);
-            }
+            this.reader = initReader();
+            this.closed = false;
+            setOffset(0);
         }
         while (hasNext() && currentOffset() < offset) {
             nextRecord();
@@ -117,8 +97,13 @@ public class ParquetFileReader extends AbstractFileReader<GenericRecord> {
 
     @Override
     public void close() throws IOException {
-        this.closed = true;
+        closed = true;
         reader.close();
+    }
+
+    @Override
+    public boolean isClosed() {
+        return closed;
     }
 
     static class GenericRecordToStruct implements ReaderAdapter<GenericRecord> {

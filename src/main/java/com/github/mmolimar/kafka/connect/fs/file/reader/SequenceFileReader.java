@@ -7,12 +7,10 @@ import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
-import org.apache.kafka.connect.errors.ConnectException;
 
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.Map;
-import java.util.NoSuchElementException;
 
 import static com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig.FILE_READER_PREFIX;
 
@@ -82,8 +80,7 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
     }
 
     @Override
-    public boolean hasNext() {
-        if (closed) throw new IllegalStateException("Reader already closed.");
+    public boolean hasNextRecord() throws IOException {
         try {
             if (hasNextIndex == -1 || hasNextIndex == recordIndex) {
                 hasNextIndex++;
@@ -93,39 +90,32 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
             return hasNext;
         } catch (EOFException eofe) {
             return false;
-        } catch (IOException ioe) {
-            throw new ConnectException(ioe);
         }
     }
 
     @Override
     protected SequenceRecord<Writable, Writable> nextRecord() {
-        if (!hasNext()) {
-            throw new NoSuchElementException("There are no more records in file: " + getFilePath());
-        }
         recordIndex++;
         return new SequenceRecord<>(schema, keyFieldName, key, valueFieldName, value);
     }
 
     @Override
-    public void seek(long offset) {
-        if (offset < 0) {
-            throw new IllegalArgumentException("Record offset must be greater than 0");
-        }
-        try {
-            reader.sync(offset);
-            hasNextIndex = recordIndex = offset;
-            hasNext = false;
-            setOffset(offset - 1);
-        } catch (IOException ioe) {
-            throw new ConnectException("Error seeking file " + getFilePath(), ioe);
-        }
+    public void seekFile(long offset) throws IOException {
+        reader.sync(offset);
+        hasNextIndex = recordIndex = offset;
+        hasNext = false;
+        setOffset(offset - 1);
     }
 
     @Override
     public void close() throws IOException {
         closed = true;
         reader.close();
+    }
+
+    @Override
+    public boolean isClosed() {
+        return closed;
     }
 
     static class SeqToStruct implements ReaderAdapter<SequenceRecord<Writable, Writable>> {

@@ -5,6 +5,7 @@ import com.github.mmolimar.kafka.connect.fs.file.reader.TextFileReader;
 import com.github.mmolimar.kafka.connect.fs.util.ReflectionUtils;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.common.config.ConfigException;
+import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.errors.IllegalWorkerStateException;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -53,8 +54,17 @@ public class CronPolicyTest extends PolicyTestBase {
         Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
         originals.put(CronPolicy.CRON_POLICY_EXPRESSION, "invalid");
         FsSourceTaskConfig cfg = new FsSourceTaskConfig(originals);
-        assertThrows(ConfigException.class, () -> ReflectionUtils.makePolicy(
-                (Class<? extends Policy>) fsConfig.getSourceTaskConfig().getClass(FsSourceTaskConfig.POLICY_CLASS), cfg));
+        assertThrows(ConnectException.class, () ->
+                ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
+                        .getClass(FsSourceTaskConfig.POLICY_CLASS), cfg));
+        assertThrows(ConfigException.class, () -> {
+            try {
+                ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
+                        .getClass(FsSourceTaskConfig.POLICY_CLASS), cfg);
+            } catch (Exception e) {
+                throw e.getCause();
+            }
+        });
     }
 
     @ParameterizedTest
@@ -63,15 +73,24 @@ public class CronPolicyTest extends PolicyTestBase {
         Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
         originals.put(CronPolicy.CRON_POLICY_END_DATE, "invalid");
         FsSourceTaskConfig cfg = new FsSourceTaskConfig(originals);
-        assertThrows(ConfigException.class, () -> ReflectionUtils.makePolicy(
-                (Class<? extends Policy>) fsConfig.getSourceTaskConfig().getClass(FsSourceTaskConfig.POLICY_CLASS), cfg));
+        assertThrows(ConnectException.class, () ->
+                ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
+                        .getClass(FsSourceTaskConfig.POLICY_CLASS), cfg));
+        assertThrows(ConfigException.class, () -> {
+            try {
+                ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
+                        .getClass(FsSourceTaskConfig.POLICY_CLASS), cfg);
+            } catch (Exception e) {
+                throw e.getCause();
+            }
+        });
     }
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void canBeInterrupted(PolicyFsTestConfig fsConfig) throws Throwable {
-        Policy policy = ReflectionUtils.makePolicy(
-                (Class<? extends Policy>) fsConfig.getSourceTaskConfig().getClass(FsSourceTaskConfig.POLICY_CLASS),
+    public void canBeInterrupted(PolicyFsTestConfig fsConfig) throws IOException {
+        Policy policy = ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
+                        .getClass(FsSourceTaskConfig.POLICY_CLASS),
                 fsConfig.getSourceTaskConfig());
 
         for (int i = 0; i < 5; i++) {

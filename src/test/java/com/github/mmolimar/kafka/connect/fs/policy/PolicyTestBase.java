@@ -6,6 +6,7 @@ import com.github.mmolimar.kafka.connect.fs.util.ReflectionUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.common.config.ConfigException;
+import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.errors.IllegalWorkerStateException;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -47,11 +48,11 @@ abstract class PolicyTestBase {
     }
 
     @BeforeEach
-    public void initPolicy() throws Throwable {
+    public void initPolicy() {
         for (PolicyFsTestConfig fsConfig : TEST_FILE_SYSTEMS) {
             FsSourceTaskConfig sourceTaskConfig = buildSourceTaskConfig(fsConfig.getDirectories());
-            Policy policy = ReflectionUtils.makePolicy(
-                    (Class<? extends Policy>) sourceTaskConfig.getClass(FsSourceTaskConfig.POLICY_CLASS), sourceTaskConfig);
+            Policy policy = ReflectionUtils.makePolicy((Class<? extends Policy>) sourceTaskConfig
+                    .getClass(FsSourceTaskConfig.POLICY_CLASS), sourceTaskConfig);
             fsConfig.setSourceTaskConfig(sourceTaskConfig);
             fsConfig.setPolicy(policy);
         }
@@ -83,14 +84,15 @@ abstract class PolicyTestBase {
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
     public void invalidConfig(PolicyFsTestConfig fsConfig) {
-        assertThrows(ConfigException.class, () -> ReflectionUtils.makePolicy(
-                (Class<? extends Policy>) fsConfig.getSourceTaskConfig().getClass(FsSourceTaskConfig.POLICY_CLASS),
-                new FsSourceTaskConfig(new HashMap<>())));
+        assertThrows(ConfigException.class, () ->
+                ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
+                                .getClass(FsSourceTaskConfig.POLICY_CLASS),
+                        new FsSourceTaskConfig(new HashMap<>())));
     }
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void interruptPolicy(PolicyFsTestConfig fsConfig) throws Throwable {
+    public void interruptPolicy(PolicyFsTestConfig fsConfig) throws IOException {
         fsConfig.getPolicy().execute();
         fsConfig.getPolicy().interrupt();
         assertTrue(fsConfig.getPolicy().hasEnded());
@@ -172,14 +174,14 @@ abstract class PolicyTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void dynamicURIs(PolicyFsTestConfig fsConfig) throws Throwable {
+    public void dynamicURIs(PolicyFsTestConfig fsConfig) throws IOException {
         Path dynamic = new Path(fsConfig.getFsUri().toString(), "${G}/${yyyy}/${MM}/${W}");
         fsConfig.getFs().create(dynamic);
         Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
         originals.put(FsSourceTaskConfig.FS_URIS, dynamic.toString());
         FsSourceTaskConfig cfg = new FsSourceTaskConfig(originals);
-        Policy policy = ReflectionUtils.makePolicy(
-                (Class<? extends Policy>) fsConfig.getSourceTaskConfig().getClass(FsSourceTaskConfig.POLICY_CLASS), cfg);
+        Policy policy = ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
+                .getClass(FsSourceTaskConfig.POLICY_CLASS), cfg);
         fsConfig.setPolicy(policy);
         assertEquals(1, fsConfig.getPolicy().getURIs().size());
 
@@ -200,14 +202,23 @@ abstract class PolicyTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void invalidDynamicURIs(PolicyFsTestConfig fsConfig) throws Throwable {
+    public void invalidDynamicURIs(PolicyFsTestConfig fsConfig) throws IOException {
         Path dynamic = new Path(fsConfig.getFsUri().toString(), "${yyyy}/${MM}/${mmmmmmm}");
         fsConfig.getFs().create(dynamic);
         Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
         originals.put(FsSourceTaskConfig.FS_URIS, dynamic.toString());
         FsSourceTaskConfig cfg = new FsSourceTaskConfig(originals);
-        assertThrows(IllegalArgumentException.class, () -> ReflectionUtils.makePolicy(
-                (Class<? extends Policy>) fsConfig.getSourceTaskConfig().getClass(FsSourceTaskConfig.POLICY_CLASS), cfg));
+        assertThrows(ConnectException.class, () ->
+                ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
+                        .getClass(FsSourceTaskConfig.POLICY_CLASS), cfg));
+        assertThrows(IllegalArgumentException.class, () -> {
+            try {
+                ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
+                        .getClass(FsSourceTaskConfig.POLICY_CLASS), cfg);
+            } catch (Exception e) {
+                throw e.getCause();
+            }
+        });
     }
 
     protected abstract FsSourceTaskConfig buildSourceTaskConfig(List<Path> directories);

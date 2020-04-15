@@ -12,6 +12,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
+import org.apache.kafka.connect.errors.ConnectException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -68,7 +69,7 @@ public class AvroFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readerWithSchema(ReaderFsTestConfig fsConfig) throws Throwable {
+    public void readerWithSchema(ReaderFsTestConfig fsConfig) throws IOException {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(AvroFileReader.FILE_READER_AVRO_SCHEMA, schema.toString());
         FileSystem testFs = FileSystem.newInstance(fsConfig.getFsUri(), new Configuration());
@@ -78,12 +79,12 @@ public class AvroFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readerWithInvalidSchema(ReaderFsTestConfig fsConfig) throws Throwable {
+    public void readerWithInvalidSchema(ReaderFsTestConfig fsConfig) throws IOException {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(AvroFileReader.FILE_READER_AVRO_SCHEMA, Schema.create(Schema.Type.STRING).toString());
         FileSystem testFs = FileSystem.newInstance(fsConfig.getFsUri(), new Configuration());
         fsConfig.setReader(getReader(testFs, fsConfig.getDataFile(), readerConfig));
-        assertThrows(IllegalStateException.class, () -> readAllData(fsConfig));
+        assertThrows(ConnectException.class, () -> readAllData(fsConfig));
         assertThrows(AvroTypeException.class, () -> {
             try {
                 readAllData(fsConfig);
@@ -99,7 +100,14 @@ public class AvroFileReaderTest extends FileReaderTestBase {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(AvroFileReader.FILE_READER_AVRO_SCHEMA, "invalid schema");
         FileSystem testFs = FileSystem.newInstance(fsConfig.getFsUri(), new Configuration());
-        assertThrows(SchemaParseException.class, () -> getReader(testFs, fsConfig.getDataFile(), readerConfig));
+        assertThrows(ConnectException.class, () -> getReader(testFs, fsConfig.getDataFile(), readerConfig));
+        assertThrows(SchemaParseException.class, () -> {
+            try {
+                getReader(testFs, fsConfig.getDataFile(), readerConfig);
+            } catch (Exception e) {
+                throw e.getCause();
+            }
+        });
     }
 
     @Override

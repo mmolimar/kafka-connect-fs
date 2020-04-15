@@ -68,29 +68,25 @@ public class JsonFileReader extends AbstractFileReader<JsonFileReader.JsonRecord
                         mapper.configure(DeserializationFeature.valueOf(feature),
                                 Boolean.parseBoolean(entry.getValue()));
                     } else {
-                        log.warn("Ignoring deserialization configuration '" + feature + "' due to it does not exist.");
+                        log.warn("Ignoring deserialization configuration '{}' due to it does not exist.", feature);
                     }
                 });
     }
 
     @Override
-    protected JsonRecord nextRecord() {
-        try {
-            JsonNode value = mapper.readTree(inner.nextRecord().getValue());
-            return new JsonRecord(schema, value);
-        } catch (IOException ioe) {
-            throw new IllegalStateException(ioe);
-        }
+    protected JsonRecord nextRecord() throws IOException {
+        JsonNode value = mapper.readTree(inner.nextRecord().getValue());
+        return new JsonRecord(schema, value);
     }
 
     @Override
-    public boolean hasNext() {
-        return inner.hasNext();
+    public boolean hasNextRecord() throws IOException {
+        return inner.hasNextRecord();
     }
 
     @Override
-    public void seek(long offset) {
-        inner.seek(offset);
+    public void seekFile(long offset) throws IOException {
+        inner.seekFile(offset);
     }
 
     @Override
@@ -101,6 +97,11 @@ public class JsonFileReader extends AbstractFileReader<JsonFileReader.JsonRecord
     @Override
     public void close() throws IOException {
         inner.close();
+    }
+
+    @Override
+    public boolean isClosed() {
+        return inner.isClosed();
     }
 
     private static Schema extractSchema(JsonNode jsonNode) {
@@ -189,7 +190,7 @@ public class JsonFileReader extends AbstractFileReader<JsonFileReader.JsonRecord
                     try {
                         return value.binaryValue();
                     } catch (IOException ioe) {
-                        throw new IllegalStateException(ioe);
+                        throw new RuntimeException(ioe);
                     }
                 case OBJECT:
                 case POJO:

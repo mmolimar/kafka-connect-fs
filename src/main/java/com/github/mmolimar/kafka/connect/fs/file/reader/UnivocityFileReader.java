@@ -12,7 +12,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
-import org.apache.kafka.connect.errors.ConnectException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,7 +19,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
@@ -145,45 +143,39 @@ abstract class UnivocityFileReader<T extends CommonParserSettings<?>>
 
     @Override
     protected final UnivocityRecord nextRecord() {
-        if (!hasNext()) throw new NoSuchElementException("There are no more records in file: " + getFilePath());
-
         incrementOffset();
         Record record = iterator.next();
         return new UnivocityRecord(schema, record.getValues());
     }
 
     @Override
-    public final boolean hasNext() {
-        if (closed) throw new IllegalStateException("Reader already closed.");
-
+    public final boolean hasNextRecord() {
         return iterator.hasNext();
     }
 
     @Override
-    public final void seek(long offset) {
-        if (offset < 0) {
-            throw new IllegalArgumentException("Record offset must be greater than 0");
+    public final void seekFile(long offset) throws IOException {
+        if (offset > currentOffset()) {
+            iterator.hasNext();
+            iterator.getContext().skipLines(offset - currentOffset() - 1);
+            iterator.next();
+        } else {
+            iterator = iterateRecords();
+            iterator.hasNext();
+            iterator.getContext().skipLines(offset);
         }
-        try {
-            if (offset > currentOffset()) {
-                iterator.hasNext();
-                iterator.getContext().skipLines(offset - currentOffset() - 1);
-                iterator.next();
-            } else {
-                iterator = iterateRecords();
-                iterator.hasNext();
-                iterator.getContext().skipLines(offset);
-            }
-            setOffset(offset);
-        } catch (IOException ioe) {
-            throw new ConnectException("Error seeking file " + getFilePath(), ioe);
-        }
+        setOffset(offset);
     }
 
     @Override
     public final void close() {
         iterator.getContext().stop();
         closed = true;
+    }
+
+    @Override
+    public final boolean isClosed() {
+        return closed;
     }
 
     static class UnivocityToStruct implements ReaderAdapter<UnivocityRecord> {

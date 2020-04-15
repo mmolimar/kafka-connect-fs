@@ -10,6 +10,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
+import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.errors.DataException;
 import org.apache.parquet.avro.AvroParquetWriter;
 import org.apache.parquet.hadoop.ParquetFileWriter;
@@ -76,7 +77,7 @@ public class ParquetFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void emptyFile(ReaderFsTestConfig fsConfig) throws Throwable {
+    public void emptyFile(ReaderFsTestConfig fsConfig) throws IOException {
         File tmp = File.createTempFile("test-", "." + getFileExtension());
         Path path = new Path(new Path(fsConfig.getFsUri()), tmp.getName());
         fsConfig.getFs().moveFromLocalFile(new Path(tmp.getAbsolutePath()), path);
@@ -85,7 +86,7 @@ public class ParquetFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void invalidFileFormat(ReaderFsTestConfig fsConfig) throws Throwable {
+    public void invalidFileFormat(ReaderFsTestConfig fsConfig) throws IOException {
         File tmp = File.createTempFile("test-", "." + getFileExtension());
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(tmp))) {
             writer.write("test");
@@ -97,7 +98,7 @@ public class ParquetFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readerWithSchema(ReaderFsTestConfig fsConfig) throws Throwable {
+    public void readerWithSchema(ReaderFsTestConfig fsConfig) throws IOException {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(ParquetFileReader.FILE_READER_PARQUET_SCHEMA, readerSchema.toString());
         readerConfig.put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_PARQUET, getFileExtension());
@@ -108,7 +109,7 @@ public class ParquetFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readerWithProjection(ReaderFsTestConfig fsConfig) throws Throwable {
+    public void readerWithProjection(ReaderFsTestConfig fsConfig) throws IOException {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(ParquetFileReader.FILE_READER_PARQUET_PROJECTION, projectionSchema.toString());
         readerConfig.put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_PARQUET, getFileExtension());
@@ -126,7 +127,7 @@ public class ParquetFileReaderTest extends FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readerWithInvalidProjection(ReaderFsTestConfig fsConfig) throws Throwable {
+    public void readerWithInvalidProjection(ReaderFsTestConfig fsConfig) throws IOException {
         Schema testSchema = SchemaBuilder.record("test_projection").namespace("test.avro")
                 .fields()
                 .name("field1").type("string").noDefault()
@@ -136,18 +137,28 @@ public class ParquetFileReaderTest extends FileReaderTestBase {
         readerConfig.put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_PARQUET, getFileExtension());
         FileSystem testFs = FileSystem.newInstance(fsConfig.getFsUri(), new Configuration());
         fsConfig.setReader(getReader(testFs, fsConfig.getDataFile(), readerConfig));
-        assertThrows(InvalidRecordException.class, () -> readAllData(fsConfig));
+        try {
+            readAllData(fsConfig);
+        } catch (Exception e) {
+            assertEquals(ConnectException.class, e.getClass());
+            assertEquals(InvalidRecordException.class, e.getCause().getClass());
+        }
     }
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readerWithInvalidSchema(ReaderFsTestConfig fsConfig) throws Throwable {
+    public void readerWithInvalidSchema(ReaderFsTestConfig fsConfig) throws IOException {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(ParquetFileReader.FILE_READER_PARQUET_SCHEMA, Schema.create(Schema.Type.STRING).toString());
         readerConfig.put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_PARQUET, getFileExtension());
         FileSystem testFs = FileSystem.newInstance(fsConfig.getFsUri(), new Configuration());
         fsConfig.setReader(getReader(testFs, fsConfig.getDataFile(), readerConfig));
-        assertThrows(AvroRuntimeException.class, () -> readAllData(fsConfig));
+        try {
+            readAllData(fsConfig);
+        } catch (Exception e) {
+            assertEquals(ConnectException.class, e.getClass());
+            assertEquals(AvroRuntimeException.class, e.getCause().getClass());
+        }
     }
 
     @ParameterizedTest
@@ -156,9 +167,17 @@ public class ParquetFileReaderTest extends FileReaderTestBase {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(ParquetFileReader.FILE_READER_PARQUET_SCHEMA, "invalid schema");
         readerConfig.put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_PARQUET, getFileExtension());
-        assertThrows(SchemaParseException.class, () ->
+        assertThrows(ConnectException.class, () ->
                 getReader(FileSystem.newInstance(fsConfig.getFsUri(), new Configuration()),
                         fsConfig.getDataFile(), readerConfig));
+        assertThrows(SchemaParseException.class, () -> {
+            try {
+                getReader(FileSystem.newInstance(fsConfig.getFsUri(), new Configuration()),
+                        fsConfig.getDataFile(), readerConfig);
+            } catch (Exception e) {
+                throw e.getCause();
+            }
+        });
     }
 
     @Override

@@ -3,12 +3,14 @@ package com.github.mmolimar.kafka.connect.fs.file.reader;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
+import org.apache.kafka.connect.errors.ConnectException;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.Arrays;
@@ -28,7 +30,7 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void emptyFile(ReaderFsTestConfig fsConfig) throws Throwable {
+    public void emptyFile(ReaderFsTestConfig fsConfig) throws IOException {
         File tmp = File.createTempFile("test-", "." + getFileExtension());
         Path path = new Path(new Path(fsConfig.getFsUri()), tmp.getName());
         fsConfig.getFs().moveFromLocalFile(new Path(tmp.getAbsolutePath()), path);
@@ -37,7 +39,7 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void invalidFileFormat(ReaderFsTestConfig fsConfig) throws Throwable {
+    public void invalidFileFormat(ReaderFsTestConfig fsConfig) throws IOException {
         File tmp = File.createTempFile("test-", "." + getFileExtension());
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(tmp))) {
             writer.write("test");
@@ -62,7 +64,7 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void readAllDataWithoutHeader(ReaderFsTestConfig fsConfig) throws Throwable {
+    public void readAllDataWithoutHeader(ReaderFsTestConfig fsConfig) throws IOException {
         Path file = createDataFile(fsConfig, false);
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(T.FILE_READER_DELIMITED_SETTINGS_HEADER, "false");
@@ -101,7 +103,7 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
                 }
                 reader.close();
                 assertEquals(NUM_RECORDS, recordCount, "The number of records in the file does not match");
-            } catch (Throwable e) {
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         });
@@ -109,7 +111,7 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void seekFileWithoutHeader(ReaderFsTestConfig fsConfig) throws Throwable {
+    public void seekFileWithoutHeader(ReaderFsTestConfig fsConfig) throws IOException {
         Path file = createDataFile(fsConfig, false);
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(T.FILE_READER_DELIMITED_SETTINGS_HEADER, "false");
@@ -141,7 +143,7 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void validFileEncoding(ReaderFsTestConfig fsConfig) throws Throwable {
+    public void validFileEncoding(ReaderFsTestConfig fsConfig) {
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(T.FILE_READER_DELIMITED_SETTINGS_HEADER, "true");
         readerConfig.put(T.FILE_READER_DELIMITED_ENCODING, "Cp1252");
@@ -154,14 +156,19 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
         Map<String, Object> readerConfig = getReaderConfig();
         readerConfig.put(T.FILE_READER_DELIMITED_SETTINGS_HEADER, "true");
         readerConfig.put(T.FILE_READER_DELIMITED_ENCODING, "invalid_charset");
-        assertThrows(UnsupportedCharsetException.class, () -> getReader(fsConfig.getFs(),
-                fsConfig.getDataFile(), readerConfig));
+        assertThrows(ConnectException.class, () -> getReader(fsConfig.getFs(), fsConfig.getDataFile(), readerConfig));
+        assertThrows(UnsupportedCharsetException.class, () -> {
+            try {
+                getReader(fsConfig.getFs(), fsConfig.getDataFile(), readerConfig);
+            } catch (Exception e) {
+                throw e.getCause();
+            }
+        });
     }
 
     @Override
     protected Class<? extends FileReader> getReaderClass() {
-        return (Class<T>) ((ParameterizedType) this.getClass().getGenericSuperclass())
-                .getActualTypeArguments()[0];
+        return (Class<T>) ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
     }
 
     @Override

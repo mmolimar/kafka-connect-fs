@@ -139,7 +139,7 @@ public class HdfsFileWatcherPolicy extends AbstractPolicy {
             } catch (FileNotFoundException fnfe) {
                 log.warn("Cannot find file in this FS {}. Stopping watcher...", fs.getWorkingDirectory(), fnfe);
             } catch (IOException ioe) {
-                log.info("An interrupted exception has occurred. Path {} is not watched any more", fs.getWorkingDirectory());
+                log.warn("An interrupted exception has occurred. Path {} is not watched any more", fs.getWorkingDirectory());
             } catch (Exception ioe) {
                 log.warn("Exception watching path {}", fs.getWorkingDirectory(), ioe);
                 throw new IllegalWorkerStateException(ioe);
@@ -153,6 +153,7 @@ public class HdfsFileWatcherPolicy extends AbstractPolicy {
                 return;
             }
 
+            log.debug("Enqueuing file to process {}", filePath);
             RemoteIterator<LocatedFileStatus> it = fs.listFiles(filePath, false);
             while (it.hasNext()) {
                 LocatedFileStatus status = it.next();
