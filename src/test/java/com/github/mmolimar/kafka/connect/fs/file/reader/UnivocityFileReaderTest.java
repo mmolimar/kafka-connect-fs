@@ -1,5 +1,6 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader;
 
+import com.univocity.parsers.common.DataProcessingException;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
@@ -25,6 +26,11 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
     protected static final String FIELD_COLUMN2 = "column_2";
     protected static final String FIELD_COLUMN3 = "column_3";
     protected static final String FIELD_COLUMN4 = "column_4";
+    protected static final String FIELD_COLUMN5 = "column_5";
+    protected static final String FIELD_COLUMN6 = "column_6";
+    protected static final String FIELD_COLUMN7 = "column_7";
+    protected static final String FIELD_COLUMN8 = "column_8";
+    protected static final String FIELD_COLUMN9 = "column_9";
     protected static final String FILE_EXTENSION = "tcsv";
     protected static final CompressionType COMPRESSION_TYPE_DEFAULT = CompressionType.NONE;
 
@@ -46,7 +52,14 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
         }
         Path path = new Path(new Path(fsConfig.getFsUri()), tmp.getName());
         fsConfig.getFs().moveFromLocalFile(new Path(tmp.getAbsolutePath()), path);
-        getReader(fsConfig.getFs(), path, getReaderConfig());
+        assertThrows(ConnectException.class, () -> getReader(fsConfig.getFs(), path, getReaderConfig()));
+        assertThrows(IllegalArgumentException.class, () -> {
+            try {
+                getReader(fsConfig.getFs(), path, getReaderConfig());
+            } catch (Exception ce) {
+                throw ce.getCause();
+            }
+        });
     }
 
     @ParameterizedTest
@@ -76,6 +89,68 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
         while (reader.hasNext()) {
             Struct record = reader.next();
             checkData(record, recordCount);
+            recordCount++;
+        }
+        assertEquals(NUM_RECORDS, recordCount, "The number of records in the file does not match");
+    }
+
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void readAllDataWithoutSchema(ReaderFsTestConfig fsConfig) throws IOException {
+        Path file = createDataFile(fsConfig, true);
+        Map<String, Object> readerConfig = getReaderConfig();
+        readerConfig.remove(T.FILE_READER_DELIMITED_SETTINGS_SCHEMA);
+        FileReader reader = getReader(fsConfig.getFs(), file, readerConfig);
+
+        assertTrue(reader.hasNext());
+
+        int recordCount = 0;
+        while (reader.hasNext()) {
+            Struct record = reader.next();
+            checkDataString(record);
+            recordCount++;
+        }
+        assertEquals(NUM_RECORDS, recordCount, "The number of records in the file does not match");
+    }
+
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void readAllDataWithMappingErrors(ReaderFsTestConfig fsConfig) throws IOException {
+        Path file = createDataFile(fsConfig, true);
+        Map<String, Object> readerConfig = getReaderConfig();
+        readerConfig.put(T.FILE_READER_DELIMITED_SETTINGS_SCHEMA, "boolean,boolean,boolean,boolean,boolean,boolean,int,long,double");
+        FileReader reader = getReader(fsConfig.getFs(), file, readerConfig);
+
+        assertTrue(reader.hasNext());
+
+        int recordCount = 0;
+        while (reader.hasNext()) {
+            try {
+                reader.next();
+            } catch (Exception e) {
+                assertEquals(ConnectException.class, e.getClass());
+                assertEquals(DataProcessingException.class, e.getCause().getClass());
+            }
+            recordCount++;
+        }
+        assertEquals(NUM_RECORDS, recordCount, "The number of records in the file does not match");
+    }
+
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void readAllDataToleratingMappingErrors(ReaderFsTestConfig fsConfig) throws IOException {
+        Path file = createDataFile(fsConfig, true);
+        Map<String, Object> readerConfig = getReaderConfig();
+        readerConfig.put(T.FILE_READER_DELIMITED_SETTINGS_SCHEMA, "boolean,boolean,boolean,boolean,boolean,boolean,int,long,double");
+        readerConfig.put(T.FILE_READER_DELIMITED_SETTINGS_DATA_TYPE_MAPPING_ERROR, "false");
+        FileReader reader = getReader(fsConfig.getFs(), file, readerConfig);
+
+        assertTrue(reader.hasNext());
+
+        int recordCount = 0;
+        while (reader.hasNext()) {
+            Struct record = reader.next();
+            checkDataNull(record);
             recordCount++;
         }
         assertEquals(NUM_RECORDS, recordCount, "The number of records in the file does not match");
@@ -174,10 +249,43 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
     @Override
     protected void checkData(Struct record, long index) {
         assertAll(
-                () -> assertTrue(record.get(FIELD_COLUMN1).toString().startsWith(index + "_")),
-                () -> assertTrue(record.get(FIELD_COLUMN2).toString().startsWith(index + "_")),
-                () -> assertTrue(record.get(FIELD_COLUMN3).toString().startsWith(index + "_")),
-                () -> assertTrue(record.get(FIELD_COLUMN4).toString().startsWith(index + "_"))
+                () -> assertEquals(record.get(FIELD_COLUMN1), (byte) 2),
+                () -> assertEquals(record.get(FIELD_COLUMN2), (short) 4),
+                () -> assertEquals(record.get(FIELD_COLUMN3), 8),
+                () -> assertEquals(record.get(FIELD_COLUMN4), 16L),
+                () -> assertEquals(record.get(FIELD_COLUMN5), 32.32f),
+                () -> assertEquals(record.get(FIELD_COLUMN6), 64.64d),
+                () -> assertEquals(record.get(FIELD_COLUMN7), true),
+                () -> assertEquals(new String((byte[]) record.get(FIELD_COLUMN8)), "test bytes"),
+                () -> assertEquals(record.get(FIELD_COLUMN9), "test string")
+        );
+    }
+
+    protected void checkDataString(Struct record) {
+        assertAll(
+                () -> assertEquals(record.get(FIELD_COLUMN1), "2"),
+                () -> assertEquals(record.get(FIELD_COLUMN2), "4"),
+                () -> assertEquals(record.get(FIELD_COLUMN3), "8"),
+                () -> assertEquals(record.get(FIELD_COLUMN4), "16"),
+                () -> assertEquals(record.get(FIELD_COLUMN5), "32.320000"),
+                () -> assertEquals(record.get(FIELD_COLUMN6), "64.640000"),
+                () -> assertEquals(record.get(FIELD_COLUMN7), "true"),
+                () -> assertEquals(record.get(FIELD_COLUMN8), "test bytes"),
+                () -> assertEquals(record.get(FIELD_COLUMN9), "test string")
+        );
+    }
+
+    protected void checkDataNull(Struct record) {
+        assertAll(
+                () -> assertEquals(record.get(FIELD_COLUMN1), null),
+                () -> assertEquals(record.get(FIELD_COLUMN2), null),
+                () -> assertEquals(record.get(FIELD_COLUMN3), null),
+                () -> assertEquals(record.get(FIELD_COLUMN4), null),
+                () -> assertEquals(record.get(FIELD_COLUMN5), null),
+                () -> assertEquals(record.get(FIELD_COLUMN6), null),
+                () -> assertEquals(record.get(FIELD_COLUMN7), null),
+                () -> assertEquals(record.get(FIELD_COLUMN8), null),
+                () -> assertEquals(record.get(FIELD_COLUMN9), null)
         );
     }
 

@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.IntStream;
 
 public class TsvFileReaderTest extends UnivocityFileReaderTest<TsvFileReader> {
@@ -19,11 +18,15 @@ public class TsvFileReaderTest extends UnivocityFileReaderTest<TsvFileReader> {
         File txtFile = File.createTempFile("test-", "." + getFileExtension());
         try (PrintWriter writer = new PrintWriter(getOutputStream(txtFile, compression))) {
             if (header) {
-                writer.append(FIELD_COLUMN1 + "\t" + FIELD_COLUMN2 + "\t" + FIELD_COLUMN3 + "\t" + FIELD_COLUMN4 + "\n");
+                String headerValue = String.join("\t", FIELD_COLUMN1, FIELD_COLUMN2, FIELD_COLUMN3, FIELD_COLUMN4,
+                        FIELD_COLUMN5, FIELD_COLUMN6, FIELD_COLUMN7, FIELD_COLUMN8, FIELD_COLUMN9);
+                writer.append(headerValue + "\n");
             }
             IntStream.range(0, NUM_RECORDS).forEach(index -> {
-                String value = String.format("%d_%s", index, UUID.randomUUID());
-                writer.append(value + "\t" + value + "\t" + value + "\t" + value + "\n");
+                String value = String.format("%d\t%d\t%d\t%d\t%f\t%f\t%s\t%s\t%s\n",
+                        (byte) 2, (short) 4, 8, 16L, 32.32f, 64.64d,
+                        true, "test bytes", "test string");
+                writer.append(value);
                 fsConfig.offsetsByIndex().put(index, (long) index);
             });
         }
@@ -36,6 +39,7 @@ public class TsvFileReaderTest extends UnivocityFileReaderTest<TsvFileReader> {
     protected Map<String, Object> getReaderConfig() {
         return new HashMap<String, Object>() {{
             put(TsvFileReader.FILE_READER_DELIMITED_SETTINGS_HEADER, "true");
+            put(TsvFileReader.FILE_READER_DELIMITED_SETTINGS_SCHEMA, "byte,short,int,long,float,double,boolean,bytes,string");
         }};
     }
 }

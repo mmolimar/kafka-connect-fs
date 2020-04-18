@@ -18,8 +18,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig.FILE_READER_PREFIX;
@@ -34,6 +37,8 @@ abstract class UnivocityFileReader<T extends CommonParserSettings<?>>
     protected static final String FILE_READER_DELIMITED_SETTINGS_FORMAT = FILE_READER_DELIMITED_SETTINGS + "format.";
 
     public static final String FILE_READER_DELIMITED_SETTINGS_HEADER = FILE_READER_DELIMITED_SETTINGS + "header";
+    public static final String FILE_READER_DELIMITED_SETTINGS_SCHEMA = FILE_READER_DELIMITED_SETTINGS + "schema";
+    public static final String FILE_READER_DELIMITED_SETTINGS_DATA_TYPE_MAPPING_ERROR = FILE_READER_DELIMITED_SETTINGS + "data_type_mapping_error";
     public static final String FILE_READER_DELIMITED_SETTINGS_HEADER_NAMES = FILE_READER_DELIMITED_SETTINGS + "header_names";
     public static final String FILE_READER_DELIMITED_SETTINGS_LINE_SEPARATOR_DETECTION = FILE_READER_DELIMITED_SETTINGS + "line_separator_detection";
     public static final String FILE_READER_DELIMITED_SETTINGS_NULL_VALUE = FILE_READER_DELIMITED_SETTINGS + "null_value";
@@ -56,28 +61,43 @@ abstract class UnivocityFileReader<T extends CommonParserSettings<?>>
     private Schema schema;
     private Charset charset;
     private CompressionType compression;
+    private boolean dataTypeMappingError;
     private boolean closed;
 
     private ResultIterator<Record, ParsingContext> iterator;
+
+    public enum DataType {
+        BYTE,
+        SHORT,
+        INT,
+        LONG,
+        FLOAT,
+        DOUBLE,
+        BOOLEAN,
+        BYTES,
+        STRING
+    }
 
     public UnivocityFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
         super(fs, filePath, new UnivocityToStruct(), config);
 
         this.iterator = iterateRecords();
-        this.schema = buildSchema(this.iterator, settings.isHeaderExtractionEnabled());
+        this.schema = buildSchema(this.iterator, settings.isHeaderExtractionEnabled(), config);
     }
 
-    private Schema buildSchema(ResultIterator<Record, ParsingContext> it, boolean hasHeader) {
+    private Schema buildSchema(ResultIterator<Record, ParsingContext> it, boolean hasHeader, Map<String, Object> config) {
         SchemaBuilder builder = SchemaBuilder.struct();
         if (it.hasNext() && !hasHeader) {
             Record first = it.next();
+            List<Schema> dataTypes = getDataTypes(config, first.getValues());
             IntStream.range(0, first.getValues().length)
-                    .forEach(index -> builder.field(DEFAULT_COLUMN_NAME + ++index, SchemaBuilder.STRING_SCHEMA));
+                    .forEach(index -> builder.field(DEFAULT_COLUMN_NAME + (index + 1), dataTypes.get(index)));
             seek(0);
         } else if (hasHeader) {
             Optional.ofNullable(it.getContext().headers()).ifPresent(headers -> {
+                List<Schema> dataTypes = getDataTypes(config, headers);
                 IntStream.range(0, headers.length)
-                        .forEach(index -> builder.field(headers[index], SchemaBuilder.STRING_SCHEMA));
+                        .forEach(index -> builder.field(headers[index], dataTypes.get(index)));
             });
         }
         return builder.build();
@@ -91,6 +111,49 @@ abstract class UnivocityFileReader<T extends CommonParserSettings<?>>
         this.compression = CompressionType.fromName(cType, concatenated);
         this.charset = Charset.forName(config.getOrDefault(FILE_READER_DELIMITED_ENCODING, Charset.defaultCharset().name()));
         this.settings = allSettings(config);
+        this.dataTypeMappingError = Boolean.parseBoolean(
+                config.getOrDefault(FILE_READER_DELIMITED_SETTINGS_DATA_TYPE_MAPPING_ERROR, "true"));
+    }
+
+    private List<Schema> getDataTypes(Map<String, Object> config, String[] headers) {
+        List<Schema> dataTypes = Arrays
+                .stream(config.getOrDefault(FILE_READER_DELIMITED_SETTINGS_SCHEMA, "").toString().split(","))
+                .filter(dt -> !dt.trim().isEmpty())
+                .map(this::strToSchema)
+                .collect(Collectors.toList());
+        if (dataTypes.size() > 0 && dataTypes.size() != headers.length) {
+            throw new IllegalArgumentException("The schema defined in property '" + FILE_READER_DELIMITED_SETTINGS_SCHEMA +
+                    "' does not match the number of fields inferred in the file.");
+        } else if (dataTypes.size() == 0) {
+            return IntStream.range(0, headers.length)
+                    .mapToObj(index -> Schema.STRING_SCHEMA)
+                    .collect(Collectors.toList());
+        }
+        return dataTypes;
+    }
+
+    private Schema strToSchema(String dataType) {
+        switch (DataType.valueOf(dataType.trim().toUpperCase())) {
+            case BYTE:
+                return this.dataTypeMappingError ? Schema.INT8_SCHEMA : Schema.OPTIONAL_INT8_SCHEMA;
+            case SHORT:
+                return this.dataTypeMappingError ? Schema.INT16_SCHEMA : Schema.OPTIONAL_INT16_SCHEMA;
+            case INT:
+                return this.dataTypeMappingError ? Schema.INT32_SCHEMA : Schema.OPTIONAL_INT32_SCHEMA;
+            case LONG:
+                return this.dataTypeMappingError ? Schema.INT64_SCHEMA : Schema.OPTIONAL_INT64_SCHEMA;
+            case FLOAT:
+                return this.dataTypeMappingError ? Schema.FLOAT32_SCHEMA : Schema.OPTIONAL_FLOAT32_SCHEMA;
+            case DOUBLE:
+                return this.dataTypeMappingError ? Schema.FLOAT64_SCHEMA : Schema.OPTIONAL_FLOAT64_SCHEMA;
+            case BOOLEAN:
+                return this.dataTypeMappingError ? Schema.BOOLEAN_SCHEMA : Schema.OPTIONAL_BOOLEAN_SCHEMA;
+            case BYTES:
+                return this.dataTypeMappingError ? Schema.BYTES_SCHEMA : Schema.OPTIONAL_BYTES_SCHEMA;
+            case STRING:
+            default:
+                return this.dataTypeMappingError ? Schema.STRING_SCHEMA : Schema.OPTIONAL_STRING_SCHEMA;
+        }
     }
 
     private T allSettings(Map<String, String> config) {
@@ -144,8 +207,7 @@ abstract class UnivocityFileReader<T extends CommonParserSettings<?>>
     @Override
     protected final UnivocityRecord nextRecord() {
         incrementOffset();
-        Record record = iterator.next();
-        return new UnivocityRecord(schema, record.getValues());
+        return new UnivocityRecord(schema, iterator.next(), dataTypeMappingError);
     }
 
     @Override
@@ -184,19 +246,59 @@ abstract class UnivocityFileReader<T extends CommonParserSettings<?>>
         public Struct apply(UnivocityRecord record) {
             Struct struct = new Struct(record.schema);
             IntStream.range(0, record.schema.fields().size())
-                    .filter(index -> index < record.values.length)
-                    .forEach(index -> struct.put(record.schema.fields().get(index).name(), record.values[index]));
+                    .filter(index -> index < record.value.getValues().length)
+                    .forEach(index -> {
+                        Schema.Type type = record.schema.fields().get(index).schema().type();
+                        String fieldName = record.schema.fields().get(index).name();
+                        struct.put(fieldName, mapDatatype(type, record.value, index, record.dataTypeMappingError));
+                    });
             return struct;
+        }
+
+        private Object mapDatatype(Schema.Type type, Record record, int fieldIndex, boolean dataTypeMappingError) {
+            try {
+                switch (type) {
+                    case INT8:
+                        return record.getByte(fieldIndex);
+                    case INT16:
+                        return record.getShort(fieldIndex);
+                    case INT32:
+                        return record.getInt(fieldIndex);
+                    case INT64:
+                        return record.getLong(fieldIndex);
+                    case FLOAT32:
+                        return record.getFloat(fieldIndex);
+                    case FLOAT64:
+                        return record.getDouble(fieldIndex);
+                    case BOOLEAN:
+                        return record.getBoolean(fieldIndex);
+                    case BYTES:
+                        return record.getString(fieldIndex).getBytes();
+                    case ARRAY:
+                    case MAP:
+                    case STRUCT:
+                    case STRING:
+                    default:
+                        return record.getString(fieldIndex);
+                }
+            } catch (RuntimeException re) {
+                if (dataTypeMappingError) {
+                    throw re;
+                }
+                return null;
+            }
         }
     }
 
     static class UnivocityRecord {
         private final Schema schema;
-        private final String[] values;
+        private final Record value;
+        private final boolean dataTypeMappingError;
 
-        UnivocityRecord(Schema schema, String[] values) {
+        UnivocityRecord(Schema schema, Record value, boolean dataTypeMappingError) {
             this.schema = schema;
-            this.values = values;
+            this.value = value;
+            this.dataTypeMappingError = dataTypeMappingError;
         }
     }
 }
