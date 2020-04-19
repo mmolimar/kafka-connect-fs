@@ -39,6 +39,7 @@ abstract class UnivocityFileReader<T extends CommonParserSettings<?>>
     public static final String FILE_READER_DELIMITED_SETTINGS_HEADER = FILE_READER_DELIMITED_SETTINGS + "header";
     public static final String FILE_READER_DELIMITED_SETTINGS_SCHEMA = FILE_READER_DELIMITED_SETTINGS + "schema";
     public static final String FILE_READER_DELIMITED_SETTINGS_DATA_TYPE_MAPPING_ERROR = FILE_READER_DELIMITED_SETTINGS + "data_type_mapping_error";
+    public static final String FILE_READER_DELIMITED_SETTINGS_ALLOW_NULLS = FILE_READER_DELIMITED_SETTINGS + "allow_nulls";
     public static final String FILE_READER_DELIMITED_SETTINGS_HEADER_NAMES = FILE_READER_DELIMITED_SETTINGS + "header_names";
     public static final String FILE_READER_DELIMITED_SETTINGS_LINE_SEPARATOR_DETECTION = FILE_READER_DELIMITED_SETTINGS + "line_separator_detection";
     public static final String FILE_READER_DELIMITED_SETTINGS_NULL_VALUE = FILE_READER_DELIMITED_SETTINGS + "null_value";
@@ -62,6 +63,7 @@ abstract class UnivocityFileReader<T extends CommonParserSettings<?>>
     private Charset charset;
     private CompressionType compression;
     private boolean dataTypeMappingError;
+    private boolean allowNulls;
     private boolean closed;
 
     private ResultIterator<Record, ParsingContext> iterator;
@@ -113,6 +115,13 @@ abstract class UnivocityFileReader<T extends CommonParserSettings<?>>
         this.settings = allSettings(config);
         this.dataTypeMappingError = Boolean.parseBoolean(
                 config.getOrDefault(FILE_READER_DELIMITED_SETTINGS_DATA_TYPE_MAPPING_ERROR, "true"));
+        if (this.dataTypeMappingError) {
+            this.allowNulls = Boolean.parseBoolean(
+                    config.getOrDefault(FILE_READER_DELIMITED_SETTINGS_ALLOW_NULLS, "false"));
+        } else {
+            this.allowNulls = true;
+        }
+
     }
 
     private List<Schema> getDataTypes(Map<String, Object> config, String[] headers) {
@@ -135,24 +144,24 @@ abstract class UnivocityFileReader<T extends CommonParserSettings<?>>
     private Schema strToSchema(String dataType) {
         switch (DataType.valueOf(dataType.trim().toUpperCase())) {
             case BYTE:
-                return this.dataTypeMappingError ? Schema.INT8_SCHEMA : Schema.OPTIONAL_INT8_SCHEMA;
+                return dataTypeMappingError && !allowNulls ? Schema.INT8_SCHEMA : Schema.OPTIONAL_INT8_SCHEMA;
             case SHORT:
-                return this.dataTypeMappingError ? Schema.INT16_SCHEMA : Schema.OPTIONAL_INT16_SCHEMA;
+                return dataTypeMappingError && !allowNulls ? Schema.INT16_SCHEMA : Schema.OPTIONAL_INT16_SCHEMA;
             case INT:
-                return this.dataTypeMappingError ? Schema.INT32_SCHEMA : Schema.OPTIONAL_INT32_SCHEMA;
+                return dataTypeMappingError && !allowNulls ? Schema.INT32_SCHEMA : Schema.OPTIONAL_INT32_SCHEMA;
             case LONG:
-                return this.dataTypeMappingError ? Schema.INT64_SCHEMA : Schema.OPTIONAL_INT64_SCHEMA;
+                return dataTypeMappingError && !allowNulls ? Schema.INT64_SCHEMA : Schema.OPTIONAL_INT64_SCHEMA;
             case FLOAT:
-                return this.dataTypeMappingError ? Schema.FLOAT32_SCHEMA : Schema.OPTIONAL_FLOAT32_SCHEMA;
+                return dataTypeMappingError && !allowNulls ? Schema.FLOAT32_SCHEMA : Schema.OPTIONAL_FLOAT32_SCHEMA;
             case DOUBLE:
-                return this.dataTypeMappingError ? Schema.FLOAT64_SCHEMA : Schema.OPTIONAL_FLOAT64_SCHEMA;
+                return dataTypeMappingError && !allowNulls ? Schema.FLOAT64_SCHEMA : Schema.OPTIONAL_FLOAT64_SCHEMA;
             case BOOLEAN:
-                return this.dataTypeMappingError ? Schema.BOOLEAN_SCHEMA : Schema.OPTIONAL_BOOLEAN_SCHEMA;
+                return dataTypeMappingError && !allowNulls ? Schema.BOOLEAN_SCHEMA : Schema.OPTIONAL_BOOLEAN_SCHEMA;
             case BYTES:
-                return this.dataTypeMappingError ? Schema.BYTES_SCHEMA : Schema.OPTIONAL_BYTES_SCHEMA;
+                return dataTypeMappingError && !allowNulls ? Schema.BYTES_SCHEMA : Schema.OPTIONAL_BYTES_SCHEMA;
             case STRING:
             default:
-                return this.dataTypeMappingError ? Schema.STRING_SCHEMA : Schema.OPTIONAL_STRING_SCHEMA;
+                return dataTypeMappingError && !allowNulls ? Schema.STRING_SCHEMA : Schema.OPTIONAL_STRING_SCHEMA;
         }
     }
 
