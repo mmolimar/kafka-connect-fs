@@ -70,7 +70,7 @@ public class FsSourceTask extends SourceTask {
                 try (FileReader reader = policy.offer(metadata, context.offsetStorageReader())) {
                     log.info("Processing records for file {}", metadata);
                     while (reader.hasNext()) {
-                        records.add(convert(metadata, reader.currentOffset(), reader.next()));
+                        records.add(convert(metadata, reader.currentOffset() + 1, reader.next()));
                     }
                 } catch (ConnectException | IOException e) {
                     //when an exception happens reading a file, the connector continues
@@ -85,9 +85,7 @@ public class FsSourceTask extends SourceTask {
     private Stream<FileMetadata> filesToProcess() {
         try {
             return asStream(policy.execute())
-                    .filter(metadata -> metadata.getLen() > 0)
-                    .collect(Collectors.toList())
-                    .stream();
+                    .filter(metadata -> metadata.getLen() > 0);
         } catch (IOException | ConnectException e) {
             //when an exception happens executing the policy, the connector continues
             log.error("Cannot retrieve files to process from the FS: {}. " +
