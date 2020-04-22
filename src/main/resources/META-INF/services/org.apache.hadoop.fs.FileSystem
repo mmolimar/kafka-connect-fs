@@ -1,0 +1,15 @@
+org.apache.hadoop.fs.LocalFileSystem
+org.apache.hadoop.fs.viewfs.ViewFileSystem
+org.apache.hadoop.fs.HarFileSystem
+org.apache.hadoop.fs.http.HttpFileSystem
+org.apache.hadoop.fs.http.HttpsFileSystem
+org.apache.hadoop.fs.ftp.FTPFileSystem
+org.apache.hadoop.hdfs.DistributedFileSystem
+org.apache.hadoop.fs.s3a.S3AFileSystem
+org.apache.hadoop.fs.s3native.NativeS3FileSystem
+org.apache.hadoop.fs.adl.AdlFileSystem
+org.apache.hadoop.fs.azure.NativeAzureFileSystem
+org.apache.hadoop.fs.azure.NativeAzureFileSystem$Secure
+org.apache.hadoop.fs.azurebfs.AzureBlobFileSystem
+org.apache.hadoop.fs.azurebfs.SecureAzureBlobFileSystem
+com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem

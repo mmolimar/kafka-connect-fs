@@ -14,6 +14,7 @@
         <kafka.version>2.4.1</kafka.version>
         <confluent.version>5.4.1</confluent.version>
         <hadoop.version>3.2.1</hadoop.version>
+        <gcs-connector.version>hadoop3-2.1.2</gcs-connector.version>
         <parquet.version>1.11.0</parquet.version>
         <univocity.version>2.8.4</univocity.version>
         <cron-utils.version>9.0.2</cron-utils.version>
@@ -51,6 +52,21 @@
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-aws</artifactId>
             <version>${hadoop.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-azure</artifactId>
+            <version>${hadoop.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-azure-datalake</artifactId>
+            <version>${hadoop.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud.bigdataoss</groupId>
+            <artifactId>gcs-connector</artifactId>
+            <version>${gcs-connector.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.parquet</groupId>
