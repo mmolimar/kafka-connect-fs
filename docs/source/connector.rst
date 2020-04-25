@@ -12,9 +12,11 @@ of this abstraction and using it in a transparent way.
 Among others, these are some file systems it supports:
 
 * HDFS.
-* WebHDFS.
 * S3.
-* FTP and SFTP.
+* Google Cloud Storage.
+* Azure Blob Storage & Azure Data Lake Store.
+* FTP.
+* WebHDFS.
 * Local File System.
 * Hadoop Archive File System.
 
@@ -24,8 +26,9 @@ Getting started
 Prerequisites
 --------------------------------------------
 
--  Confluent Platform 5.4.1
+-  Apache Kafka 2.5.0
 -  Java 8
+-  Confluent Schema Registry (recommended).
 
 Building from source
 --------------------------------------------
@@ -72,13 +75,13 @@ Running in development
 
 .. sourcecode:: bash
 
-   export CONFLUENT_HOME=/path/to/confluent/install/dir
+   export KAFKA_HOME=/path/to/kafka/install/dir
 
 .. sourcecode:: bash
 
    mvn clean package
    export CLASSPATH="$(find target/ -type f -name '*.jar'| grep '\-package' | tr '\n' ':')"
-   $CONFLUENT_HOME/bin/connect-standalone $CONFLUENT_HOME/etc/schema-registry/connect-avro-standalone.properties config/kafka-connect-fs.properties
+   $KAFKA_HOME/bin/connect-distributed.sh config/kafka-connect-fs.properties
 
 Components
 ============================================

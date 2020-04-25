@@ -315,6 +315,30 @@ To configure custom properties for this reader, the name you must use is ``delim
   * Default: ``false``
   * Importance: high
 
+``file_reader.delimited.settings.schema``
+  A comma-separated list of ordered data types for each field in the file. Possible values: ``byte``, ``short``,
+  ``int``, ``long``, ``float``, ``double``, ``boolean``, ``bytes`` and ``string``)
+
+  * Type: string[]
+  * Default: ``null``
+  * Importance: medium
+
+``file_reader.delimited.settings.data_type_mapping_error``
+  Flag to enable/disable throwing errors when mapping data types based on the schema is not possible. If disabled,
+  the returned value which could not be mapped will be ``null``.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: medium
+
+``file_reader.delimited.settings.allow_nulls``
+  If the schema supports nullable fields. If ``file_reader.delimited.settings.data_type_mapping_error`` config flag is
+  disabled, the value set for this config will be ignored and set to ``true``.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: medium
+
 ``file_reader.delimited.settings.header_names``
   A comma-separated list of ordered field names to set when reading a file.
 
@@ -456,6 +480,30 @@ To configure custom properties for this reader, the name you must use is ``delim
   * Default: ``false``
   * Importance: high
 
+``file_reader.delimited.settings.schema``
+  A comma-separated list of ordered data types for each field in the file. Possible values: ``byte``, ``short``,
+  ``int``, ``long``, ``float``, ``double``, ``boolean``, ``bytes`` and ``string``)
+
+  * Type: string[]
+  * Default: ``null``
+  * Importance: medium
+
+``file_reader.delimited.settings.data_type_mapping_error``
+  Flag to enable/disable throwing errors when mapping data types based on the schema is not possible. If disabled,
+  the returned value which could not be mapped will be ``null``.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: medium
+
+``file_reader.delimited.settings.allow_nulls``
+  If the schema supports nullable fields. If ``file_reader.delimited.settings.data_type_mapping_error`` config flag is
+  disabled, the value set for this config will be ignored and set to ``true``.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: medium
+
 ``file_reader.delimited.settings.header_names``
   A comma-separated list of ordered field names to set when reading a file.
 
@@ -589,6 +637,30 @@ To configure custom properties for this reader, the name you must use is ``delim
   * Type: boolean
   * Default: ``false``
   * Importance: high
+
+``file_reader.delimited.settings.schema``
+  A comma-separated list of ordered data types for each field in the file. Possible values: ``byte``, ``short``,
+  ``int``, ``long``, ``float``, ``double``, ``boolean``, ``bytes`` and ``string``)
+
+  * Type: string[]
+  * Default: ``null``
+  * Importance: medium
+
+``file_reader.delimited.settings.data_type_mapping_error``
+  Flag to enable/disable throwing errors when mapping data types based on the schema is not possible. If disabled,
+  the returned value which could not be mapped will be ``null``.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: medium
+
+``file_reader.delimited.settings.allow_nulls``
+  If the schema supports nullable fields. If ``file_reader.delimited.settings.data_type_mapping_error`` config flag is
+  disabled, the value set for this config will be ignored and set to ``true``.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: medium
 
 ``file_reader.delimited.settings.header_names``
   A comma-separated list of ordered field names to set when reading a file.
