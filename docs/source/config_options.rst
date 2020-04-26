@@ -54,7 +54,7 @@ General config properties for this connector.
   ``file:///data/${yyyy}/${MM}/${dd}/${HH}${mm}``
   
 .. tip:: 
-  If you want to ingest data from S3, you can add credentials with :
+  If you want to ingest data from S3, you can add credentials with:
   ``policy.fs.fs.s3a.access.key=<ACCESS_KEY>``
   and
   ``policy.fs.fs.s3a.secret.key=<SECRET_KEY>``
@@ -64,6 +64,13 @@ General config properties for this connector.
 
   * Type: string
   * Importance: high
+
+``poll.interval.ms``
+  Frequency in milliseconds to poll for new data. This config just applies when the policies have ended.
+
+  * Type: int
+  * Default: ``10000``
+  * Importance: medium
 
 ``policy.class``
   Policy class to apply (must implement ``com.github.mmolimar.kafka.connect.fs.policy.Policy`` interface).
@@ -179,7 +186,21 @@ In order to configure custom properties for this policy, the name you must use i
 HDFS file watcher
 --------------------------------------------
 
-This policy does not have any additional configuration.
+In order to configure custom properties for this policy, the name you must use is ``hdfs_file_watcher``.
+
+``policy.hdfs_file_watcher.poll``
+  Time to wait until the records retrieved from the file watcher will be sent to the source task.
+
+  * Type: long
+  * Default: ``5000``
+  * Importance: medium
+
+``policy.hdfs_file_watcher.retry``
+  Sleep time to retry connections to HDFS in case of connection errors happened.
+
+  * Type: long
+  * Default: ``20000``
+  * Importance: medium
 
 .. _config_options-filereaders:
 

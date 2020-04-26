@@ -47,7 +47,7 @@ The ``kafka-connect-fs.properties`` file defines the following properties as req
    name=FsSourceConnector
    connector.class=com.github.mmolimar.kafka.connect.fs.FsSourceConnector
    tasks.max=1
-   fs.uris=file:///data,hdfs://localhost:9000/
+   fs.uris=file:///data,hdfs://localhost:8020/data
    topic=mytopic
    policy.class=<Policy class>
    policy.recursive=true
@@ -70,7 +70,7 @@ The ``kafka-connect-fs.properties`` file defines the following properties as req
 
 A more detailed information about these properties can be found :ref:`here<config_options-general>`.
 
-Running in development
+Running in local
 --------------------------------------------
 
 .. sourcecode:: bash
@@ -81,7 +81,25 @@ Running in development
 
    mvn clean package
    export CLASSPATH="$(find target/ -type f -name '*.jar'| grep '\-package' | tr '\n' ':')"
-   $KAFKA_HOME/bin/connect-distributed.sh config/kafka-connect-fs.properties
+   $KAFKA_HOME/bin/connect-standalone.sh $KAFKA_HOME/config/connect-standalone.properties config/kafka-connect-fs.properties
+
+Running in Docker
+--------------------------------------------
+
+.. sourcecode:: bash
+
+   mvn clean package
+
+.. sourcecode:: bash
+
+   docker build --build-arg PROJECT_VERSION=<VERSION> .
+   docker-compose build
+   docker-compose up -d
+   docker logs --tail="all" -f connect
+
+.. sourcecode:: bash
+
+   curl -sX GET http://localhost:8083/connector-plugins | grep FsSourceConnector
 
 Components
 ============================================
