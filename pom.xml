@@ -29,6 +29,7 @@
         <maven-jacoco-plugin.version>0.8.5</maven-jacoco-plugin.version>
         <maven-coveralls-plugin.version>4.3.0</maven-coveralls-plugin.version>
         <maven-surfire-plugin.version>3.0.0-M4</maven-surfire-plugin.version>
+        <maven-kafka-connect-plugin.version>0.11.3</maven-kafka-connect-plugin.version>
     </properties>
 
     <dependencies>
@@ -178,6 +179,64 @@
                 <groupId>org.eluder.coveralls</groupId>
                 <artifactId>coveralls-maven-plugin</artifactId>
                 <version>${maven-coveralls-plugin.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>io.confluent</groupId>
+                <artifactId>kafka-connect-maven-plugin</artifactId>
+                <version>${maven-kafka-connect-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>kafka-connect</goal>
+                        </goals>
+                        <configuration>
+                            <name>kafka-connect-fs</name>
+                            <title>Kafka Connect FileSystem</title>
+                            <documentationUrl>https://kafka-connect-fs.readthedocs.io/</documentationUrl>
+                            <sourceUrl>https://github.com/mmolimar/kafka-connect-fs</sourceUrl>
+                            <description>
+                                Kafka Connect FileSystem Connector is a source connector for reading records from files
+                                in the file systems specified and load them into Kafka.
+                            </description>
+                            <supportProviderName>Mario Molina</supportProviderName>
+                            <supportSummary>This connector is supported by the open source community.</supportSummary>
+                            <supportUrl>https://github.com/mmolimar/kafka-connect-fs/issues</supportUrl>
+                            <ownerUsername>mmolimar</ownerUsername>
+                            <ownerType>user</ownerType>
+                            <ownerName>Mario Molina</ownerName>
+                            <ownerUrl>https://github.com/mmolimar</ownerUrl>
+                            <dockerNamespace>mmolimar</dockerNamespace>
+                            <dockerName>kafka-connect-fs</dockerName>
+                            <dockerTag>${project.version}</dockerTag>
+                            <componentTypes>
+                                <componentType>source</componentType>
+                            </componentTypes>
+                            <tags>
+                                <tag>filesystem</tag>
+                                <tag>files</tag>
+                                <tag>hadoop</tag>
+                                <tag>hdfs</tag>
+                                <tag>aws</tag>
+                                <tag>s3</tag>
+                                <tag>google</tag>
+                                <tag>gcs</tag>
+                                <tag>azure</tag>
+                                <tag>txt</tag>
+                                <tag>csv</tag>
+                                <tag>tsv</tag>
+                                <tag>json</tag>
+                                <tag>avro</tag>
+                                <tag>parquet</tag>
+                                <tag>sequence</tag>
+                            </tags>
+                            <requirements/>
+                            <deliveryGuarantee>
+                                <deliveryGuarantee>atLeastOnce</deliveryGuarantee>
+                            </deliveryGuarantee>
+                            <confluentControlCenterIntegration>true</confluentControlCenterIntegration>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
         <resources>
