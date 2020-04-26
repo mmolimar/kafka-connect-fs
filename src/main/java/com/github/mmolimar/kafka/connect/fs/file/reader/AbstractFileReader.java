@@ -33,7 +33,7 @@ public abstract class AbstractFileReader<T> implements FileReader {
         this.offset = 0;
 
         configure(readerConfig(config));
-        log.trace("Initialized file reader {} for file {}", getClass(), filePath);
+        log.trace("Initialized file reader [{}] for file [{}].", getClass().getName(), filePath);
     }
 
     protected final Map<String, String> readerConfig(Map<String, Object> config) {
@@ -88,10 +88,7 @@ public abstract class AbstractFileReader<T> implements FileReader {
         }
         checkClosed();
         try {
-            log.debug("Seeking file {} to offset {}.", filePath, offset);
             seekFile(offset);
-        } catch (ConnectException ce) {
-            throw ce;
         } catch (IOException ioe) {
             throw new ConnectException("Error seeking file: " + getFilePath(), ioe);
         }

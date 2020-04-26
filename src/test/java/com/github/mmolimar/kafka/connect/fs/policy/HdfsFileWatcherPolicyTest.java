@@ -2,7 +2,10 @@ package com.github.mmolimar.kafka.connect.fs.policy;
 
 import com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig;
 import com.github.mmolimar.kafka.connect.fs.file.reader.TextFileReader;
+import com.github.mmolimar.kafka.connect.fs.util.ReflectionUtils;
 import org.apache.hadoop.fs.Path;
+import org.apache.kafka.common.config.ConfigException;
+import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.errors.IllegalWorkerStateException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -74,6 +77,63 @@ public class HdfsFileWatcherPolicyTest extends PolicyTestBase {
         fsConfig.getPolicy().interrupt();
         assertTrue(fsConfig.getPolicy().hasEnded());
         assertThrows(IllegalWorkerStateException.class, () -> fsConfig.getPolicy().execute());
+    }
+
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void notReachableFileSystem(PolicyFsTestConfig fsConfig) throws InterruptedException {
+        Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
+        originals.put(FsSourceTaskConfig.FS_URIS, "hdfs://localhost:65432/data");
+        originals.put(HdfsFileWatcherPolicy.HDFS_FILE_WATCHER_POLICY_POLL_MS, "0");
+        originals.put(HdfsFileWatcherPolicy.HDFS_FILE_WATCHER_POLICY_RETRY_MS, "0");
+        FsSourceTaskConfig cfg = new FsSourceTaskConfig(originals);
+        Policy policy = ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
+                .getClass(FsSourceTaskConfig.POLICY_CLASS), cfg);
+        int count = 0;
+        while (!policy.hasEnded() && count < 10) {
+            Thread.sleep(500);
+            count++;
+        }
+        assertTrue(count < 10);
+        assertTrue(policy.hasEnded());
+    }
+
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void invalidPollTime(PolicyFsTestConfig fsConfig) {
+        Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
+        originals.put(HdfsFileWatcherPolicy.HDFS_FILE_WATCHER_POLICY_POLL_MS, "invalid");
+        FsSourceTaskConfig cfg = new FsSourceTaskConfig(originals);
+        assertThrows(ConnectException.class, () ->
+                ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
+                        .getClass(FsSourceTaskConfig.POLICY_CLASS), cfg));
+        assertThrows(ConfigException.class, () -> {
+            try {
+                ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
+                        .getClass(FsSourceTaskConfig.POLICY_CLASS), cfg);
+            } catch (Exception e) {
+                throw e.getCause();
+            }
+        });
+    }
+
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void invalidRetryTime(PolicyFsTestConfig fsConfig) {
+        Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
+        originals.put(HdfsFileWatcherPolicy.HDFS_FILE_WATCHER_POLICY_RETRY_MS, "invalid");
+        FsSourceTaskConfig cfg = new FsSourceTaskConfig(originals);
+        assertThrows(ConnectException.class, () ->
+                ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
+                        .getClass(FsSourceTaskConfig.POLICY_CLASS), cfg));
+        assertThrows(ConfigException.class, () -> {
+            try {
+                ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
+                        .getClass(FsSourceTaskConfig.POLICY_CLASS), cfg);
+            } catch (Exception e) {
+                throw e.getCause();
+            }
+        });
     }
 
 }

@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -34,14 +34,14 @@ abstract class AbstractPolicy implements Policy {
     protected final Pattern fileRegexp;
 
     private final FsSourceTaskConfig conf;
-    private final AtomicInteger executions;
+    private final AtomicLong executions;
     private final boolean recursive;
     private boolean interrupted;
 
     public AbstractPolicy(FsSourceTaskConfig conf) throws IOException {
         this.fileSystems = new ArrayList<>();
         this.conf = conf;
-        this.executions = new AtomicInteger(0);
+        this.executions = new AtomicLong(0);
         this.recursive = conf.getBoolean(FsSourceTaskConfig.POLICY_RECURSIVE);
         this.fileRegexp = Pattern.compile(conf.getString(FsSourceTaskConfig.POLICY_REGEXP));
         this.interrupted = false;
@@ -107,11 +107,11 @@ abstract class AbstractPolicy implements Policy {
         }
         preCheck();
 
+        executions.incrementAndGet();
         Iterator<FileMetadata> files = Collections.emptyIterator();
         for (FileSystem fs : fileSystems) {
             files = concat(files, listFiles(fs));
         }
-        executions.incrementAndGet();
 
         postCheck();
 
@@ -178,7 +178,7 @@ abstract class AbstractPolicy implements Policy {
 
     protected abstract boolean isPolicyCompleted();
 
-    final int getExecutions() {
+    public final long getExecutions() {
         return executions.get();
     }
 
@@ -204,6 +204,7 @@ abstract class AbstractPolicy implements Policy {
             Map<String, Object> partition = Collections.singletonMap("path", metadata.getPath());
             Map<String, Object> offset = offsetStorageReader.offset(partition);
             if (offset != null && offset.get("offset") != null) {
+                log.info("Seeking to offset [{}] for file [{}].", offset.get("offset"), metadata.getPath());
                 reader.seek((Long) offset.get("offset"));
             }
             return reader;

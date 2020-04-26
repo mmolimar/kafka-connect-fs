@@ -6,6 +6,8 @@ import com.cronutils.model.time.ExecutionTime;
 import com.cronutils.parser.CronParser;
 import com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig;
 import org.apache.kafka.common.config.ConfigException;
+import org.apache.kafka.common.utils.SystemTime;
+import org.apache.kafka.common.utils.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,11 +28,13 @@ public class CronPolicy extends AbstractPolicy {
     public static final String CRON_POLICY_EXPRESSION = CRON_POLICY_PREFIX + "expression";
     public static final String CRON_POLICY_END_DATE = CRON_POLICY_PREFIX + "end_date";
 
+    private final Time time;
     private ExecutionTime executionTime;
     private Date endDate;
 
     public CronPolicy(FsSourceTaskConfig conf) throws IOException {
         super(conf);
+        this.time = new SystemTime();
     }
 
     @Override
@@ -57,13 +61,7 @@ public class CronPolicy extends AbstractPolicy {
     @Override
     protected void preCheck() {
         executionTime.timeToNextExecution(ZonedDateTime.now())
-                .ifPresent(next -> {
-                    try {
-                        Thread.sleep(next.toMillis());
-                    } catch (InterruptedException ie) {
-                        log.warn("An interrupted exception has occurred.", ie);
-                    }
-                });
+                .ifPresent(next -> time.sleep(next.toMillis()));
     }
 
     @Override
