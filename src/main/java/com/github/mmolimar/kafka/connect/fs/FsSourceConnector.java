@@ -50,8 +50,9 @@ public class FsSourceConnector extends SourceConnector {
         }
         final List<Map<String, String>> taskConfigs = new ArrayList<>();
 
-        int groups = Math.min(config.getFsUris().size(), maxTasks);
-        ConnectorUtils.groupPartitions(config.getFsUris(), groups)
+        List<String> fsUris = config.getFsUris();
+        int groups = Math.min(fsUris.size(), maxTasks);
+        ConnectorUtils.groupPartitions(fsUris, groups)
                 .forEach(dirs -> {
                     Map<String, String> taskProps = new HashMap<>(config.originalsStrings());
                     taskProps.put(FsSourceConnectorConfig.FS_URIS, String.join(",", dirs));
