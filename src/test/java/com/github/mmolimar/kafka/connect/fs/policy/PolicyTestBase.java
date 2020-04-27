@@ -130,10 +130,10 @@ abstract class PolicyTestBase {
             fs.createNewFile(new Path(dir, System.nanoTime() + ".txt"));
             //this file does not match the regexp
             fs.createNewFile(new Path(dir, System.nanoTime() + ".invalid"));
-        }
-        //we wait till FS has registered the files
-        Thread.sleep(500);
 
+            //we wait till FS has registered the files
+            Thread.sleep(3000);
+        }
         Iterator<FileMetadata> it = fsConfig.getPolicy().execute();
         assertTrue(it.hasNext());
         it.next();
@@ -152,10 +152,10 @@ abstract class PolicyTestBase {
             fs.createNewFile(new Path(tmpDir, System.nanoTime() + ".txt"));
             //this file does not match the regexp
             fs.createNewFile(new Path(tmpDir, System.nanoTime() + ".invalid"));
-        }
-        //we wait till FS has registered the files
-        Thread.sleep(500);
 
+            //we wait till FS has registered the files
+            Thread.sleep(3000);
+        }
         Iterator<FileMetadata> it = fsConfig.getPolicy().execute();
         assertTrue(it.hasNext());
         it.next();
