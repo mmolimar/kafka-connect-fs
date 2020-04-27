@@ -4,55 +4,53 @@ import com.github.mmolimar.kafka.connect.fs.FsSourceConnector;
 import com.github.mmolimar.kafka.connect.fs.FsSourceTask;
 import com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig;
 import org.apache.kafka.connect.errors.ConnectException;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class FsSourceConnectorTest {
-    @ClassRule
-    public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @TempDir
+    public static File temporaryFolder;
 
     private FsSourceConnector connector;
     private Map<String, String> connProps;
 
-    @Before
-    public void setup() throws IOException {
+    @BeforeEach
+    public void setup() {
         connector = new FsSourceConnector();
 
         Map<String, String> cfg = new HashMap<String, String>() {{
             put(FsSourceTaskConfig.FS_URIS, String.join(",",
-                    temporaryFolder.getRoot().toURI() + File.separator + "dir1",
-                    temporaryFolder.getRoot().toURI() + File.separator + "dir2",
-                    temporaryFolder.getRoot().toURI() + File.separator + "dir3"));
+                    temporaryFolder.toURI() + File.separator + "dir1",
+                    temporaryFolder.toURI() + File.separator + "dir2",
+                    temporaryFolder.toURI() + File.separator + "dir3"));
             put(FsSourceTaskConfig.TOPIC, "topic_test");
         }};
         connProps = new HashMap<>(cfg);
     }
 
-    @Test(expected = ConnectException.class)
+    @Test
     public void nullProperties() {
-        connector.start(null);
-    }
-
-    @Test(expected = ConnectException.class)
-    public void expectedFsUris() {
-        Map<String, String> testProps = new HashMap<>(connProps);
-        testProps.remove(FsSourceTaskConfig.FS_URIS);
-        connector.start(testProps);
+        assertThrows(ConnectException.class, () -> connector.start(null));
     }
 
     @Test
-    public void minimunConfig() {
+    public void expectedFsUris() {
+        Map<String, String> testProps = new HashMap<>(connProps);
+        testProps.remove(FsSourceTaskConfig.FS_URIS);
+        assertThrows(ConnectException.class, () -> connector.start(testProps));
+    }
+
+    @Test
+    public void minimumConfig() {
         connector.start(connProps);
         connector.stop();
     }
@@ -62,15 +60,15 @@ public class FsSourceConnectorTest {
         assertEquals(FsSourceTask.class, connector.taskClass());
     }
 
-    @Test(expected = ConnectException.class)
+    @Test
     public void configTasksWithoutStart() {
-        connector.taskConfigs(1);
+        assertThrows(ConnectException.class, () -> connector.taskConfigs(1));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void invalidConfigTaskNumber() {
         connector.start(connProps);
-        connector.taskConfigs(0);
+        assertThrows(IllegalArgumentException.class, () -> connector.taskConfigs(0));
     }
 
     @Test
@@ -80,7 +78,7 @@ public class FsSourceConnectorTest {
         IntStream.range(1, connProps.get(FsSourceTaskConfig.FS_URIS).split(",").length + 1)
                 .forEach(index -> {
                     List<Map<String, String>> taskConfigs = connector.taskConfigs(index);
-                    assertTrue(taskConfigs.size() == (index > uris ? uris : index));
+                    assertEquals(taskConfigs.size(), Math.min(index, uris));
                 });
         connector.stop();
     }
@@ -95,5 +93,4 @@ public class FsSourceConnectorTest {
     public void checkDefaultConf() {
         assertNotNull(connector.config());
     }
-
 }

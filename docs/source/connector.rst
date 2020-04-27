@@ -12,9 +12,11 @@ of this abstraction and using it in a transparent way.
 Among others, these are some file systems it supports:
 
 * HDFS.
-* WebHDFS.
 * S3.
-* FTP and SFTP.
+* Google Cloud Storage.
+* Azure Blob Storage & Azure Data Lake Store.
+* FTP.
+* WebHDFS.
 * Local File System.
 * Hadoop Archive File System.
 
@@ -24,8 +26,9 @@ Getting started
 Prerequisites
 --------------------------------------------
 
--  Confluent Platform 3.1.1
+-  Apache Kafka 2.5.0
 -  Java 8
+-  Confluent Schema Registry (recommended).
 
 Building from source
 --------------------------------------------
@@ -44,7 +47,7 @@ The ``kafka-connect-fs.properties`` file defines the following properties as req
    name=FsSourceConnector
    connector.class=com.github.mmolimar.kafka.connect.fs.FsSourceConnector
    tasks.max=1
-   fs.uris=file:///data,hdfs://localhost:9000/
+   fs.uris=file:///data,hdfs://localhost:8020/data
    topic=mytopic
    policy.class=<Policy class>
    policy.recursive=true
@@ -67,18 +70,36 @@ The ``kafka-connect-fs.properties`` file defines the following properties as req
 
 A more detailed information about these properties can be found :ref:`here<config_options-general>`.
 
-Running in development
+Running in local
 --------------------------------------------
 
 .. sourcecode:: bash
 
-   export CONFLUENT_HOME=/path/to/confluent/install/dir
+   export KAFKA_HOME=/path/to/kafka/install/dir
 
 .. sourcecode:: bash
 
    mvn clean package
    export CLASSPATH="$(find target/ -type f -name '*.jar'| grep '\-package' | tr '\n' ':')"
-   $CONFLUENT_HOME/bin/connect-standalone $CONFLUENT_HOME/etc/schema-registry/connect-avro-standalone.properties config/kafka-connect-fs.properties
+   $KAFKA_HOME/bin/connect-standalone.sh $KAFKA_HOME/config/connect-standalone.properties config/kafka-connect-fs.properties
+
+Running in Docker
+--------------------------------------------
+
+.. sourcecode:: bash
+
+   mvn clean package
+
+.. sourcecode:: bash
+
+   docker build --build-arg PROJECT_VERSION=<VERSION> .
+   docker-compose build
+   docker-compose up -d
+   docker logs --tail="all" -f connect
+
+.. sourcecode:: bash
+
+   curl -sX GET http://localhost:8083/connector-plugins | grep FsSourceConnector
 
 Components
 ============================================
@@ -91,7 +112,7 @@ Policies
 
 In order to ingest data from the FS(s), the connector needs a **policy** to define the rules to do it.
 
-Basically, the policy tries to connect to each FS included in ``fs.uris`` connector property, list files
+Basically, the policy tries to connect to each FS included in ``fs.uris`` connector property, lists files
 (and filter them using the regular expression provided in the ``policy.regexp`` property) and enables
 a file reader to read records from them.
 

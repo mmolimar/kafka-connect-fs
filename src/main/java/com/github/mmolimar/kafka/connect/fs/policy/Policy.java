@@ -19,5 +19,7 @@ public interface Policy extends Closeable {
 
     List<String> getURIs();
 
+    long getExecutions();
+
     void interrupt();
 }

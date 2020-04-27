@@ -16,7 +16,7 @@ Parquet
 Reads files with `Parquet <https://parquet.apache.org/>`__ format.
 
 The reader takes advantage of the Parquet-Avro API and uses the Parquet file
-as if it were an Avro file, so the message sent to Kafka is built in the same
+as if it was an Avro file, so the message sent to Kafka is built in the same
 way as the Avro file reader does.
 
 .. warning:: Seeking Parquet files is a heavy task because the reader has to
@@ -38,28 +38,61 @@ by default but you can customize these field names.
 
 More information about properties of this file reader :ref:`here<config_options-filereaders-sequencefile>`.
 
-Text
+JSON
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Reads plain text files.
+Reads JSON files which might contain multiple number of fields with their specified
+data types. The schema for this sort of records is inferred reading the first record
+and marked as optional in the schema all the fields contained.
 
-Each line represents one record which will be in a field
-named ``value`` in the message sent to Kafka by default but you can
-customize these field names.
+More information about properties of this file reader :ref:`here<config_options-filereaders-json>`.
 
-More information about properties of this file reader :ref:`here<config_options-filereaders-text>`.
-
-Delimited text
+CSV
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Text file reader using a custom token to distinguish different columns on each line.
+CSV file reader using a custom token to distinguish different columns on each line.
 
 It allows to distinguish a header in the files and set the name of their columns
 in the message sent to Kafka. If there is no header, the value of each column will be in
 the field named ``column_N`` (**N** represents the column index) in the message.
 Also, the token delimiter for columns is configurable.
 
-More information about properties of this file reader :ref:`here<config_options-filereaders-delimited>`.
+This reader is based on the `Univocity CSV parser <https://www.univocity.com/pages/univocity_parsers_csv.html#working-with-csv>`__.
+
+More information about properties of this file reader :ref:`here<config_options-filereaders-csv>`.
+
+TSV
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+TSV file reader using a tab (``\t``) to distinguish different columns on each line.
+
+Its behaviour is the same one for the CSV file reader regarding the header and the column names.
+
+This reader is based on the `Univocity TSV parser <https://www.univocity.com/pages/univocity_parsers_tsv.html#working-with-tsv>`__.
+
+More information about properties of this file reader :ref:`here<config_options-filereaders-tsv>`.
+
+FixedWidth
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+FixedWidth is a plain text file reader which distinguishes each column based on the length of each field.
+
+Its behaviour is the same one for the CSV/TSV file readers regarding the header and the column names.
+
+This reader is based on the `Univocity Fixed-Width parser <https://www.univocity.com/pages/univocity_parsers_fixed_width.html#working-with-fixed-width>`__.
+
+More information about properties of this file reader :ref:`here<config_options-filereaders-fixedwidth>`.
+
+Text
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Reads plain text files.
+
+Each line represents one record (by default) which will be in a field
+named ``value`` in the message sent to Kafka by default but you can
+customize these field names.
+
+More information about properties of this file reader :ref:`here<config_options-filereaders-text>`.
 
 Agnostic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -67,14 +100,18 @@ Agnostic
 Actually, this reader is a wrapper of the readers listing above.
 
 It tries to read any kind of file format using an internal reader based on the file extension,
-applying the proper one (Parquet, Avro, SecuenceFile, Text or Delimited text). In case of no
+applying the proper one (Parquet, Avro, SequenceFile, CSV, TSV or Text). In case of no
 extension has been matched, the Text file reader will be applied.
 
-Default extensions for each format:
-* Parquet: .parquet
-* Avro: .avro
-* SequenceFile: .seq
-* Delimited text: .tsv, .csv
+Default extensions for each format (configurable):
+
+* Parquet: ``.parquet``
+* Avro: ``.avro``
+* SequenceFile: ``.seq``
+* JSON: ``.json``
+* CSV: ``.csv``
+* TSV: ``.tsv``
+* FixedWidth: ``.fixed``
 * Text: any other sort of file extension.
 
 More information about properties of this file reader :ref:`here<config_options-filereaders-agnostic>`.

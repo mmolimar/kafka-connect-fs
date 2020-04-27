@@ -1,6 +1,5 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader;
 
-import com.github.mmolimar.kafka.connect.fs.file.Offset;
 import io.confluent.connect.avro.AvroData;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileReader;
@@ -11,10 +10,10 @@ import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
-import org.apache.kafka.connect.errors.ConnectException;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig.FILE_READER_PREFIX;
 
@@ -24,86 +23,66 @@ public class AvroFileReader extends AbstractFileReader<GenericRecord> {
 
     public static final String FILE_READER_AVRO_SCHEMA = FILE_READER_AVRO + "schema";
 
-    private final AvroOffset offset;
-    private DataFileReader<GenericRecord> reader;
+    private final DataFileReader<GenericRecord> reader;
     private Schema schema;
+    private boolean closed;
 
     public AvroFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
         super(fs, filePath, new GenericRecordToStruct(), config);
 
         AvroFSInput input = new AvroFSInput(FileContext.getFileContext(filePath.toUri()), filePath);
-        this.reader = new DataFileReader<>(input, new SpecificDatumReader<>(this.schema));
-        this.offset = new AvroOffset(0);
-    }
-
-    protected void configure(Map<String, Object> config) {
-        if (config.get(FILE_READER_AVRO_SCHEMA) != null) {
-            this.schema = new Schema.Parser().parse(config.get(FILE_READER_AVRO_SCHEMA).toString());
+        if (this.schema == null) {
+            this.reader = new DataFileReader<>(input, new SpecificDatumReader<>());
         } else {
-            this.schema = null;
+            this.reader = new DataFileReader<>(input, new SpecificDatumReader<>(this.schema));
         }
+        this.closed = false;
     }
 
     @Override
-    public boolean hasNext() {
+    protected void configure(Map<String, String> config) {
+        this.schema = Optional.ofNullable(config.get(FILE_READER_AVRO_SCHEMA))
+                .map(c -> new Schema.Parser().parse(c))
+                .orElse(null);
+    }
+
+    @Override
+    public boolean hasNextRecord() {
         return reader.hasNext();
     }
 
     @Override
     protected GenericRecord nextRecord() {
         GenericRecord record = reader.next();
-        this.offset.inc();
+        incrementOffset();
 
         return record;
     }
 
     @Override
-    public void seek(Offset offset) {
-        try {
-            reader.sync(offset.getRecordOffset());
-            this.offset.setOffset(reader.previousSync() - 15);
-        } catch (IOException ioe) {
-            throw new ConnectException("Error seeking file " + getFilePath(), ioe);
-        }
-    }
-
-    @Override
-    public Offset currentOffset() {
-        return offset;
+    public void seekFile(long offset) throws IOException {
+        reader.sync(offset);
+        setOffset(reader.previousSync() - 16L);
     }
 
     @Override
     public void close() throws IOException {
+        closed = true;
         reader.sync(0);
         reader.close();
     }
 
-    public static class AvroOffset implements Offset {
-        private long offset;
-
-        public AvroOffset(long offset) {
-            this.offset = offset;
-        }
-
-        public void setOffset(long offset) {
-            this.offset = offset;
-        }
-
-        protected void inc() {
-            this.offset++;
-        }
-
-        @Override
-        public long getRecordOffset() {
-            return offset;
-        }
+    @Override
+    public boolean isClosed() {
+        return closed;
     }
 
     static class GenericRecordToStruct implements ReaderAdapter<GenericRecord> {
+
         private static final int CACHE_SIZE = 100;
         private final AvroData avroData;
 
-        public GenericRecordToStruct() {
+        GenericRecordToStruct() {
             this.avroData = new AvroData(CACHE_SIZE);
         }
 

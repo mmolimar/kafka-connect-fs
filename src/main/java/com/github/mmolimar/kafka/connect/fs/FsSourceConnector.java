@@ -1,7 +1,5 @@
 package com.github.mmolimar.kafka.connect.fs;
 
-import com.github.mmolimar.kafka.connect.fs.file.reader.FileReader;
-import com.github.mmolimar.kafka.connect.fs.policy.Policy;
 import com.github.mmolimar.kafka.connect.fs.util.Version;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigException;
@@ -16,7 +14,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class FsSourceConnector extends SourceConnector {
 
@@ -34,13 +31,10 @@ public class FsSourceConnector extends SourceConnector {
         log.info("Starting FsSourceConnector...");
         try {
             config = new FsSourceConnectorConfig(properties);
-
         } catch (ConfigException ce) {
-            log.error("Couldn't start FsSourceConnector:", ce);
             throw new ConnectException("Couldn't start FsSourceConnector due to configuration error.", ce);
         } catch (Exception ce) {
-            log.error("Couldn't start FsSourceConnector:", ce);
-            throw new ConnectException("An error has occurred when starting FsSourceConnector" + ce);
+            throw new ConnectException("An error has occurred when starting FsSourceConnector." + ce);
         }
     }
 
@@ -52,15 +46,16 @@ public class FsSourceConnector extends SourceConnector {
     @Override
     public List<Map<String, String>> taskConfigs(int maxTasks) {
         if (config == null) {
-            throw new ConnectException("Connector config has not been initialized");
+            throw new ConnectException("Connector config has not been initialized.");
         }
-        List<Map<String, String>> taskConfigs = new ArrayList<>();
+        final List<Map<String, String>> taskConfigs = new ArrayList<>();
 
-        int groups = Math.min(config.getFsUris().size(), maxTasks);
-        ConnectorUtils.groupPartitions(config.getFsUris(), groups)
+        List<String> fsUris = config.getFsUris();
+        int groups = Math.min(fsUris.size(), maxTasks);
+        ConnectorUtils.groupPartitions(fsUris, groups)
                 .forEach(dirs -> {
                     Map<String, String> taskProps = new HashMap<>(config.originalsStrings());
-                    taskProps.put(FsSourceConnectorConfig.FS_URIS, dirs.stream().collect(Collectors.joining(",")));
+                    taskProps.put(FsSourceConnectorConfig.FS_URIS, String.join(",", dirs));
                     taskConfigs.add(taskProps);
                 });
 
@@ -71,6 +66,7 @@ public class FsSourceConnector extends SourceConnector {
 
     @Override
     public void stop() {
+        log.info("Stopping FsSourceConnector.");
         //Nothing to do
     }
 

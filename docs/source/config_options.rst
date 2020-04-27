@@ -48,25 +48,38 @@ General config properties for this connector.
   If you want to ingest data from dynamic directories, this is, directories created every day and
   avoiding to add new URIs or look for files from a parent directory, you can include expressions
   in the URIs to do that. For example, for this URI ``file:///data/${yyyy}``, it will be
-  converted to ``file:///data/2017`` (when executing whe policy).
+  converted to ``file:///data/2020`` (when executing whe policy).
 
   You can use as many as you like in the URIs, for instance:
   ``file:///data/${yyyy}/${MM}/${dd}/${HH}${mm}``
   
 .. tip:: 
-  If you want to ingest data from S3, you can add credentials with :
+  If you want to ingest data from S3, you can add credentials with:
   ``policy.fs.fs.s3a.access.key=<ACCESS_KEY>``
   and
   ``policy.fs.fs.s3a.secret.key=<SECRET_KEY>``
   
 ``topic``
-  Topic in which copy data.
+  Topic in which copy data to.
 
   * Type: string
   * Importance: high
 
+``poll.interval.ms``
+  Frequency in milliseconds to poll for new data. This config just applies when the policies have ended.
+
+  * Type: int
+  * Default: ``10000``
+  * Importance: medium
+
 ``policy.class``
   Policy class to apply (must implement ``com.github.mmolimar.kafka.connect.fs.policy.Policy`` interface).
+
+  * Type: string
+  * Importance: high
+
+``policy.regexp``
+  Regular expression to filter files from the FS.
 
   * Type: string
   * Importance: high
@@ -75,26 +88,20 @@ General config properties for this connector.
   Flag to activate traversed recursion in subdirectories when listing files.
 
   * Type: boolean
-  * Default: false
+  * Default: ``false``
   * Importance: medium
 
-``policy.regexp``
-  Regular expression to filter files from the FS.
-
-  * Type: string
-  * Importance: high
-
 ``policy.<policy_name>.<policy_property>``
-  This represents the custom properties you can include based on the policy class specified.
+  This represents custom properties you can include based on the policy class specified.
 
-  * Type: depending on the policy.
-  * Importance: depending on the policy.
+  * Type: based on the policy.
+  * Importance: based on the policy.
 
 ``policy.fs.<fs_property>``
   Custom properties to use for the FS.
 
-  * Type: depending on the FS.
-  * Importance: depending on the FS.
+  * Type: based on the FS.
+  * Importance: based on the FS.
 
 ``file_reader.class``
   File reader class to read files from the FS (must implement
@@ -104,10 +111,10 @@ General config properties for this connector.
   * Importance: high
 
 ``file_reader.<file_reader_name>.<file_reader_property>``
-  This represents the custom properties you can include based on the file reader class specified.
+  This represents custom properties you can include based on the file reader class specified.
 
-  * Type: depending on the file reader.
-  * Importance: depending on the file reader.
+  * Type: based on the file reader.
+  * Importance: based on the file reader.
 
 .. _config_options-policies:
 
@@ -142,7 +149,7 @@ In order to configure custom properties for this policy, the name you must use i
   Sleep fraction to divide the sleep time to allow interrupting the policy faster.
 
   * Type: long
-  * Default: 10
+  * Default: ``10``
   * Importance: medium
 
 ``policy.sleepy.max_execs``
@@ -150,15 +157,50 @@ In order to configure custom properties for this policy, the name you must use i
   An execution represents: listing files from the FS and its corresponding sleep time.
 
   * Type: long
-  * Default: -1
+  * Default: ``-1``
+  * Importance: medium
+
+.. _config_options-policies-cron:
+
+Cron
+--------------------------------------------
+
+In order to configure custom properties for this policy, the name you must use is ``cron``.
+
+``policy.cron.expression``
+  Cron expression to schedule the policy.
+
+  * Type: string
+  * Importance: high
+
+``policy.cron.end_date``
+  End date to finish the policy with `ISO date-time <https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html#ISO_LOCAL_DATE_TIME>`__
+  format.
+
+  * Type: date
+  * Default: ``null``
   * Importance: medium
 
 .. _config_options-policies-hdfs:
 
-Hdfs file watcher
+HDFS file watcher
 --------------------------------------------
 
-This policy does not have any additional configuration.
+In order to configure custom properties for this policy, the name you must use is ``hdfs_file_watcher``.
+
+``policy.hdfs_file_watcher.poll``
+  Time to wait until the records retrieved from the file watcher will be sent to the source task.
+
+  * Type: long
+  * Default: ``5000``
+  * Importance: medium
+
+``policy.hdfs_file_watcher.retry``
+  Sleep time to retry connections to HDFS in case of connection errors happened.
+
+  * Type: long
+  * Default: ``20000``
+  * Importance: medium
 
 .. _config_options-filereaders:
 
@@ -176,7 +218,7 @@ Avro
 In order to configure custom properties for this reader, the name you must use is ``avro``.
 
 ``file_reader.avro.schema``
-  AVRO schema in JSON format to use when reading a file.
+  Avro schema in JSON format to use when reading a file.
   If not specified, the reader will use the schema defined in the file.
 
   * Type: string
@@ -190,13 +232,13 @@ Parquet
 In order to configure custom properties for this reader, the name you must use is ``parquet``.
 
 ``file_reader.parquet.schema``
-  AVRO schema in JSON format to use when reading a file.
+  Avro schema in JSON format to use when reading a file.
 
   * Type: string
   * Importance: medium
 
 ``file_reader.parquet.projection``
-  AVRO schema in JSON format to use for projecting fields from records in a file.
+  Avro schema in JSON format to use for projecting fields from records in a file.
 
   * Type: string
   * Importance: medium
@@ -208,25 +250,564 @@ SequenceFile
 
 In order to configure custom properties for this reader, the name you must use is ``sequence``.
 
-``file_reader.sequence.buffer_size``
-  Custom buffer size to read data from the Sequence file.
-
-  * Type: int
-  * Default: 4096
-  * Importance: medium
-
 ``file_reader.sequence.field_name.key``
   Custom field name for the output key to include in the Kafka message.
 
   * Type: string
-  * Default: key
-  * Importance: low
+  * Default: ``key``
+  * Importance: medium
 
 ``file_reader.sequence.field_name.value``
   Custom field name for the output value to include in the Kafka message.
 
   * Type: string
-  * Default: value
+  * Default: ``value``
+  * Importance: medium
+
+``file_reader.sequence.buffer_size``
+  Custom buffer size to read data from the Sequence file.
+
+  * Type: int
+  * Default: ``4096``
+  * Importance: low
+
+.. _config_options-filereaders-json:
+
+JSON
+--------------------------------------------
+
+To configure custom properties for this reader, the name you must use is ``json``.
+
+``file_reader.json.record_per_line``
+  If enabled, the reader will read each line as a record. Otherwise, the reader will read the full
+  content of the file as a record.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: medium
+
+``file_reader.json.deserialization.<deserialization_feature>``
+  Deserialization feature to use when reading a JSON file. You can add as much as you like
+  based on the ones defined `here. <https://fasterxml.github.io/jackson-databind/javadoc/2.10/com/fasterxml/jackson/databind/DeserializationFeature.html#enum.constant.summary>`__
+
+  * Type: boolean
+  * Importance: medium
+
+``file_reader.json.encoding``
+  Encoding to use for reading a file. If not specified, the reader will use the default encoding.
+
+  * Type: string
+  * Default: based on the locale and charset of the underlying operating system.
+  * Importance: medium
+
+``file_reader.json.compression.type``
+  Compression type to use when reading a file.
+
+  * Type: enum (available values ``bzip2``, ``gzip`` and ``none``)
+  * Default: ``none``
+  * Importance: medium
+
+``file_reader.json.compression.concatenated``
+  Flag to specify if the decompression of the reader will finish at the end of the file or after
+  the first compressed stream.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: low
+
+.. _config_options-filereaders-csv:
+
+CSV
+--------------------------------------------
+
+To configure custom properties for this reader, the name you must use is ``delimited`` (even though it's for CSV).
+
+``file_reader.delimited.settings.format.delimiter``
+  Field delimiter.
+
+  * Type: string
+  * Default: ``,``
+  * Importance: high
+
+``file_reader.delimited.settings.header``
+  If the file contains header or not.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: high
+
+``file_reader.delimited.settings.schema``
+  A comma-separated list of ordered data types for each field in the file. Possible values: ``byte``, ``short``,
+  ``int``, ``long``, ``float``, ``double``, ``boolean``, ``bytes`` and ``string``)
+
+  * Type: string[]
+  * Default: ``null``
+  * Importance: medium
+
+``file_reader.delimited.settings.data_type_mapping_error``
+  Flag to enable/disable throwing errors when mapping data types based on the schema is not possible. If disabled,
+  the returned value which could not be mapped will be ``null``.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: medium
+
+``file_reader.delimited.settings.allow_nulls``
+  If the schema supports nullable fields. If ``file_reader.delimited.settings.data_type_mapping_error`` config flag is
+  disabled, the value set for this config will be ignored and set to ``true``.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: medium
+
+``file_reader.delimited.settings.header_names``
+  A comma-separated list of ordered field names to set when reading a file.
+
+  * Type: string[]
+  * Default: ``null``
+  * Importance: medium
+
+``file_reader.delimited.settings.null_value``
+  Default value for ``null`` values.
+
+  * Type: string
+  * Default: ``null``
+  * Importance: medium
+
+``file_reader.delimited.settings.empty_value``
+  Default value for empty values (empty values within quotes).
+
+  * Type: string
+  * Default: ``null``
+  * Importance: medium
+
+``file_reader.delimited.settings.format.line_separator``
+  Line separator to be used.
+
+  * Type: string
+  * Default: ``\n``
+  * Importance: medium
+
+``file_reader.delimited.settings.max_columns``
+  Default value for ``null`` values.
+
+  * Type: int
+  * Default: ``512``
+  * Importance: low
+
+``file_reader.delimited.settings.max_chars_per_column``
+  Default value for ``null`` values.
+
+  * Type: int
+  * Default: ``4096``
+  * Importance: low
+
+``file_reader.delimited.settings.rows_to_skip``
+  Number of rows to skip.
+
+  * Type: long
+  * Default: ``0``
+  * Importance: low
+
+``file_reader.delimited.settings.line_separator_detection``
+  If the reader should detect the line separator automatically.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: low
+
+``file_reader.delimited.settings.delimiter_detection``
+  If the reader should detect the delimiter automatically.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: low
+
+``file_reader.delimited.settings.ignore_leading_whitespaces``
+  Flag to enable/disable skipping leading whitespaces from values.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: low
+
+``file_reader.delimited.settings.ignore_trailing_whitespaces``
+  Flag to enable/disable skipping trailing whitespaces from values.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: low
+
+``file_reader.delimited.settings.format.comment``
+  Character that represents a line comment at the beginning of a line.
+
+  * Type: char
+  * Default: ``#``
+  * Importance: low
+
+``file_reader.delimited.settings.escape_unquoted``
+  Flag to enable/disable processing escape sequences in unquoted values.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: low
+
+``file_reader.delimited.settings.format.quote``
+  Character used for escaping values where the field delimiter is part of the value.
+
+  * Type: char
+  * Default: ``"``
+  * Importance: low
+
+``file_reader.delimited.settings.format.quote_escape``
+  Character used for escaping quotes inside an already quoted value.
+
+  * Type: char
+  * Default: ``"``
+  * Importance: low
+
+``file_reader.delimited.encoding``
+  Encoding to use for reading a file. If not specified, the reader will use the default encoding.
+
+  * Type: string
+  * Default: based on the locale and charset of the underlying operating system.
+  * Importance: medium
+
+``file_reader.delimited.compression.type``
+  Compression type to use when reading a file.
+
+  * Type: enum (available values ``bzip2``, ``gzip`` and ``none``)
+  * Default: ``none``
+  * Importance: medium
+
+``file_reader.delimited.compression.concatenated``
+  Flag to specify if the decompression of the reader will finish at the end of the file or after
+  the first compressed stream.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: low
+
+.. _config_options-filereaders-tsv:
+
+TSV
+--------------------------------------------
+
+To configure custom properties for this reader, the name you must use is ``delimited`` (even though it's for TSV).
+
+``file_reader.delimited.settings.header``
+  If the file contains header or not.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: high
+
+``file_reader.delimited.settings.schema``
+  A comma-separated list of ordered data types for each field in the file. Possible values: ``byte``, ``short``,
+  ``int``, ``long``, ``float``, ``double``, ``boolean``, ``bytes`` and ``string``)
+
+  * Type: string[]
+  * Default: ``null``
+  * Importance: medium
+
+``file_reader.delimited.settings.data_type_mapping_error``
+  Flag to enable/disable throwing errors when mapping data types based on the schema is not possible. If disabled,
+  the returned value which could not be mapped will be ``null``.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: medium
+
+``file_reader.delimited.settings.allow_nulls``
+  If the schema supports nullable fields. If ``file_reader.delimited.settings.data_type_mapping_error`` config flag is
+  disabled, the value set for this config will be ignored and set to ``true``.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: medium
+
+``file_reader.delimited.settings.header_names``
+  A comma-separated list of ordered field names to set when reading a file.
+
+  * Type: string[]
+  * Default: ``null``
+  * Importance: medium
+
+``file_reader.delimited.settings.null_value``
+  Default value for ``null`` values.
+
+  * Type: string
+  * Default: ``null``
+  * Importance: medium
+
+``file_reader.delimited.settings.format.line_separator``
+  Line separator to be used.
+
+  * Type: string
+  * Default: ``\n``
+  * Importance: medium
+
+``file_reader.delimited.settings.max_columns``
+  Default value for ``null`` values.
+
+  * Type: int
+  * Default: ``512``
+  * Importance: low
+
+``file_reader.delimited.settings.max_chars_per_column``
+  Default value for ``null`` values.
+
+  * Type: int
+  * Default: ``4096``
+  * Importance: low
+
+``file_reader.delimited.settings.rows_to_skip``
+  Number of rows to skip.
+
+  * Type: long
+  * Default: ``0``
+  * Importance: low
+
+``file_reader.delimited.settings.line_separator_detection``
+  If the reader should detect the line separator automatically.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: low
+
+``file_reader.delimited.settings.line_joining``
+  Identifies whether or lines ending with the escape character and followed by a line
+  separator character should be joined with the following line.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: low
+
+``file_reader.delimited.settings.ignore_leading_whitespaces``
+  Flag to enable/disable skipping leading whitespaces from values.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: low
+
+``file_reader.delimited.settings.ignore_trailing_whitespaces``
+  Flag to enable/disable skipping trailing whitespaces from values.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: low
+
+``file_reader.delimited.settings.format.comment``
+  Character that represents a line comment at the beginning of a line.
+
+  * Type: char
+  * Default: ``#``
+  * Importance: low
+
+``file_reader.delimited.settings.format.escape``
+  Character used for escaping special characters.
+
+  * Type: char
+  * Default: ``\``
+  * Importance: low
+
+``file_reader.delimited.settings.format.escaped_char``
+  Character used to represent an escaped tab.
+
+  * Type: char
+  * Default: ``t``
+  * Importance: low
+
+``file_reader.delimited.encoding``
+  Encoding to use for reading a file. If not specified, the reader will use the default encoding.
+
+  * Type: string
+  * Default: based on the locale and charset of the underlying operating system.
+  * Importance: medium
+
+``file_reader.delimited.compression.type``
+  Compression type to use when reading a file.
+
+  * Type: enum (available values ``bzip2``, ``gzip`` and ``none``)
+  * Default: ``none``
+  * Importance: medium
+
+``file_reader.delimited.compression.concatenated``
+  Flag to specify if the decompression of the reader will finish at the end of the file or after
+  the first compressed stream.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: low
+
+.. _config_options-filereaders-fixedwidth:
+
+FixedWidth
+--------------------------------------------
+
+To configure custom properties for this reader, the name you must use is ``delimited`` (even though it's for FixedWidth).
+
+``file_reader.delimited.settings.field_lengths``
+  A comma-separated ordered list of integers with the lengths of each field.
+
+  * Type: int[]
+  * Importance: high
+
+``file_reader.delimited.settings.header``
+  If the file contains header or not.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: high
+
+``file_reader.delimited.settings.schema``
+  A comma-separated list of ordered data types for each field in the file. Possible values: ``byte``, ``short``,
+  ``int``, ``long``, ``float``, ``double``, ``boolean``, ``bytes`` and ``string``)
+
+  * Type: string[]
+  * Default: ``null``
+  * Importance: medium
+
+``file_reader.delimited.settings.data_type_mapping_error``
+  Flag to enable/disable throwing errors when mapping data types based on the schema is not possible. If disabled,
+  the returned value which could not be mapped will be ``null``.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: medium
+
+``file_reader.delimited.settings.allow_nulls``
+  If the schema supports nullable fields. If ``file_reader.delimited.settings.data_type_mapping_error`` config flag is
+  disabled, the value set for this config will be ignored and set to ``true``.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: medium
+
+``file_reader.delimited.settings.header_names``
+  A comma-separated list of ordered field names to set when reading a file.
+
+  * Type: string[]
+  * Default: ``null``
+  * Importance: medium
+
+``file_reader.delimited.settings.keep_padding``
+  If the padding character should be kept in each value.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: medium
+
+``file_reader.delimited.settings.padding_for_headers``
+  If headers have the default padding specified.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: medium
+
+``file_reader.delimited.settings.null_value``
+  Default value for ``null`` values.
+
+  * Type: string
+  * Default: ``null``
+  * Importance: medium
+
+``file_reader.delimited.settings.format.ends_on_new_line``
+  Line separator to be used.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: medium
+
+``file_reader.delimited.settings.format.line_separator``
+  Line separator to be used.
+
+  * Type: string
+  * Default: ``\n``
+  * Importance: medium
+
+``file_reader.delimited.settings.format.padding``
+  The padding character used to represent unwritten spaces.
+
+  * Type: char
+  * Default: `` ``
+  * Importance: medium
+
+``file_reader.delimited.settings.max_columns``
+  Default value for ``null`` values.
+
+  * Type: int
+  * Default: ``512``
+  * Importance: low
+
+``file_reader.delimited.settings.max_chars_per_column``
+  Default value for ``null`` values.
+
+  * Type: int
+  * Default: ``4096``
+  * Importance: low
+
+``file_reader.delimited.settings.skip_trailing_chars``
+  If the trailing characters beyond the record's length should be skipped.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: low
+
+``file_reader.delimited.settings.rows_to_skip``
+  Number of rows to skip.
+
+  * Type: long
+  * Default: ``0``
+  * Importance: low
+
+``file_reader.delimited.settings.line_separator_detection``
+  If the reader should detect the line separator automatically.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: low
+
+``file_reader.delimited.settings.ignore_leading_whitespaces``
+  Flag to enable/disable skipping leading whitespaces from values.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: low
+
+``file_reader.delimited.settings.ignore_trailing_whitespaces``
+  Flag to enable/disable skipping trailing whitespaces from values.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: low
+
+``file_reader.delimited.settings.format.comment``
+  Character that represents a line comment at the beginning of a line.
+
+  * Type: char
+  * Default: ``#``
+  * Importance: low
+
+``file_reader.delimited.encoding``
+  Encoding to use for reading a file. If not specified, the reader will use the default encoding.
+
+  * Type: string
+  * Default: based on the locale and charset of the underlying operating system.
+  * Importance: medium
+
+``file_reader.delimited.compression.type``
+  Compression type to use when reading a file.
+
+  * Type: enum (available values ``bzip2``, ``gzip`` and ``none``)
+  * Default: ``none``
+  * Importance: medium
+
+``file_reader.delimited.compression.concatenated``
+  Flag to specify if the decompression of the reader will finish at the end of the file or after
+  the first compressed stream.
+
+  * Type: boolean
+  * Default: ``true``
   * Importance: low
 
 .. _config_options-filereaders-text:
@@ -234,84 +815,101 @@ In order to configure custom properties for this reader, the name you must use i
 Text
 --------------------------------------------
 
-In order to configure custom properties for this reader, the name you must use is ``text``.
+To configure custom properties for this reader, the name you must use is ``text``.
+
+``file_reader.json.record_per_line``
+  If enabled, the reader will read each line as a record. Otherwise, the reader will read the full
+  content of the file as a record.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: medium
 
 ``file_reader.text.field_name.value``
   Custom field name for the output value to include in the Kafka message.
 
   * Type: string
-  * Default: value
-  * Importance: low
+  * Default: ``value``
+  * Importance: medium
 
 ``file_reader.text.encoding``
   Encoding to use for reading a file. If not specified, the reader will use the default encoding.
 
   * Type: string
+  * Default: based on the locale and charset of the underlying operating system.
   * Importance: medium
 
-.. _config_options-filereaders-delimited:
+``file_reader.json.compression.type``
+  Compression type to use when reading a file.
 
-Delimited text
---------------------------------------------
+  * Type: enum (available values ``bzip2``, ``gzip`` and ``none``)
+  * Default: ``none``
+  * Importance: medium
 
-In order to configure custom properties for this reader, the name you must use is ``delimited``.
-
-``file_reader.delimited.token``
-  The token delimiter for columns.
-
-  * Type: string
-  * Importance: high
-
-``file_reader.delimited.header``
-  If the file contains header or not.
+``file_reader.json.compression.concatenated``
+  Flag to specify if the decompression of the reader will finish at the end of the file or after
+  the first compressed stream.
 
   * Type: boolean
-  * Default: false
-  * Importance: medium
-
-``file_reader.delimited.encoding``
-  Encoding to use for reading a file. If not specified, the reader will use the default encoding.
-
-  * Type: string
-  * Importance: medium
-
-``file_reader.delimited.default_value``
-  Sets a default value in a column when its value is null. This is due to the record is malformed (it does not contain
-  all expected columns).
-
-  * Type: string
-  * Default: null
+  * Default: ``true``
   * Importance: low
+
+.. _config_options-filereaders-agnostic:
 
 Agnostic
 --------------------------------------------
 
-In order to configure custom properties for this reader, the name you must use is ``agnostic``.
+To configure custom properties for this reader, the name you must use is ``agnostic``.
 
 ``file_reader.agnostic.extensions.parquet``
   A comma-separated string list with the accepted extensions for Parquet files.
 
   * Type: string
-  * Default: parquet
+  * Default: ``parquet``
   * Importance: medium
 
 ``file_reader.agnostic.extensions.avro``
   A comma-separated string list with the accepted extensions for Avro files.
 
   * Type: string
-  * Default: avro
+  * Default: ``avro``
   * Importance: medium
 
 ``file_reader.agnostic.extensions.sequence``
   A comma-separated string list with the accepted extensions for Sequence files.
 
   * Type: string
-  * Default: seq
+  * Default: ``seq``
   * Importance: medium
 
-``file_reader.agnostic.extensions.delimited``
-  A comma-separated string list with the accepted extensions for Delimited text files.
+``file_reader.agnostic.extensions.json``
+  A comma-separated string list with the accepted extensions for JSON files.
 
   * Type: string
-  * Default: tsv,csv
+  * Default: ``json``
   * Importance: medium
+
+``file_reader.agnostic.extensions.csv``
+ A comma-separated string list with the accepted extensions for CSV files.
+
+  * Type: string
+  * Default: ``csv``
+  * Importance: medium
+
+``file_reader.agnostic.extensions.tsv``
+ A comma-separated string list with the accepted extensions for TSV files.
+
+  * Type: string
+  * Default: ``tsv``
+  * Importance: medium
+
+``file_reader.agnostic.extensions.fixed``
+ A comma-separated string list with the accepted extensions for fixed-width files.
+
+  * Type: string
+  * Default: ``fixed``
+  * Importance: medium
+
+.. note:: The Agnostic reader uses the previous ones as inner readers. So, in case of using this
+          reader, you'll probably need to include also the specified properties for those
+          readers in the connector configuration as well.

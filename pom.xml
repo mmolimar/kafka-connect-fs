@@ -4,26 +4,32 @@
 
     <groupId>com.github.mmolimar.kafka.connect</groupId>
     <artifactId>kafka-connect-fs</artifactId>
-    <version>0.3-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
 
     <name>kafka-connect-fs</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kafka.version>0.10.1.0</kafka.version>
-        <confluent.version>3.1.1</confluent.version>
-        <hadoop.version>2.9.0</hadoop.version>
-        <avro.version>1.8.1</avro.version>
-        <parquet.version>1.9.0</parquet.version>
-        <junit.version>4.12</junit.version>
-        <easymock.version>3.4</easymock.version>
-        <powermock.version>1.6.6</powermock.version>
-        <maven-jar-plugin.version>3.0.2</maven-jar-plugin.version>
-        <maven-compiler-plugin.version>3.6.1</maven-compiler-plugin.version>
-        <maven-assembly-plugin.version>3.0.0</maven-assembly-plugin.version>
-        <jacoco-maven-plugin.version>0.7.9</jacoco-maven-plugin.version>
-        <coveralls-maven-plugin.version>4.3.0</coveralls-maven-plugin.version>
+        <kafka.version>2.5.0</kafka.version>
+        <confluent.version>5.5.0</confluent.version>
+        <hadoop.version>3.2.1</hadoop.version>
+        <gcs-connector.version>hadoop3-2.1.2</gcs-connector.version>
+        <parquet.version>1.11.0</parquet.version>
+        <univocity.version>2.8.4</univocity.version>
+        <cron-utils.version>9.0.2</cron-utils.version>
+        <junit-jupiter.version>5.6.2</junit-jupiter.version>
+        <easymock.version>4.2</easymock.version>
+        <powermock.version>2.0.7</powermock.version>
+        <maven-compiler.source>1.8</maven-compiler.source>
+        <maven-compiler.target>${maven-compiler.source}</maven-compiler.target>
+        <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
+        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+        <maven-assembly-plugin.version>3.2.0</maven-assembly-plugin.version>
+        <maven-jacoco-plugin.version>0.8.5</maven-jacoco-plugin.version>
+        <maven-coveralls-plugin.version>4.3.0</maven-coveralls-plugin.version>
+        <maven-surfire-plugin.version>3.0.0-M4</maven-surfire-plugin.version>
+        <maven-kafka-connect-plugin.version>0.11.3</maven-kafka-connect-plugin.version>
     </properties>
 
     <dependencies>
@@ -37,7 +43,6 @@
             <groupId>io.confluent</groupId>
             <artifactId>kafka-connect-avro-converter</artifactId>
             <version>${confluent.version}</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -50,15 +55,19 @@
             <version>${hadoop.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.avro</groupId>
-            <artifactId>avro-tools</artifactId>
-            <version>${avro.version}</version>
-            <classifier>nodeps</classifier>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-azure</artifactId>
+            <version>${hadoop.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.avro</groupId>
-            <artifactId>avro</artifactId>
-            <version>${avro.version}</version>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-azure-datalake</artifactId>
+            <version>${hadoop.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud.bigdataoss</groupId>
+            <artifactId>gcs-connector</artifactId>
+            <version>${gcs-connector.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.parquet</groupId>
@@ -66,21 +75,27 @@
             <version>${parquet.version}</version>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
+            <groupId>com.univocity</groupId>
+            <artifactId>univocity-parsers</artifactId>
+            <version>${univocity.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cronutils</groupId>
+            <artifactId>cron-utils</artifactId>
+            <version>${cron-utils.version}</version>
+        </dependency>
+
+        <!-- test dependencies -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit-jupiter.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.easymock</groupId>
             <artifactId>easymock</artifactId>
             <version>${easymock.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-module-junit4</artifactId>
-            <version>${powermock.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -118,11 +133,17 @@
                 <version>${maven-compiler-plugin.version}</version>
                 <inherited>true</inherited>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>${maven-compiler.source}</source>
+                    <target>${maven-compiler.target}</target>
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven-surfire-plugin.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>${maven-assembly-plugin.version}</version>
                 <configuration>
@@ -144,7 +165,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>${jacoco-maven-plugin.version}</version>
+                <version>${maven-jacoco-plugin.version}</version>
                 <executions>
                     <execution>
                         <id>prepare-agent</id>
@@ -157,7 +178,65 @@
             <plugin>
                 <groupId>org.eluder.coveralls</groupId>
                 <artifactId>coveralls-maven-plugin</artifactId>
-                <version>${coveralls-maven-plugin.version}</version>
+                <version>${maven-coveralls-plugin.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>io.confluent</groupId>
+                <artifactId>kafka-connect-maven-plugin</artifactId>
+                <version>${maven-kafka-connect-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>kafka-connect</goal>
+                        </goals>
+                        <configuration>
+                            <name>kafka-connect-fs</name>
+                            <title>Kafka Connect FileSystem</title>
+                            <documentationUrl>https://kafka-connect-fs.readthedocs.io/</documentationUrl>
+                            <sourceUrl>https://github.com/mmolimar/kafka-connect-fs</sourceUrl>
+                            <description>
+                                Kafka Connect FileSystem Connector is a source connector for reading records from files
+                                in the file systems specified and load them into Kafka.
+                            </description>
+                            <supportProviderName>Mario Molina</supportProviderName>
+                            <supportSummary>This connector is supported by the open source community.</supportSummary>
+                            <supportUrl>https://github.com/mmolimar/kafka-connect-fs/issues</supportUrl>
+                            <ownerUsername>mmolimar</ownerUsername>
+                            <ownerType>user</ownerType>
+                            <ownerName>Mario Molina</ownerName>
+                            <ownerUrl>https://github.com/mmolimar</ownerUrl>
+                            <dockerNamespace>mmolimar</dockerNamespace>
+                            <dockerName>kafka-connect-fs</dockerName>
+                            <dockerTag>${project.version}</dockerTag>
+                            <componentTypes>
+                                <componentType>source</componentType>
+                            </componentTypes>
+                            <tags>
+                                <tag>filesystem</tag>
+                                <tag>files</tag>
+                                <tag>hadoop</tag>
+                                <tag>hdfs</tag>
+                                <tag>aws</tag>
+                                <tag>s3</tag>
+                                <tag>google</tag>
+                                <tag>gcs</tag>
+                                <tag>azure</tag>
+                                <tag>txt</tag>
+                                <tag>csv</tag>
+                                <tag>tsv</tag>
+                                <tag>json</tag>
+                                <tag>avro</tag>
+                                <tag>parquet</tag>
+                                <tag>sequence</tag>
+                            </tags>
+                            <requirements/>
+                            <deliveryGuarantee>
+                                <deliveryGuarantee>atLeastOnce</deliveryGuarantee>
+                            </deliveryGuarantee>
+                            <confluentControlCenterIntegration>true</confluentControlCenterIntegration>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
         <resources>

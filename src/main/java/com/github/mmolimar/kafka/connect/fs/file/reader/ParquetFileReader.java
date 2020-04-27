@@ -1,6 +1,5 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader;
 
-import com.github.mmolimar.kafka.connect.fs.file.Offset;
 import io.confluent.connect.avro.AvroData;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
@@ -9,14 +8,14 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Struct;
-import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.parquet.avro.AvroParquetReader;
 import org.apache.parquet.avro.AvroReadSupport;
 import org.apache.parquet.hadoop.ParquetReader;
+import org.apache.parquet.hadoop.util.HadoopInputFile;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import static com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig.FILE_READER_PREFIX;
 
@@ -27,19 +26,15 @@ public class ParquetFileReader extends AbstractFileReader<GenericRecord> {
     public static final String FILE_READER_PARQUET_SCHEMA = FILE_READER_PARQUET + "schema";
     public static final String FILE_READER_PARQUET_PROJECTION = FILE_READER_PARQUET + "projection";
 
-    private final ParquetOffset offset;
-
     private ParquetReader<GenericRecord> reader;
     private GenericRecord currentRecord;
     private Schema schema;
     private Schema projection;
     private boolean closed;
 
-
     public ParquetFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws IOException {
         super(fs, filePath, new GenericRecordToStruct(), config);
 
-        this.offset = new ParquetOffset(0);
         this.reader = initReader();
         this.closed = false;
     }
@@ -52,43 +47,30 @@ public class ParquetFileReader extends AbstractFileReader<GenericRecord> {
         if (this.projection != null) {
             AvroReadSupport.setRequestedProjection(configuration, this.projection);
         }
-        ParquetReader reader = AvroParquetReader.<GenericRecord>builder(getFilePath())
-                .withConf(configuration).build();
-        return reader;
+        return AvroParquetReader
+                .<GenericRecord>builder(HadoopInputFile.fromPath(getFilePath(), configuration))
+                .build();
     }
 
-    protected void configure(Map<String, Object> config) {
-        if (config.get(FILE_READER_PARQUET_SCHEMA) != null) {
-            this.schema = new Schema.Parser().parse(config.get(FILE_READER_PARQUET_SCHEMA).toString());
-        } else {
-            this.schema = null;
-        }
-        if (config.get(FILE_READER_PARQUET_PROJECTION) != null) {
-            this.projection = new Schema.Parser().parse(config.get(FILE_READER_PARQUET_PROJECTION).toString());
-        } else {
-            this.projection = null;
-        }
+    protected void configure(Map<String, String> config) {
+        this.schema = Optional.ofNullable(config.get(FILE_READER_PARQUET_SCHEMA))
+                .map(c -> new Schema.Parser().parse(c))
+                .orElse(null);
+        this.projection = Optional.ofNullable(config.get(FILE_READER_PARQUET_PROJECTION))
+                .map(c -> new Schema.Parser().parse(c))
+                .orElse(null);
     }
 
     @Override
-    public boolean hasNext() {
-        if (closed) return false;
+    public boolean hasNextRecord() throws IOException {
         if (currentRecord == null) {
-            try {
-                currentRecord = reader.read();
-                if (currentRecord != null) offset.inc();
-            } catch (IOException ioe) {
-                throw new ConnectException("Error reading parquet record", ioe);
-            }
+            currentRecord = reader.read();
         }
         return currentRecord != null;
     }
 
     @Override
     protected GenericRecord nextRecord() {
-        if (!hasNext()) {
-            throw new NoSuchElementException("There are no more records in file: " + getFilePath());
-        }
         GenericRecord record;
         if (this.projection != null) {
             record = new GenericData.Record(this.projection);
@@ -97,68 +79,38 @@ public class ParquetFileReader extends AbstractFileReader<GenericRecord> {
             record = currentRecord;
         }
         currentRecord = null;
+        incrementOffset();
         return record;
     }
 
     @Override
-    public void seek(Offset offset) {
-        if (closed) {
-            throw new ConnectException("Stream is closed!");
+    public void seekFile(long offset) throws IOException {
+        if (currentOffset() > offset) {
+            this.reader = initReader();
+            this.closed = false;
+            setOffset(0);
         }
-        if (offset.getRecordOffset() < 0) {
-            throw new IllegalArgumentException("Record offset must be greater than 0");
-        }
-        if (this.offset.getRecordOffset() > offset.getRecordOffset()) {
-            try {
-                this.reader = initReader();
-                this.offset.setOffset(0);
-                this.closed = false;
-            } catch (IOException ioe) {
-                throw new ConnectException("Error initializing parquet reader", ioe);
-            }
-        }
-        while (hasNext() && this.offset.getRecordOffset() <= offset.getRecordOffset()) {
+        while (hasNext() && currentOffset() < offset) {
             nextRecord();
         }
     }
 
     @Override
-    public Offset currentOffset() {
-        return offset;
-    }
-
-    @Override
     public void close() throws IOException {
-        this.closed = true;
+        closed = true;
         reader.close();
     }
 
-    public static class ParquetOffset implements Offset {
-        private long offset;
-
-        public ParquetOffset(long offset) {
-            this.offset = offset;
-        }
-
-        public void setOffset(long offset) {
-            this.offset = offset;
-        }
-
-        protected void inc() {
-            this.offset++;
-        }
-
-        @Override
-        public long getRecordOffset() {
-            return offset;
-        }
+    @Override
+    public boolean isClosed() {
+        return closed;
     }
 
     static class GenericRecordToStruct implements ReaderAdapter<GenericRecord> {
         private static final int CACHE_SIZE = 100;
         private final AvroData avroData;
 
-        public GenericRecordToStruct() {
+        GenericRecordToStruct() {
             this.avroData = new AvroData(CACHE_SIZE);
         }
 

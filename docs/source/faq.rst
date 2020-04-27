@@ -4,7 +4,7 @@
 FAQs
 ********************************************
 
-**My file was already processed and the connector, when it is executed again,
+**My file was already processed and the connector, when it's executed again,
 processes the same records again.**
 
 If during the previous executions the records were sent successfully to Kafka,
@@ -33,7 +33,7 @@ the connector everyday.**
 
 Don't do this! Take advantage of the dynamic URIs using expressions.
 
-For instance, if you have this URI ``hdfs://host:9000/data/2017``, you can
+For instance, if you have this URI ``hdfs://host:9000/data/2020``, you can
 use this URI ``hdfs://host:9000/data/${yyyy}`` instead.
 
 **The connector is too slow to process all URIs I have.**
@@ -53,4 +53,3 @@ until throws an exception. It's a matter of time.
 But the main thing is that you don't have to worry about removing files
 from the FS when they are being processed. The connector tolerates errors
 when reading files and continues with the next file.
-
