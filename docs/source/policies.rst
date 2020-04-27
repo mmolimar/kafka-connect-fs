@@ -1,10 +1,9 @@
 Simple
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-It's a never-ending policy which just filters and processes files included in the corresponding URIs.
+It's a policy which just filters and processes files included in the corresponding URIs one time.
 
 .. attention:: This policy is more oriented for testing purposes.
-               It never stops and Kafka Connect is continuously trying to poll data from the FS(s).
 
 Sleepy
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -28,10 +27,12 @@ HDFS file watcher
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 It uses Hadoop notifications events and all create/append/rename/close events will be reported
-as new files to be ingested.
+as files to be ingested.
 
 Just use it when you have HDFS URIs.
 
-.. attention:: The URIs included in general property ``fs.uris`` will be filtered and only those
+You can learn more about the properties of this policy :ref:`here<config_options-policies-hdfs>`.
+
+.. attention:: The URIs included in the general property ``fs.uris`` will be filtered and only those
                ones which start with the prefix ``hdfs://`` will be watched. Also, this policy
                will only work for Hadoop versions 2.6.0 or higher.

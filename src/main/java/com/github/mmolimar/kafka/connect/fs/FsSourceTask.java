@@ -50,11 +50,11 @@ public class FsSourceTask extends SourceTask {
             config = new FsSourceTaskConfig(properties);
             if (config.getClass(FsSourceTaskConfig.POLICY_CLASS).isAssignableFrom(Policy.class)) {
                 throw new ConfigException("Policy class " +
-                        config.getClass(FsSourceTaskConfig.POLICY_CLASS) + "is not a subclass of " + Policy.class);
+                        config.getClass(FsSourceTaskConfig.POLICY_CLASS) + " is not a subclass of " + Policy.class);
             }
             if (config.getClass(FsSourceTaskConfig.FILE_READER_CLASS).isAssignableFrom(FileReader.class)) {
                 throw new ConfigException("FileReader class " +
-                        config.getClass(FsSourceTaskConfig.FILE_READER_CLASS) + "is not a subclass of " + FileReader.class);
+                        config.getClass(FsSourceTaskConfig.FILE_READER_CLASS) + " is not a subclass of " + FileReader.class);
             }
 
             Class<Policy> policyClass = (Class<Policy>) Class.forName(properties.get(FsSourceTaskConfig.POLICY_CLASS));
