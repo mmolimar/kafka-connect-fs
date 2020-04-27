@@ -45,7 +45,7 @@ services:
       SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: 'zookeeper:2181'
 
   connect-fs:
-    image: mmolimar/kafka-connect-fs:1.0.0-SNAPSHOT
+    image: mmolimar/kafka-connect-fs:1.0.0
     container_name: connect
     depends_on:
       - cp-kafka
