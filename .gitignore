@@ -1,3 +1,6 @@
+# jenv file (use java 8)
+.java-version
+
 # use glob syntax.
 syntax: glob
 *.ser
