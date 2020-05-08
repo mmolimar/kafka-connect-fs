@@ -1,7 +1,6 @@
-FROM confluentinc/cp-kafka-connect-base:5.5.0
+# This is the base docker image we use at spothero for kafka connect
+FROM spothero/kafka-connect:5.4.1_aiven-jdbc-6.1.0_debezium-1.0.0.Final_mirrortool-3.1.0_jmx-prometheus-0.12.0
 
 ARG PROJECT_VERSION
-ENV CONNECT_PLUGIN_PATH="/usr/share/java,/usr/share/confluent-hub-components"
 
-COPY ./target/components/packages/mmolimar-kafka-connect-fs-${PROJECT_VERSION}.zip /tmp/kafka-connect-fs.zip
-RUN confluent-hub install --no-prompt /tmp/kafka-connect-fs.zip && rm -rf /tmp/kafka-connect-fs.zip
+COPY ./target/kafka-connect-fs-${PROJECT_VERSION}-package /usr/share/java/kafka-connect-fs
