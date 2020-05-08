@@ -1,6 +1,7 @@
 .PHONY : all package docker_build docker_push test
 
 # Controls the version of the jar (and the version of the docker image with that jar)
+# Bump this version when you make a change to the code
 PROJECT_VERSION ?= 1.0.0-SNAPSHOT
 
 all: build run
