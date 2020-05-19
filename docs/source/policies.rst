@@ -36,3 +36,11 @@ You can learn more about the properties of this policy :ref:`here<config_options
 .. attention:: The URIs included in the general property ``fs.uris`` will be filtered and only those
                ones which start with the prefix ``hdfs://`` will be watched. Also, this policy
                will only work for Hadoop versions 2.6.0 or higher.
+
+Simple Batch
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This policy's behaviour is similar to the Simple policy but it will process files in batches instead
+of processing them all at once.
+
+You can learn more about the properties of this policy :ref:`here<config_options-policies-simple_batch>`.

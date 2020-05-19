@@ -202,6 +202,20 @@ In order to configure custom properties for this policy, the name you must use i
   * Default: ``20000``
   * Importance: medium
 
+.. _config_options-policies-simple_batch:
+
+Simple Batch
+--------------------------------------------
+
+In order to configure custom properties for this policy, the name you must use is ``simple_batch``.
+
+``policy.simple_batch.batch_size``
+  Number of files to process per execution.
+
+  * Type: int
+  * Default: ``200``
+  * Importance: High
+
 .. _config_options-filereaders:
 
 File readers
