@@ -7,11 +7,13 @@ import com.github.mmolimar.kafka.connect.fs.util.ReflectionUtils;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.kafka.common.config.ConfigException;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -48,19 +50,20 @@ public class SimpleBatchPolicyTest extends PolicyTestBase {
         Map<String, String> configMap = buildConfigMap(fsConfig.getDirectories());
         configMap.put(SimpleBatchPolicy.BATCH_POLICY_BATCH_SIZE, "1");
         FsSourceTaskConfig sourceTaskConfig = new FsSourceTaskConfig(configMap);
-        
+
         Path dir = fsConfig.getDirectories().get(0);
 
         fsConfig.getFs().createNewFile(new Path(dir, System.nanoTime() + ".txt"));
-        //this file does not match the regexp
+        // this file does not match the regexp
         fsConfig.getFs().createNewFile(new Path(dir, System.nanoTime() + ".txt"));
-        
-        Policy policy = ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
-                .getClass(FsSourceTaskConfig.POLICY_CLASS), sourceTaskConfig);
+
+        Policy policy = ReflectionUtils.makePolicy(
+                (Class<? extends Policy>) fsConfig.getSourceTaskConfig().getClass(FsSourceTaskConfig.POLICY_CLASS),
+                sourceTaskConfig);
         fsConfig.setPolicy(policy);
 
         Iterator<FileMetadata> it = fsConfig.getPolicy().execute();
-        
+
         // First batch of files (1 file)
         assertFalse(fsConfig.getPolicy().hasEnded());
         assertTrue(it.hasNext());
@@ -72,10 +75,27 @@ public class SimpleBatchPolicyTest extends PolicyTestBase {
         // Second batch of files (1 file)
         it = fsConfig.getPolicy().execute();
         assertTrue(it.hasNext());
-        
+
         assertNotEquals(firstPath, it.next().getPath());
 
         assertFalse(it.hasNext());
         assertTrue(fsConfig.getPolicy().hasEnded());
+    }
+
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void invalidBatchSize(PolicyFsTestConfig fsConfig) {
+        Map<String, String> configMap = buildConfigMap(fsConfig.getDirectories());
+        configMap.put(SimpleBatchPolicy.BATCH_POLICY_BATCH_SIZE, "one");
+        FsSourceTaskConfig sourceTaskConfig = new FsSourceTaskConfig(configMap);
+        assertThrows(ConfigException.class, () -> {
+            try {
+                ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
+                        .getClass(FsSourceTaskConfig.POLICY_CLASS), sourceTaskConfig);
+            } catch (Exception e) {
+                throw e.getCause();
+            }
+        });
+
     }
 }

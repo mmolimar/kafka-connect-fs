@@ -41,6 +41,6 @@ Simple Batch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This policy's behaviour is similar to the Simple policy but it will process files in batches instead
-of processing them all at once.
+of processing all the files at once.
 
 You can learn more about the properties of this policy :ref:`here<config_options-policies-simple_batch>`.
