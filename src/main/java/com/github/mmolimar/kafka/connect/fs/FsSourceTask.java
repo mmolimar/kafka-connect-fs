@@ -3,6 +3,7 @@ package com.github.mmolimar.kafka.connect.fs;
 import com.github.mmolimar.kafka.connect.fs.file.FileMetadata;
 import com.github.mmolimar.kafka.connect.fs.file.reader.FileReader;
 import com.github.mmolimar.kafka.connect.fs.policy.Policy;
+import com.github.mmolimar.kafka.connect.fs.util.IteratorUtils;
 import com.github.mmolimar.kafka.connect.fs.util.ReflectionUtils;
 import com.github.mmolimar.kafka.connect.fs.util.Version;
 import org.apache.kafka.common.config.ConfigException;
@@ -18,9 +19,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 public class FsSourceTask extends SourceTask {
 
@@ -74,22 +75,42 @@ public class FsSourceTask extends SourceTask {
     public List<SourceRecord> poll() {
         while (!stop.get() && policy != null && !policy.hasEnded()) {
             log.trace("Polling for new data...");
+            Function<FileMetadata, Map<String, Object>> makePartitionKey = (FileMetadata metadata) ->
+                    Collections.singletonMap("path", metadata.getPath());
 
-            List<SourceRecord> totalRecords = filesToProcess().map(metadata -> {
-                List<SourceRecord> records = new ArrayList<>();
-                try (FileReader reader = policy.offer(metadata, context.offsetStorageReader())) {
-                    log.info("Processing records for file {}.", metadata);
-                    while (reader.hasNext()) {
-                        records.add(convert(metadata, reader.currentOffset() + 1, reader.next()));
+            List<SourceRecord> totalRecords = filesToProcess().flatMap(chunkedMetadata -> {
+                List<Map<String, Object>> partitions = chunkedMetadata.stream()
+                        .map(makePartitionKey)
+                        .collect(Collectors.toList());
+
+                Map<Map<String, Object>, Map<String, Object>> offsets = context.offsetStorageReader().offsets(partitions);
+
+                Stream<SourceRecord> chunkedRecords = chunkedMetadata.stream().flatMap( metadata -> {
+                    List<SourceRecord> records = new ArrayList<>();
+                    Map<String, Object> partitionKey = makePartitionKey.apply(metadata);
+                    Map<String, Object> offset = offsets.get(partitionKey);
+
+                    try (FileReader reader = policy.offer(metadata, offset)) {
+                        if(reader == null){
+                            log.info("Skipping processing file {} as it is unchanged", metadata);
+                            return records.stream();
+                        }
+                        log.info("Processing records for file {}.", metadata);
+                        while (reader.hasNext()) {
+                            records.add(convert(metadata, reader.currentOffset() + 1, reader.next()));
+                        }
+                    } catch (ConnectException | IOException e) {
+                        //when an exception happens reading a file, the connector continues
+                        log.error("Error reading file [{}]. Keep going...", metadata.getPath(), e);
                     }
-                } catch (ConnectException | IOException e) {
-                    //when an exception happens reading a file, the connector continues
-                    log.error("Error reading file [{}]. Keep going...", metadata.getPath(), e);
-                }
-                log.debug("Read [{}] records from file [{}].", records.size(), metadata.getPath());
+                    log.debug("Read [{}] records from file [{}].", records.size(), metadata.getPath());
 
-                return records;
-            }).flatMap(Collection::stream).collect(Collectors.toList());
+                    return records.stream();
+                });
+
+                return chunkedRecords;
+
+            }).collect(Collectors.toList());
 
             log.debug("Returning [{}] records in execution number [{}] for policy [{}].",
                     totalRecords.size(), policy.getExecutions(), policy.getClass().getName());
@@ -103,10 +124,16 @@ public class FsSourceTask extends SourceTask {
         return null;
     }
 
-    private Stream<FileMetadata> filesToProcess() {
+    private Stream<List<FileMetadata>> filesToProcess() {
         try {
-            return asStream(policy.execute())
-                    .filter(metadata -> metadata.getLen() > 0);
+            int chunkSize = config.getInt(FsSourceTaskConfig.FILES_CHUNK_SIZE);
+            Iterator<List<FileMetadata>> chunked = IteratorUtils.chunkIterator(policy.execute(), chunkSize);
+            return IteratorUtils.asStream(chunked)
+                    .map(chunk ->
+                            chunk.stream().filter(
+                                    metadata -> metadata.getLen() > 0
+                            ).collect(Collectors.toList())
+                    );
         } catch (IOException | ConnectException e) {
             //when an exception happens executing the policy, the connector continues
             log.error("Cannot retrieve files to process from the FS: {}. " +
@@ -116,15 +143,14 @@ public class FsSourceTask extends SourceTask {
         }
     }
 
-    private <T> Stream<T> asStream(Iterator<T> src) {
-        Iterable<T> iterable = () -> src;
-        return StreamSupport.stream(iterable.spliterator(), false);
-    }
-
     private SourceRecord convert(FileMetadata metadata, long offset, Struct struct) {
+        Map<String, Long> offsetMap = new HashMap<>();
+        offsetMap.put("offset", offset);
+        offsetMap.put("fileSizeBytes", metadata.getLen());
+
         return new SourceRecord(
                 Collections.singletonMap("path", metadata.getPath()),
-                Collections.singletonMap("offset", offset),
+                offsetMap,
                 config.getTopic(),
                 struct.schema(),
                 struct

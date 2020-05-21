@@ -13,6 +13,8 @@ import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTaskContext;
 import org.apache.kafka.connect.storage.OffsetStorageReader;
+import org.easymock.Capture;
+import org.easymock.CaptureType;
 import org.easymock.EasyMock;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -33,6 +35,10 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
+
+import org.easymock.EasyMock;
+import org.easymock.IAnswer;
+
 
 public class FsSourceTaskTest {
 
@@ -79,14 +85,16 @@ public class FsSourceTaskTest {
             EasyMock.expect(taskContext.offsetStorageReader())
                     .andReturn(offsetStorageReader);
 
-            EasyMock.expect(offsetStorageReader.offset(EasyMock.anyObject()))
-                    .andReturn(new HashMap<String, Object>() {{
-                        put("offset", (long) (NUM_RECORDS / 2));
-                    }});
-            EasyMock.expect(offsetStorageReader.offset(EasyMock.anyObject()))
-                    .andReturn(new HashMap<String, Object>() {{
-                        put("offset", (long) (NUM_RECORDS / 2));
-                    }});
+            Capture<Collection<Map<String, Object>>> captureOne = Capture.newInstance(CaptureType.ALL);
+            EasyMock.expect(
+                    offsetStorageReader.offsets(EasyMock.capture(captureOne))
+            ).andAnswer(() -> {
+                Map<Map<String, Object>, Map<String, Object>> map = new HashMap<>();
+                captureOne.getValue().forEach(part -> map.put(part, new HashMap<String, Object>(){{
+                    put("offset", (long)(NUM_RECORDS/2));
+                }}));
+                return map;
+            });
 
             EasyMock.checkOrder(taskContext, false);
             EasyMock.replay(taskContext);

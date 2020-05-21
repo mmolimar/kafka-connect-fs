@@ -32,6 +32,11 @@ public class FsSourceTaskConfig extends FsSourceConnectorConfig {
     public static final int POLL_INTERVAL_MS_DEFAULT = 10000;
     private static final String POLL_INTERVAL_MS_DISPLAY = "Poll Interval (ms)";
 
+    public static final String FILES_CHUNK_SIZE = "files.chunk.size";
+    private static final String FILES_CHUNK_SIZE_DOC = "The number of files that will be be chunked together for grabbing offsets from kafka connect.  Tune this value for higher throughput if you notice a delay between processing files.";
+    public static final  int FILES_CHUNK_SIZE_DEFAULT = 20;
+    private static final String FILES_CHUNK_SIZE_DISPLAY = "Files chunk size";
+
     private static final String POLICY_GROUP = "Policy";
     private static final String CONNECTOR_GROUP = "Connector";
 
@@ -96,6 +101,16 @@ public class FsSourceTaskConfig extends FsSourceConnectorConfig {
                         ++order,
                         ConfigDef.Width.SHORT,
                         POLL_INTERVAL_MS_DISPLAY
+                ).define(
+                        FILES_CHUNK_SIZE,
+                        ConfigDef.Type.INT,
+                        FILES_CHUNK_SIZE_DEFAULT,
+                        ConfigDef.Importance.MEDIUM,
+                        FILES_CHUNK_SIZE_DOC,
+                        CONNECTOR_GROUP,
+                        ++order,
+                        ConfigDef.Width.MEDIUM,
+                        FILES_CHUNK_SIZE_DISPLAY
                 );
     }
 }
