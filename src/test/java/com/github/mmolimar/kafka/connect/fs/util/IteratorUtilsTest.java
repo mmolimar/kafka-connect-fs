@@ -78,6 +78,17 @@ public class IteratorUtilsTest {
     }
 
     @Test
+    public void testIteratorChunkingWithEmptyIteratorWorks() {
+        Iterator<Integer> iterator = IntStream.range(0, 0).boxed().iterator();
+        Iterator<List<Integer>> chunkedIterator = IteratorUtils.chunkIterator(iterator, 5);
+
+        List<List<Integer>> materializedChunkedIterator  = asStream(chunkedIterator).collect(Collectors.toList());
+        ArrayList<ArrayList<Integer>> expected = new ArrayList<>();
+
+        assertEquals(expected, materializedChunkedIterator);
+    }
+
+    @Test
     public void testIteratorChunkingThrowsWithInvalidChunkSize() {
         Iterator<Integer> iterator = IntStream.rangeClosed(0, 2).boxed().iterator();
 

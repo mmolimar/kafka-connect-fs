@@ -36,9 +36,6 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.easymock.EasyMock;
-import org.easymock.IAnswer;
-
 
 public class FsSourceTaskTest {
 
@@ -47,6 +44,8 @@ public class FsSourceTaskTest {
             new HdfsFsConfig()
     );
     private static final int NUM_RECORDS = 10;
+    private static final String SPECIAL_FILE_NAME_INDICATING_FILE_ALREADY_PROCESSED = "123.txt";
+    private static final int NUM_BYTES_PER_FILE = 390;
 
     @BeforeAll
     public static void initFs() throws IOException {
@@ -90,9 +89,19 @@ public class FsSourceTaskTest {
                     offsetStorageReader.offsets(EasyMock.capture(captureOne))
             ).andAnswer(() -> {
                 Map<Map<String, Object>, Map<String, Object>> map = new HashMap<>();
-                captureOne.getValue().forEach(part -> map.put(part, new HashMap<String, Object>(){{
-                    put("offset", (long)(NUM_RECORDS/2));
-                }}));
+                captureOne.getValue().forEach(part -> {
+                    if(((String)(part.get("path"))).endsWith(SPECIAL_FILE_NAME_INDICATING_FILE_ALREADY_PROCESSED)){
+                        map.put(part, new HashMap<String, Object>(){{
+                            put("offset", (long)(NUM_RECORDS));
+                            put("fileSizeBytes", (long)NUM_BYTES_PER_FILE);
+
+                        }});
+                    }else{
+                        map.put(part, new HashMap<String, Object>(){{
+                            put("offset", (long)(NUM_RECORDS/2));
+                        }});
+                    }
+                });
                 return map;
             });
 
@@ -163,6 +172,21 @@ public class FsSourceTaskTest {
         assertEquals((NUM_RECORDS * fsConfig.getDirectories().size()) / 2, records.size());
         checkRecords(records);
         //policy has ended
+        assertNull(fsConfig.getTask().poll());
+    }
+
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void skipsFetchingFileIfByteOffsetExistsAndMatchesFileLength(TaskFsTestConfig fsConfig) throws IOException {
+        for (Path dir : fsConfig.getDirectories()) {
+            //this file will be skipped since the byte offset for the file is equal to the byte size of the file
+            Path dataFile = new Path(dir, SPECIAL_FILE_NAME_INDICATING_FILE_ALREADY_PROCESSED);
+            createDataFile(fsConfig.getFs(), dataFile);
+        }
+
+        fsConfig.getTask().start(fsConfig.getTaskConfig());
+        List<SourceRecord> records = fsConfig.getTask().poll();
+        assertEquals(0, records.size());
         assertNull(fsConfig.getTask().poll());
     }
 
