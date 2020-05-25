@@ -91,6 +91,13 @@ General config properties for this connector.
   * Default: ``false``
   * Importance: medium
 
+``policy.batch_size``
+  Number of files that should be handled at a time. Non-positive values disable batching.
+
+  * Type: long
+  * Default: ``0``
+  * Importance: medium
+
 ``policy.<policy_name>.<policy_property>``
   This represents custom properties you can include based on the policy class specified.
 
@@ -201,20 +208,6 @@ In order to configure custom properties for this policy, the name you must use i
   * Type: long
   * Default: ``20000``
   * Importance: medium
-
-.. _config_options-policies-simple_batch:
-
-Simple Batch
---------------------------------------------
-
-In order to configure custom properties for this policy, the name you must use is ``simple_batch``.
-
-``policy.simple_batch.batch_size``
-  Number of files to process per execution.
-
-  * Type: int
-  * Default: ``200``
-  * Importance: High
 
 .. _config_options-filereaders:
 

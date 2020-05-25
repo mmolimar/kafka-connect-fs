@@ -221,6 +221,62 @@ abstract class PolicyTestBase {
         });
     }
 
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void execPolicyBatchesFiles(PolicyFsTestConfig fsConfig) throws IOException, InterruptedException {
+        Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
+        originals.put(FsSourceTaskConfig.POLICY_BATCH_SIZE, "1");
+        FsSourceTaskConfig sourceTaskConfig = new FsSourceTaskConfig(originals);
+
+        Policy policy = ReflectionUtils.makePolicy(
+                (Class<? extends Policy>) fsConfig.getSourceTaskConfig().getClass(FsSourceTaskConfig.POLICY_CLASS),
+                sourceTaskConfig);
+
+        fsConfig.setPolicy(policy);
+
+        FileSystem fs = fsConfig.getFs();
+        for (Path dir : fsConfig.getDirectories()) {
+            fs.createNewFile(new Path(dir, System.nanoTime() + ".txt"));
+            //this file does not match the regexp
+            fs.createNewFile(new Path(dir, System.nanoTime() + ".invalid"));
+
+            //we wait till FS has registered the files
+            Thread.sleep(3000);
+        }
+        
+
+        Iterator<FileMetadata> it = fsConfig.getPolicy().execute();
+
+        // First batch of files (1 file)
+        assertTrue(it.hasNext());
+        String firstPath = it.next().getPath();
+
+        assertFalse(it.hasNext());
+
+        // Second batch of files (1 file)
+        it = fsConfig.getPolicy().execute();
+        assertTrue(it.hasNext());
+
+        assertNotEquals(firstPath, it.next().getPath());
+
+        assertFalse(it.hasNext());
+        
+        // Second batch of files (1 file)
+        it = fsConfig.getPolicy().execute();
+        assertFalse(it.hasNext());
+    }
+
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void invalidBatchSize(PolicyFsTestConfig fsConfig) {
+        Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
+        originals.put(FsSourceTaskConfig.POLICY_BATCH_SIZE, "one");
+        assertThrows(ConfigException.class, () -> {
+            new FsSourceTaskConfig(originals);
+        });
+
+    }
+
     protected abstract FsSourceTaskConfig buildSourceTaskConfig(List<Path> directories);
 
 }

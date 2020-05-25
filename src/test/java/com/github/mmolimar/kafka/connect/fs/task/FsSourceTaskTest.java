@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -269,6 +270,106 @@ public class FsSourceTaskTest {
         assertNotNull(fsConfig.getTask().version());
         assertFalse("unknown".equalsIgnoreCase(fsConfig.getTask().version()));
     }
+
+
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void pollNoDataWithBatch(TaskFsTestConfig fsConfig) {
+        Map<String, String> props = new HashMap<>(fsConfig.getTaskConfig());
+        props.put(FsSourceTaskConfig.POLICY_BATCH_SIZE, "1");
+        fsConfig.getTask().start(props);
+        
+        assertEquals(0, fsConfig.getTask().poll().size());
+        //policy has ended
+        assertNull(fsConfig.getTask().poll());
+    }
+
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void emptyFilesToProcessWithBatch(TaskFsTestConfig fsConfig) throws IOException {
+        for (Path dir : fsConfig.getDirectories()) {
+            fsConfig.getFs().createNewFile(new Path(dir, System.nanoTime() + ".txt"));
+            //this file does not match the regexp
+            fsConfig.getFs().createNewFile(new Path(dir, String.valueOf(System.nanoTime())));
+        }
+        Map<String, String> props = new HashMap<>(fsConfig.getTaskConfig());
+        props.put(FsSourceTaskConfig.POLICY_BATCH_SIZE, "1");
+        fsConfig.getTask().start(props);
+
+        List<SourceRecord> records = new ArrayList<>();
+        do {
+            List<SourceRecord> fresh = fsConfig.getTask().poll();
+            
+            if (fresh == null)
+                break;
+            records.addAll(fresh);
+
+        } while (true);
+
+        assertEquals(0, records.size());
+
+        //policy has ended
+        assertNull(fsConfig.getTask().poll());
+    }
+
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void oneFilePerFsWithBatch(TaskFsTestConfig fsConfig) throws IOException {
+        for (Path dir : fsConfig.getDirectories()) {
+            Path dataFile = new Path(dir, System.nanoTime() + ".txt");
+            createDataFile(fsConfig.getFs(), dataFile);
+            //this file does not match the regexp
+            fsConfig.getFs().createNewFile(new Path(dir, String.valueOf(System.nanoTime())));
+        }
+
+        Map<String, String> props = new HashMap<>(fsConfig.getTaskConfig());
+        props.put(FsSourceTaskConfig.POLICY_BATCH_SIZE, "1");
+        fsConfig.getTask().start(props);
+        
+        List<SourceRecord> records = new ArrayList<>();
+        do {
+            List<SourceRecord> fresh = fsConfig.getTask().poll();
+            
+            if (fresh == null)
+                break;
+            records.addAll(fresh);
+
+        } while (true);
+
+        assertEquals((NUM_RECORDS * fsConfig.getDirectories().size()) / 2, records.size());
+        checkRecords(records);
+        //policy has ended
+        assertNull(fsConfig.getTask().poll());
+    }
+
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void shouldNotSleepBetweenBatches(TaskFsTestConfig fsConfig) throws IOException {
+        Map<String, String> props = new HashMap<>(fsConfig.getTaskConfig());
+        props.put(FsSourceTaskConfig.POLL_INTERVAL_MS, "10000");
+        props.put(FsSourceTaskConfig.POLICY_BATCH_SIZE, "1");
+
+        for (Path dir : fsConfig.getDirectories()) {
+            Path dataFile = new Path(dir, System.nanoTime() + ".txt");
+            createDataFile(fsConfig.getFs(), dataFile);
+            //this file does not match the regexp
+            fsConfig.getFs().createNewFile(new Path(dir, String.valueOf(System.nanoTime())));
+        }
+
+        fsConfig.getTask().start(props);
+        
+        List<SourceRecord> records = new ArrayList<>();
+        assertTimeoutPreemptively(Duration.ofSeconds(2), () -> {
+            records.addAll(fsConfig.getTask().poll());
+            records.addAll(fsConfig.getTask().poll());    
+        });
+
+        assertEquals((NUM_RECORDS * fsConfig.getDirectories().size()) / 2, records.size());
+        checkRecords(records);
+        //policy has ended
+        assertNull(fsConfig.getTask().poll());
+    }
+
 
     protected void checkRecords(List<SourceRecord> records) {
         records.forEach(record -> {
