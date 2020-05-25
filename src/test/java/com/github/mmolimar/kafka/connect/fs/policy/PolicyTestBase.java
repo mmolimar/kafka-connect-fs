@@ -260,10 +260,6 @@ abstract class PolicyTestBase {
         assertNotEquals(firstPath, it.next().getPath());
 
         assertFalse(it.hasNext());
-        
-        // Second batch of files (1 file)
-        it = fsConfig.getPolicy().execute();
-        assertFalse(it.hasNext());
     }
 
     @ParameterizedTest
