@@ -43,41 +43,40 @@ public class SimplePolicyTest extends PolicyTestBase {
         originals.put(FsSourceTaskConfig.POLICY_BATCH_SIZE, "1");
         FsSourceTaskConfig sourceTaskConfig = new FsSourceTaskConfig(originals);
 
-        Policy policy = ReflectionUtils.makePolicy(
+        try (Policy policy = ReflectionUtils.makePolicy(
                 (Class<? extends Policy>) fsConfig.getSourceTaskConfig().getClass(FsSourceTaskConfig.POLICY_CLASS),
-                sourceTaskConfig);
+                sourceTaskConfig)) {
 
-        fsConfig.setPolicy(policy);
+            FileSystem fs = fsConfig.getFs();
+            for (Path dir : fsConfig.getDirectories()) {
+                fs.createNewFile(new Path(dir, System.nanoTime() + ".txt"));
+                //this file does not match the regexp
+                fs.createNewFile(new Path(dir, System.nanoTime() + ".invalid"));
 
-        FileSystem fs = fsConfig.getFs();
-        for (Path dir : fsConfig.getDirectories()) {
-            fs.createNewFile(new Path(dir, System.nanoTime() + ".txt"));
-            //this file does not match the regexp
-            fs.createNewFile(new Path(dir, System.nanoTime() + ".invalid"));
+                //we wait till FS has registered the files
+                Thread.sleep(3000);
+            }
+            
 
-            //we wait till FS has registered the files
-            Thread.sleep(3000);
+            Iterator<FileMetadata> it = policy.execute();
+
+            // First batch of files (1 file)
+            assertFalse(policy.hasEnded());
+            assertTrue(it.hasNext());
+            String firstPath = it.next().getPath();
+
+            assertFalse(it.hasNext());
+            assertFalse(policy.hasEnded());
+
+            // Second batch of files (1 file)
+            it = policy.execute();
+            assertTrue(it.hasNext());
+
+            assertNotEquals(firstPath, it.next().getPath());
+
+            assertFalse(it.hasNext());
+            assertTrue(policy.hasEnded());
         }
-        
-
-        Iterator<FileMetadata> it = fsConfig.getPolicy().execute();
-
-        // First batch of files (1 file)
-        assertFalse(fsConfig.getPolicy().hasEnded());
-        assertTrue(it.hasNext());
-        String firstPath = it.next().getPath();
-
-        assertFalse(it.hasNext());
-        assertFalse(fsConfig.getPolicy().hasEnded());
-
-        // Second batch of files (1 file)
-        it = fsConfig.getPolicy().execute();
-        assertTrue(it.hasNext());
-
-        assertNotEquals(firstPath, it.next().getPath());
-
-        assertFalse(it.hasNext());
-        assertTrue(fsConfig.getPolicy().hasEnded());
     }
 
 }
