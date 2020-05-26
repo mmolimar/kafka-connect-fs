@@ -102,6 +102,7 @@ public class FsSourceTask extends SourceTask {
                     } catch (ConnectException | IOException e) {
                         //when an exception happens reading a file, the connector continues
                         log.error("Error reading file [{}]. Keep going...", metadata.getPath(), e);
+                        return new ArrayList<SourceRecord>().stream();
                     }
                     log.debug("Read [{}] records from file [{}].", records.size(), metadata.getPath());
 
