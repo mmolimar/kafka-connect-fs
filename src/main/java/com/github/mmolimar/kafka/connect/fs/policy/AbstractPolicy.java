@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -197,17 +198,34 @@ abstract class AbstractPolicy implements Policy {
                 .filter(fs -> metadata.getPath().startsWith(fs.getWorkingDirectory().toString()))
                 .findFirst()
                 .orElse(null);
+
+        Supplier<FileReader> makeReader = () -> ReflectionUtils.makeReader(
+                (Class<? extends FileReader>) conf.getClass(FsSourceTaskConfig.FILE_READER_CLASS),
+                current, new Path(metadata.getPath()), conf.originals()
+        );
         try {
-            FileReader reader = ReflectionUtils.makeReader(
-                    (Class<? extends FileReader>) conf.getClass(FsSourceTaskConfig.FILE_READER_CLASS),
-                    current, new Path(metadata.getPath()), conf.originals());
             Map<String, Object> partition = Collections.singletonMap("path", metadata.getPath());
             Map<String, Object> offset = offsetStorageReader.offset(partition);
             if (offset != null && offset.get("offset") != null) {
+                Object offsetObject = offset.get("offset");
+                Object fileSizeBytesObject = offset.get("fileSizeBytes");
+
+                // Only new versions of kafka-connect-fs store the file size bytes
+                // If we have the byte offset, we can skip reading the entire file if the file size has not changed
+                if(fileSizeBytesObject != null) {
+                    Long byteOffset = (Long)fileSizeBytesObject;
+                    if (metadata.getLen() == byteOffset){
+                        log.info("File {} has byte length and byte offset of: {}, skipping reading the file as it is unchanged since the last execution", metadata.getPath(), byteOffset);
+                        return null;
+                    }
+                }
+
                 log.info("Seeking to offset [{}] for file [{}].", offset.get("offset"), metadata.getPath());
-                reader.seek((Long) offset.get("offset"));
+                FileReader reader = makeReader.get();
+                reader.seek((Long) offsetObject);
+                return reader;
             }
-            return reader;
+            return makeReader.get();
         } catch (Exception e) {
             throw new ConnectException("An error has occurred when creating reader for file: " + metadata.getPath(), e);
         }

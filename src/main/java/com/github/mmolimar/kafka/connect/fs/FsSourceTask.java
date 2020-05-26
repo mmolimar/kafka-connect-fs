@@ -78,6 +78,10 @@ public class FsSourceTask extends SourceTask {
             List<SourceRecord> totalRecords = filesToProcess().map(metadata -> {
                 List<SourceRecord> records = new ArrayList<>();
                 try (FileReader reader = policy.offer(metadata, context.offsetStorageReader())) {
+                    if(reader == null){
+                        log.info("Skipping processing file {} as it is unchanged", metadata);
+                        return records;
+                    }
                     log.info("Processing records for file {}.", metadata);
                     while (reader.hasNext()) {
                         records.add(convert(metadata, reader.currentOffset() + 1, reader.next()));
@@ -85,6 +89,7 @@ public class FsSourceTask extends SourceTask {
                 } catch (ConnectException | IOException e) {
                     //when an exception happens reading a file, the connector continues
                     log.error("Error reading file [{}]. Keep going...", metadata.getPath(), e);
+                    return new ArrayList<SourceRecord>();
                 }
                 log.debug("Read [{}] records from file [{}].", records.size(), metadata.getPath());
 
@@ -122,9 +127,12 @@ public class FsSourceTask extends SourceTask {
     }
 
     private SourceRecord convert(FileMetadata metadata, long offset, Struct struct) {
+        Map<String, Long> offsetMap = new HashMap<>();
+        offsetMap.put("offset", offset);
+        offsetMap.put("fileSizeBytes", metadata.getLen());
         return new SourceRecord(
                 Collections.singletonMap("path", metadata.getPath()),
-                Collections.singletonMap("offset", offset),
+                offsetMap,
                 config.getTopic(),
                 struct.schema(),
                 struct
