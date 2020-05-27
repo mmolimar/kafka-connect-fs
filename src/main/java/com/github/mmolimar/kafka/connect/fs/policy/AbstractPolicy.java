@@ -215,7 +215,7 @@ abstract class AbstractPolicy implements Policy {
                 if(fileSizeBytesObject != null) {
                     Long byteOffset = (Long)fileSizeBytesObject;
                     if (metadata.getLen() == byteOffset){
-                        log.info("File {} has byte length and byte offset of: {}, skipping reading the file as it is unchanged since the last execution", metadata.getPath(), byteOffset);
+                        log.info("Skipping file: file {} has byte length and byte offset of: {}", metadata.getPath(), byteOffset);
                         return null;
                     }
                 }
