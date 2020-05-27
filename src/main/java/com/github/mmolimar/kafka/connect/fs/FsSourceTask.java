@@ -78,10 +78,6 @@ public class FsSourceTask extends SourceTask {
             List<SourceRecord> totalRecords = filesToProcess().map(metadata -> {
                 List<SourceRecord> records = new ArrayList<>();
                 try (FileReader reader = policy.offer(metadata, context.offsetStorageReader())) {
-                    if(reader == null){
-                        log.info("Skipping processing file {} as it is unchanged", metadata);
-                        return records;
-                    }
                     log.info("Processing records for file {}.", metadata);
                     while (reader.hasNext()) {
                         records.add(convert(metadata, reader.currentOffset() + 1, reader.next()));

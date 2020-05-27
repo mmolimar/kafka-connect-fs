@@ -2,6 +2,7 @@ package com.github.mmolimar.kafka.connect.fs.policy;
 
 import com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig;
 import com.github.mmolimar.kafka.connect.fs.file.FileMetadata;
+import com.github.mmolimar.kafka.connect.fs.file.reader.EmptyFileReader;
 import com.github.mmolimar.kafka.connect.fs.file.reader.FileReader;
 import com.github.mmolimar.kafka.connect.fs.util.ReflectionUtils;
 import com.github.mmolimar.kafka.connect.fs.util.TailCall;
@@ -216,7 +217,7 @@ abstract class AbstractPolicy implements Policy {
                     Long byteOffset = (Long)fileSizeBytesObject;
                     if (metadata.getLen() == byteOffset){
                         log.info("Skipping file: file {} has byte length and byte offset of: {}", metadata.getPath(), byteOffset);
-                        return null;
+                        return new EmptyFileReader(current, new Path(metadata.getPath()), conf.originals());
                     }
                 }
 
