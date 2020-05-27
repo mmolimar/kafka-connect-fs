@@ -38,7 +38,7 @@ abstract class AbstractPolicy implements Policy {
     private final AtomicLong executions;
     private final boolean recursive;
     private final long batchSize;
-    private Iterator<FileMetadata> currentIterator;
+    private Iterator<FileMetadata> previous;
     private boolean interrupted;
 
     public AbstractPolicy(FsSourceTaskConfig conf) throws IOException {
@@ -49,6 +49,7 @@ abstract class AbstractPolicy implements Policy {
         this.fileRegexp = Pattern.compile(conf.getString(FsSourceTaskConfig.POLICY_REGEXP));
         this.batchSize = conf.getLong(FsSourceTaskConfig.POLICY_BATCH_SIZE);
         this.interrupted = false;
+        this.previous = Collections.emptyIterator();
 
         Map<String, Object> customConfigs = customConfigs();
         logAll(customConfigs);
@@ -110,8 +111,8 @@ abstract class AbstractPolicy implements Policy {
             throw new IllegalWorkerStateException("Policy has ended. Cannot be retried.");
         }
         
-        if (batchSize > 0 && currentIterator != null && currentIterator.hasNext()) {
-            return BatchIterator.batchIterator(currentIterator, batchSize);
+        if (batchSize > 0 && previous != null && previous.hasNext()) {
+            return BatchIterator.batchIterator(previous, batchSize);
         }
 
         preCheck();
@@ -121,7 +122,7 @@ abstract class AbstractPolicy implements Policy {
         for (FileSystem fs : fileSystems) {
             files = concat(files, listFiles(fs));
         }
-        currentIterator = files;
+        previous = files;
         
         postCheck();
 
@@ -189,10 +190,10 @@ abstract class AbstractPolicy implements Policy {
         if (interrupted)
             return true;
 
-        if (currentIterator == null)
+        if (previous == null)
             return isPolicyCompleted();
 
-        return !currentIterator.hasNext() && isPolicyCompleted();
+        return !previous.hasNext() && isPolicyCompleted();
     }
 
     protected abstract boolean isPolicyCompleted();
