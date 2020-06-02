@@ -82,8 +82,8 @@ public class FsSourceTaskConfig extends FsSourceConnectorConfig {
                         POLICY_REGEXP_DISPLAY
                 ).define(
                         POLICY_BATCH_SIZE,
-                        ConfigDef.Type.LONG,
-                        0l,
+                        ConfigDef.Type.INT,
+                        0,
                         ConfigDef.Importance.MEDIUM,
                         POLICY_BATCH_SIZE_DOC,
                         POLICY_GROUP,

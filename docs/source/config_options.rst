@@ -94,7 +94,7 @@ General config properties for this connector.
 ``policy.batch_size``
   Number of files that should be handled at a time. Non-positive values disable batching.
 
-  * Type: long
+  * Type: int
   * Default: ``0``
   * Importance: medium
 
