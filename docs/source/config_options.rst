@@ -817,7 +817,7 @@ Text
 
 To configure custom properties for this reader, the name you must use is ``text``.
 
-``file_reader.json.record_per_line``
+``file_reader.text.record_per_line``
   If enabled, the reader will read each line as a record. Otherwise, the reader will read the full
   content of the file as a record.
 
@@ -839,14 +839,14 @@ To configure custom properties for this reader, the name you must use is ``text`
   * Default: based on the locale and charset of the underlying operating system.
   * Importance: medium
 
-``file_reader.json.compression.type``
+``file_reader.text.compression.type``
   Compression type to use when reading a file.
 
   * Type: enum (available values ``bzip2``, ``gzip`` and ``none``)
   * Default: ``none``
   * Importance: medium
 
-``file_reader.json.compression.concatenated``
+``file_reader.text.compression.concatenated``
   Flag to specify if the decompression of the reader will finish at the end of the file or after
   the first compressed stream.
 
