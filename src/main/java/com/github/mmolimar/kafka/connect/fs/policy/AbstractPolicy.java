@@ -160,7 +160,7 @@ abstract class AbstractPolicy implements Policy {
                         current = it.next();
                         return this::hasNextRec;
                     }
-                    if (current.isFile() & fileRegexp.matcher(current.getPath().getName()).find()) {
+                    if (current.isFile() && fileRegexp.matcher(current.getPath().getName()).find()) {
                         return TailCall.done(true);
                     }
                     current = null;
@@ -189,11 +189,9 @@ abstract class AbstractPolicy implements Policy {
 
     @Override
     public final boolean hasEnded() {
-        if (interrupted)
+        if (interrupted) {
             return true;
-
-        if (previous == null)
-            return isPolicyCompleted();
+        }
 
         return !previous.hasNext() && isPolicyCompleted();
     }
@@ -216,12 +214,15 @@ abstract class AbstractPolicy implements Policy {
     @Override
     public FileReader offer(FileMetadata metadata, OffsetStorageReader offsetStorageReader) {
         FileSystem current = fileSystems.stream()
-                .filter(fs -> metadata.getPath().startsWith(fs.getWorkingDirectory().toString())).findFirst()
+                .filter(fs -> metadata.getPath().startsWith(fs.getWorkingDirectory().toString()))
+                .findFirst()
                 .orElse(null);
         try {
             FileReader reader = ReflectionUtils.makeReader(
-                    (Class<? extends FileReader>) conf.getClass(FsSourceTaskConfig.FILE_READER_CLASS), current,
-                    new Path(metadata.getPath()), conf.originals());
+                    (Class<? extends FileReader>) conf.getClass(FsSourceTaskConfig.FILE_READER_CLASS),
+                    current,
+                    new Path(metadata.getPath()), conf.originals()
+            );
             Map<String, Object> partition = Collections.singletonMap("path", metadata.getPath());
             Map<String, Object> offset = offsetStorageReader.offset(partition);
             if (offset != null && offset.get("offset") != null) {

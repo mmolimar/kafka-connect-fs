@@ -243,21 +243,17 @@ abstract class PolicyTestBase {
                 Thread.sleep(3000);
             }
             
-
             Iterator<FileMetadata> it = policy.execute();
 
             // First batch of files (1 file)
             assertTrue(it.hasNext());
             String firstPath = it.next().getPath();
-
             assertFalse(it.hasNext());
 
             // Second batch of files (1 file)
             it = policy.execute();
             assertTrue(it.hasNext());
-
             assertNotEquals(firstPath, it.next().getPath());
-
             assertFalse(it.hasNext());
         }
     }

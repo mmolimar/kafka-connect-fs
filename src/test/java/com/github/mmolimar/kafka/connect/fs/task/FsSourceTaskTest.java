@@ -297,15 +297,11 @@ public class FsSourceTaskTest {
         fsConfig.getTask().start(props);
 
         List<SourceRecord> records = new ArrayList<>();
-        do {
-            List<SourceRecord> fresh = fsConfig.getTask().poll();
-            
-            if (fresh == null)
-                break;
+        List<SourceRecord> fresh = fsConfig.getTask().poll();
+        while (fresh != null) {
             records.addAll(fresh);
-
-        } while (true);
-
+            fresh = fsConfig.getTask().poll();
+        }
         assertEquals(0, records.size());
 
         //policy has ended
@@ -327,14 +323,11 @@ public class FsSourceTaskTest {
         fsConfig.getTask().start(props);
         
         List<SourceRecord> records = new ArrayList<>();
-        do {
-            List<SourceRecord> fresh = fsConfig.getTask().poll();
-            
-            if (fresh == null)
-                break;
+        List<SourceRecord> fresh = fsConfig.getTask().poll();
+        while (fresh != null) {
             records.addAll(fresh);
-
-        } while (true);
+            fresh = fsConfig.getTask().poll();
+        }
 
         assertEquals((NUM_RECORDS * fsConfig.getDirectories().size()) / 2, records.size());
         checkRecords(records);
