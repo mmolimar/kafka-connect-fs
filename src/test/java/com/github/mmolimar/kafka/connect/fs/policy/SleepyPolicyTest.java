@@ -101,13 +101,14 @@ public class SleepyPolicyTest extends PolicyTestBase {
         tConfig.put(SleepyPolicy.SLEEPY_POLICY_MAX_EXECS, "2");
         FsSourceTaskConfig sleepConfig = new FsSourceTaskConfig(tConfig);
 
-        Policy policy = ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
-                .getClass(FsSourceTaskConfig.POLICY_CLASS), sleepConfig);
-        assertFalse(policy.hasEnded());
-        policy.execute();
-        assertFalse(policy.hasEnded());
-        policy.execute();
-        assertTrue(policy.hasEnded());
+        try (Policy policy = ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
+                .getClass(FsSourceTaskConfig.POLICY_CLASS), sleepConfig)) {
+            assertFalse(policy.hasEnded());
+            policy.execute();
+            assertFalse(policy.hasEnded());
+            policy.execute();
+            assertTrue(policy.hasEnded());
+        }
     }
 
     @ParameterizedTest
@@ -118,16 +119,16 @@ public class SleepyPolicyTest extends PolicyTestBase {
         tConfig.remove(SleepyPolicy.SLEEPY_POLICY_MAX_EXECS);
         FsSourceTaskConfig sleepConfig = new FsSourceTaskConfig(tConfig);
 
-        Policy policy = ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
-                .getClass(FsSourceTaskConfig.POLICY_CLASS), sleepConfig);
-
-        //it never ends
-        for (int i = 0; i < 100; i++) {
-            assertFalse(policy.hasEnded());
-            policy.execute();
+        try (Policy policy = ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
+                .getClass(FsSourceTaskConfig.POLICY_CLASS), sleepConfig)) {
+            //it never ends
+            for (int i = 0; i < 100; i++) {
+                assertFalse(policy.hasEnded());
+                policy.execute();
+            }
+            policy.interrupt();
+            assertTrue(policy.hasEnded());
         }
-        policy.interrupt();
-        assertTrue(policy.hasEnded());
     }
 
 }

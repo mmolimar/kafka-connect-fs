@@ -21,6 +21,10 @@ public class FsSourceTaskConfig extends FsSourceConnectorConfig {
     private static final String POLICY_REGEXP_DOC = "Regular expression to filter files from the FS.";
     private static final String POLICY_REGEXP_DISPLAY = "File filter regex";
 
+    public static final String POLICY_BATCH_SIZE = POLICY_PREFIX + "batch_size";
+    private static final String POLICY_BATCH_SIZE_DOC = "Number of files to process at a time. Non-positive values disable batching.";
+    private static final String POLICY_BATCH_SIZE_DISPLAY = "Files per batch";
+
     public static final String POLICY_PREFIX_FS = POLICY_PREFIX + "fs.";
 
     public static final String FILE_READER_CLASS = FILE_READER_PREFIX + "class";
@@ -76,6 +80,16 @@ public class FsSourceTaskConfig extends FsSourceConnectorConfig {
                         ++order,
                         ConfigDef.Width.MEDIUM,
                         POLICY_REGEXP_DISPLAY
+                ).define(
+                        POLICY_BATCH_SIZE,
+                        ConfigDef.Type.INT,
+                        0,
+                        ConfigDef.Importance.MEDIUM,
+                        POLICY_BATCH_SIZE_DOC,
+                        POLICY_GROUP,
+                        ++order,
+                        ConfigDef.Width.MEDIUM,
+                        POLICY_BATCH_SIZE_DISPLAY
                 ).define(
                         FILE_READER_CLASS,
                         ConfigDef.Type.CLASS,
