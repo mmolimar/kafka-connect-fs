@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -79,16 +80,20 @@ public class FsSourceTaskTest {
             OffsetStorageReader offsetStorageReader = PowerMock.createMock(OffsetStorageReader.class);
 
             EasyMock.expect(taskContext.offsetStorageReader())
-                    .andReturn(offsetStorageReader);
+                    .andReturn(offsetStorageReader)
+                    .times(2);
 
-            EasyMock.expect(taskContext.offsetStorageReader())
-                    .andReturn(offsetStorageReader);
-
+            // Every time the `offsetStorageReader.offset(params)` method is called we want to capture the offset params
+            // And return a different result based on the offset params passed in
+            // In this case, returning a different result based on the file path of the params
             Capture<Map<String, Object>> captureOne = Capture.newInstance(CaptureType.ALL);
+            AtomicInteger executionNumber = new AtomicInteger();
             EasyMock.expect(
                     offsetStorageReader.offset(EasyMock.capture(captureOne))
             ).andAnswer(() -> {
-                Map<String, Object> captured = captureOne.getValue();
+                List<Map<String, Object>> capturedValues = captureOne.getValues();
+                Map<String, Object> captured = capturedValues.get(executionNumber.get());
+                executionNumber.addAndGet(1);
                 if(((String)(captured.get("path"))).endsWith(SPECIAL_FILE_NAME_INDICATING_FILE_ALREADY_PROCESSED)){
                     return new HashMap<String, Object>(){{
                         put("offset", (long)(NUM_RECORDS));
@@ -99,24 +104,7 @@ public class FsSourceTaskTest {
                         put("offset", (long)(NUM_RECORDS/2));
                     }};
                 }
-            });
-
-            Capture<Map<String, Object>> captureTwo = Capture.newInstance(CaptureType.ALL);
-            EasyMock.expect(
-                    offsetStorageReader.offset(EasyMock.capture(captureTwo))
-            ).andAnswer(() -> {
-                Map<String, Object> captured = captureOne.getValue();
-                if(((String)(captured.get("path"))).endsWith(SPECIAL_FILE_NAME_INDICATING_FILE_ALREADY_PROCESSED)){
-                    return new HashMap<String, Object>(){{
-                        put("offset", (long)(NUM_RECORDS));
-                        put("fileSizeBytes", (long)NUM_BYTES_PER_FILE);
-                    }};
-                }else{
-                    return new HashMap<String, Object>(){{
-                        put("offset", (long)(NUM_RECORDS/2));
-                    }};
-                }
-            });
+            }).times(2);
 
             EasyMock.checkOrder(taskContext, false);
             EasyMock.replay(taskContext);
