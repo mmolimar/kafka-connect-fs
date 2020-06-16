@@ -6,6 +6,8 @@ import com.github.mmolimar.kafka.connect.fs.file.reader.EmptyFileReader;
 import com.github.mmolimar.kafka.connect.fs.file.reader.FileReader;
 import com.github.mmolimar.kafka.connect.fs.util.ReflectionUtils;
 import com.github.mmolimar.kafka.connect.fs.util.TailCall;
+import com.google.common.collect.Iterators;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
@@ -38,6 +40,8 @@ abstract class AbstractPolicy implements Policy {
     private final FsSourceTaskConfig conf;
     private final AtomicLong executions;
     private final boolean recursive;
+    private final int batchSize;
+    private Iterator<List<FileMetadata>> previous;
     private boolean interrupted;
 
     public AbstractPolicy(FsSourceTaskConfig conf) throws IOException {
@@ -46,7 +50,9 @@ abstract class AbstractPolicy implements Policy {
         this.executions = new AtomicLong(0);
         this.recursive = conf.getBoolean(FsSourceTaskConfig.POLICY_RECURSIVE);
         this.fileRegexp = Pattern.compile(conf.getString(FsSourceTaskConfig.POLICY_REGEXP));
+        this.batchSize = conf.getInt(FsSourceTaskConfig.POLICY_BATCH_SIZE);
         this.interrupted = false;
+        this.previous = Collections.emptyIterator();
 
         Map<String, Object> customConfigs = customConfigs();
         logAll(customConfigs);
@@ -107,6 +113,11 @@ abstract class AbstractPolicy implements Policy {
         if (hasEnded()) {
             throw new IllegalWorkerStateException("Policy has ended. Cannot be retried.");
         }
+
+        if (batchSize > 0 && previous.hasNext()) {
+            return previous.next().iterator();
+        }
+
         preCheck();
 
         executions.incrementAndGet();
@@ -114,8 +125,14 @@ abstract class AbstractPolicy implements Policy {
         for (FileSystem fs : fileSystems) {
             files = concat(files, listFiles(fs));
         }
-
         postCheck();
+
+        if (batchSize > 0) {
+            previous = Iterators.partition(files, batchSize);
+            if (!previous.hasNext())
+                return Collections.emptyIterator();
+            return previous.next().iterator();
+        }
 
         return files;
     }
@@ -145,8 +162,7 @@ abstract class AbstractPolicy implements Policy {
                         current = it.next();
                         return this::hasNextRec;
                     }
-                    if (current.isFile() &
-                            fileRegexp.matcher(current.getPath().getName()).find()) {
+                    if (current.isFile() && fileRegexp.matcher(current.getPath().getName()).find()) {
                         return TailCall.done(true);
                     }
                     current = null;
@@ -175,7 +191,11 @@ abstract class AbstractPolicy implements Policy {
 
     @Override
     public final boolean hasEnded() {
-        return interrupted || isPolicyCompleted();
+        if (interrupted) {
+            return true;
+        }
+
+        return !previous.hasNext() && isPolicyCompleted();
     }
 
     protected abstract boolean isPolicyCompleted();
@@ -232,8 +252,7 @@ abstract class AbstractPolicy implements Policy {
         }
     }
 
-    private Iterator<FileMetadata> concat(final Iterator<FileMetadata> it1,
-                                          final Iterator<FileMetadata> it2) {
+    private Iterator<FileMetadata> concat(final Iterator<FileMetadata> it1, final Iterator<FileMetadata> it2) {
         return new Iterator<FileMetadata>() {
 
             @Override

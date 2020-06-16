@@ -180,24 +180,25 @@ abstract class PolicyTestBase {
         Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
         originals.put(FsSourceTaskConfig.FS_URIS, dynamic.toString());
         FsSourceTaskConfig cfg = new FsSourceTaskConfig(originals);
-        Policy policy = ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
-                .getClass(FsSourceTaskConfig.POLICY_CLASS), cfg);
-        fsConfig.setPolicy(policy);
-        assertEquals(1, fsConfig.getPolicy().getURIs().size());
+        try (Policy policy = ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
+                .getClass(FsSourceTaskConfig.POLICY_CLASS), cfg)) {
 
-        LocalDateTime dateTime = LocalDateTime.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("G");
-        StringBuilder uri = new StringBuilder(dateTime.format(formatter));
-        uri.append("/");
-        formatter = DateTimeFormatter.ofPattern("yyyy");
-        uri.append(dateTime.format(formatter));
-        uri.append("/");
-        formatter = DateTimeFormatter.ofPattern("MM");
-        uri.append(dateTime.format(formatter));
-        uri.append("/");
-        formatter = DateTimeFormatter.ofPattern("W");
-        uri.append(dateTime.format(formatter));
-        assertTrue(fsConfig.getPolicy().getURIs().get(0).endsWith(uri.toString()));
+            assertEquals(1, policy.getURIs().size());
+
+            LocalDateTime dateTime = LocalDateTime.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("G");
+            StringBuilder uri = new StringBuilder(dateTime.format(formatter));
+            uri.append("/");
+            formatter = DateTimeFormatter.ofPattern("yyyy");
+            uri.append(dateTime.format(formatter));
+            uri.append("/");
+            formatter = DateTimeFormatter.ofPattern("MM");
+            uri.append(dateTime.format(formatter));
+            uri.append("/");
+            formatter = DateTimeFormatter.ofPattern("W");
+            uri.append(dateTime.format(formatter));
+            assertTrue(policy.getURIs().get(0).endsWith(uri.toString()));
+        }
     }
 
     @ParameterizedTest
@@ -219,6 +220,53 @@ abstract class PolicyTestBase {
                 throw e.getCause();
             }
         });
+    }
+
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void execPolicyBatchesFiles(PolicyFsTestConfig fsConfig) throws IOException, InterruptedException {
+        Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
+        originals.put(FsSourceTaskConfig.POLICY_BATCH_SIZE, "1");
+        FsSourceTaskConfig sourceTaskConfig = new FsSourceTaskConfig(originals);
+
+        try (Policy policy = ReflectionUtils.makePolicy(
+                (Class<? extends Policy>) fsConfig.getSourceTaskConfig().getClass(FsSourceTaskConfig.POLICY_CLASS),
+                sourceTaskConfig)) {
+
+            FileSystem fs = fsConfig.getFs();
+            for (Path dir : fsConfig.getDirectories()) {
+                fs.createNewFile(new Path(dir, System.nanoTime() + ".txt"));
+                //this file does not match the regexp
+                fs.createNewFile(new Path(dir, System.nanoTime() + ".invalid"));
+
+                //we wait till FS has registered the files
+                Thread.sleep(3000);
+            }
+            
+            Iterator<FileMetadata> it = policy.execute();
+
+            // First batch of files (1 file)
+            assertTrue(it.hasNext());
+            String firstPath = it.next().getPath();
+            assertFalse(it.hasNext());
+
+            // Second batch of files (1 file)
+            it = policy.execute();
+            assertTrue(it.hasNext());
+            assertNotEquals(firstPath, it.next().getPath());
+            assertFalse(it.hasNext());
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void invalidBatchSize(PolicyFsTestConfig fsConfig) {
+        Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
+        originals.put(FsSourceTaskConfig.POLICY_BATCH_SIZE, "one");
+        assertThrows(ConfigException.class, () -> {
+            new FsSourceTaskConfig(originals);
+        });
+
     }
 
     protected abstract FsSourceTaskConfig buildSourceTaskConfig(List<Path> directories);
