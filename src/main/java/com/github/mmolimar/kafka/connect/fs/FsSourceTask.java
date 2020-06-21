@@ -122,9 +122,12 @@ public class FsSourceTask extends SourceTask {
     }
 
     private SourceRecord convert(FileMetadata metadata, long offset, Struct struct) {
+        Map<String, Long> offsetMap = new HashMap<>();
+        offsetMap.put("offset", offset);
+        offsetMap.put("fileSizeBytes", metadata.getLen());
         return new SourceRecord(
                 Collections.singletonMap("path", metadata.getPath()),
-                Collections.singletonMap("offset", offset),
+                offsetMap,
                 config.getTopic(),
                 struct.schema(),
                 struct

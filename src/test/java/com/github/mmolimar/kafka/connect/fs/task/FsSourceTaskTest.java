@@ -13,6 +13,8 @@ import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTaskContext;
 import org.apache.kafka.connect.storage.OffsetStorageReader;
+import org.easymock.Capture;
+import org.easymock.CaptureType;
 import org.easymock.EasyMock;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -30,6 +32,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -42,6 +45,8 @@ public class FsSourceTaskTest {
             new HdfsFsConfig()
     );
     private static final int NUM_RECORDS = 10;
+    private static final long NUM_BYTES_PER_FILE = 390;
+    private static final String FILE_ALREADY_PROCESSED = "already_processed.txt";
 
     @BeforeAll
     public static void initFs() throws IOException {
@@ -75,19 +80,31 @@ public class FsSourceTaskTest {
             OffsetStorageReader offsetStorageReader = PowerMock.createMock(OffsetStorageReader.class);
 
             EasyMock.expect(taskContext.offsetStorageReader())
-                    .andReturn(offsetStorageReader);
+                    .andReturn(offsetStorageReader)
+                    .times(2);
 
-            EasyMock.expect(taskContext.offsetStorageReader())
-                    .andReturn(offsetStorageReader);
-
-            EasyMock.expect(offsetStorageReader.offset(EasyMock.anyObject()))
-                    .andReturn(new HashMap<String, Object>() {{
-                        put("offset", (long) (NUM_RECORDS / 2));
-                    }});
-            EasyMock.expect(offsetStorageReader.offset(EasyMock.anyObject()))
-                    .andReturn(new HashMap<String, Object>() {{
-                        put("offset", (long) (NUM_RECORDS / 2));
-                    }});
+            // Every time the `offsetStorageReader.offset(params)` method is called we want to capture the offset params
+            // And return a different result based on the offset params passed in
+            // In this case, returning a different result based on the file path of the params
+            Capture<Map<String, Object>> captureOne = Capture.newInstance(CaptureType.ALL);
+            AtomicInteger executionNumber = new AtomicInteger();
+            EasyMock.expect(
+                    offsetStorageReader.offset(EasyMock.capture(captureOne))
+            ).andAnswer(() -> {
+                List<Map<String, Object>> capturedValues = captureOne.getValues();
+                Map<String, Object> captured = capturedValues.get(executionNumber.get());
+                executionNumber.addAndGet(1);
+                if (((String) (captured.get("path"))).endsWith(FILE_ALREADY_PROCESSED)) {
+                    return new HashMap<String, Object>() {{
+                        put("offset", (long) NUM_RECORDS);
+                        put("fileSizeBytes", NUM_BYTES_PER_FILE);
+                    }};
+                } else {
+                    return new HashMap<String, Object>() {{
+                        put("offset", (long) NUM_RECORDS / 2);
+                    }};
+                }
+            }).times(2);
 
             EasyMock.checkOrder(taskContext, false);
             EasyMock.replay(taskContext);
@@ -156,6 +173,21 @@ public class FsSourceTaskTest {
         assertEquals((NUM_RECORDS * fsConfig.getDirectories().size()) / 2, records.size());
         checkRecords(records);
         //policy has ended
+        assertNull(fsConfig.getTask().poll());
+    }
+
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void skipsFetchingFileIfByteOffsetExistsAndMatchesFileLength(TaskFsTestConfig fsConfig) throws IOException {
+        for (Path dir : fsConfig.getDirectories()) {
+            //this file will be skipped since the byte offset for the file is equal to the byte size of the file
+            Path dataFile = new Path(dir, FILE_ALREADY_PROCESSED);
+            createDataFile(fsConfig.getFs(), dataFile);
+        }
+
+        fsConfig.getTask().start(fsConfig.getTaskConfig());
+        List<SourceRecord> records = fsConfig.getTask().poll();
+        assertEquals(0, records.size());
         assertNull(fsConfig.getTask().poll());
     }
 
@@ -278,7 +310,7 @@ public class FsSourceTaskTest {
         Map<String, String> props = new HashMap<>(fsConfig.getTaskConfig());
         props.put(FsSourceTaskConfig.POLICY_BATCH_SIZE, "1");
         fsConfig.getTask().start(props);
-        
+
         assertEquals(0, fsConfig.getTask().poll().size());
         //policy has ended
         assertNull(fsConfig.getTask().poll());
@@ -321,7 +353,7 @@ public class FsSourceTaskTest {
         Map<String, String> props = new HashMap<>(fsConfig.getTaskConfig());
         props.put(FsSourceTaskConfig.POLICY_BATCH_SIZE, "1");
         fsConfig.getTask().start(props);
-        
+
         List<SourceRecord> records = new ArrayList<>();
         List<SourceRecord> fresh = fsConfig.getTask().poll();
         while (fresh != null) {
@@ -350,11 +382,11 @@ public class FsSourceTaskTest {
         }
 
         fsConfig.getTask().start(props);
-        
+
         List<SourceRecord> records = new ArrayList<>();
         assertTimeoutPreemptively(Duration.ofSeconds(2), () -> {
             records.addAll(fsConfig.getTask().poll());
-            records.addAll(fsConfig.getTask().poll());    
+            records.addAll(fsConfig.getTask().poll());
         });
 
         assertEquals((NUM_RECORDS * fsConfig.getDirectories().size()) / 2, records.size());
