@@ -2,24 +2,24 @@ package com.github.mmolimar.kafka.connect.fs.file.reader;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.kafka.connect.data.Struct;
 
 import java.util.Map;
 
-public class EmptyFileReader extends AbstractFileReader<Void>{
+public class EmptyFileReader extends AbstractFileReader<Void> {
     /*
     An empty file reader that will always return no records
     Used as a null object instead of returning null
      */
-    boolean closed;
+    private boolean closed;
 
     public EmptyFileReader(FileSystem fs, Path filePath, Map<String, Object> config) {
-        super(fs, filePath, new FakeReaderAdapter(), config);
+        super(fs, filePath, (Void record) -> null, config);
         this.closed = false;
     }
 
     @Override
-    protected void configure(Map<String, String> config) {}
+    protected void configure(Map<String, String> config) {
+    }
 
     @Override
     protected Void nextRecord() {
@@ -32,23 +32,16 @@ public class EmptyFileReader extends AbstractFileReader<Void>{
     }
 
     @Override
-    public void seekFile(long offset) {}
+    public void seekFile(long offset) {
+    }
 
     @Override
-    public boolean isClosed(){
+    public boolean isClosed() {
         return this.closed;
     }
 
     @Override
     public void close() {
         closed = true;
-    }
-
-    static class FakeReaderAdapter implements ReaderAdapter<Void> {
-
-        @Override
-        public Struct apply(Void record) {
-            return null;
-        }
     }
 }

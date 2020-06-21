@@ -45,8 +45,8 @@ public class FsSourceTaskTest {
             new HdfsFsConfig()
     );
     private static final int NUM_RECORDS = 10;
-    private static final String SPECIAL_FILE_NAME_INDICATING_FILE_ALREADY_PROCESSED = "123.txt";
-    private static final int NUM_BYTES_PER_FILE = 390;
+    private static final long NUM_BYTES_PER_FILE = 390;
+    private static final String FILE_ALREADY_PROCESSED = "already_processed.txt";
 
     @BeforeAll
     public static void initFs() throws IOException {
@@ -94,14 +94,14 @@ public class FsSourceTaskTest {
                 List<Map<String, Object>> capturedValues = captureOne.getValues();
                 Map<String, Object> captured = capturedValues.get(executionNumber.get());
                 executionNumber.addAndGet(1);
-                if(((String)(captured.get("path"))).endsWith(SPECIAL_FILE_NAME_INDICATING_FILE_ALREADY_PROCESSED)){
-                    return new HashMap<String, Object>(){{
-                        put("offset", (long)(NUM_RECORDS));
-                        put("fileSizeBytes", (long)NUM_BYTES_PER_FILE);
+                if (((String) (captured.get("path"))).endsWith(FILE_ALREADY_PROCESSED)) {
+                    return new HashMap<String, Object>() {{
+                        put("offset", (long) NUM_RECORDS);
+                        put("fileSizeBytes", NUM_BYTES_PER_FILE);
                     }};
-                }else{
-                    return new HashMap<String, Object>(){{
-                        put("offset", (long)(NUM_RECORDS/2));
+                } else {
+                    return new HashMap<String, Object>() {{
+                        put("offset", (long) NUM_RECORDS / 2);
                     }};
                 }
             }).times(2);
@@ -181,7 +181,7 @@ public class FsSourceTaskTest {
     public void skipsFetchingFileIfByteOffsetExistsAndMatchesFileLength(TaskFsTestConfig fsConfig) throws IOException {
         for (Path dir : fsConfig.getDirectories()) {
             //this file will be skipped since the byte offset for the file is equal to the byte size of the file
-            Path dataFile = new Path(dir, SPECIAL_FILE_NAME_INDICATING_FILE_ALREADY_PROCESSED);
+            Path dataFile = new Path(dir, FILE_ALREADY_PROCESSED);
             createDataFile(fsConfig.getFs(), dataFile);
         }
 
@@ -310,7 +310,7 @@ public class FsSourceTaskTest {
         Map<String, String> props = new HashMap<>(fsConfig.getTaskConfig());
         props.put(FsSourceTaskConfig.POLICY_BATCH_SIZE, "1");
         fsConfig.getTask().start(props);
-        
+
         assertEquals(0, fsConfig.getTask().poll().size());
         //policy has ended
         assertNull(fsConfig.getTask().poll());
@@ -353,7 +353,7 @@ public class FsSourceTaskTest {
         Map<String, String> props = new HashMap<>(fsConfig.getTaskConfig());
         props.put(FsSourceTaskConfig.POLICY_BATCH_SIZE, "1");
         fsConfig.getTask().start(props);
-        
+
         List<SourceRecord> records = new ArrayList<>();
         List<SourceRecord> fresh = fsConfig.getTask().poll();
         while (fresh != null) {
@@ -382,11 +382,11 @@ public class FsSourceTaskTest {
         }
 
         fsConfig.getTask().start(props);
-        
+
         List<SourceRecord> records = new ArrayList<>();
         assertTimeoutPreemptively(Duration.ofSeconds(2), () -> {
             records.addAll(fsConfig.getTask().poll());
-            records.addAll(fsConfig.getTask().poll());    
+            records.addAll(fsConfig.getTask().poll());
         });
 
         assertEquals((NUM_RECORDS * fsConfig.getDirectories().size()) / 2, records.size());

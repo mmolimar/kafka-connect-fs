@@ -7,7 +7,6 @@ import com.github.mmolimar.kafka.connect.fs.file.reader.FileReader;
 import com.github.mmolimar.kafka.connect.fs.util.ReflectionUtils;
 import com.github.mmolimar.kafka.connect.fs.util.TailCall;
 import com.google.common.collect.Iterators;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
@@ -233,10 +232,10 @@ abstract class AbstractPolicy implements Policy {
 
                 // Only new versions of kafka-connect-fs store the file size bytes
                 // If we have the byte offset, we can skip reading the entire file if the file size has not changed
-                if(fileSizeBytesObject != null) {
-                    Long byteOffset = (Long)fileSizeBytesObject;
-                    if (metadata.getLen() == byteOffset){
-                        log.info("Skipping file: file {} has byte length and byte offset of: {}", metadata.getPath(), byteOffset);
+                if (fileSizeBytesObject != null) {
+                    Long byteOffset = (Long) fileSizeBytesObject;
+                    if (metadata.getLen() == byteOffset) {
+                        log.info("Skipping file [{}] due to it was already processed.", metadata.getPath());
                         return new EmptyFileReader(current, new Path(metadata.getPath()), conf.originals());
                     }
                 }
