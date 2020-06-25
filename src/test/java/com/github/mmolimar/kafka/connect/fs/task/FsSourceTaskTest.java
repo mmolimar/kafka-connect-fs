@@ -46,7 +46,7 @@ public class FsSourceTaskTest {
     );
     private static final int NUM_RECORDS = 10;
     private static final long NUM_BYTES_PER_FILE = 390;
-    private static final String FILE_ALREADY_PROCESSED = "already_processed.txt";
+    private static final String FILE_ALREADY_PROCESSED = "0101010101010101.txt";
 
     @BeforeAll
     public static void initFs() throws IOException {
@@ -83,27 +83,32 @@ public class FsSourceTaskTest {
                     .andReturn(offsetStorageReader)
                     .times(2);
 
-            // Every time the `offsetStorageReader.offset(params)` method is called we want to capture the offset params
+            // Every time the `offsetStorageReader.offsets(params)` method is called we want to capture the offsets params
             // And return a different result based on the offset params passed in
             // In this case, returning a different result based on the file path of the params
-            Capture<Map<String, Object>> captureOne = Capture.newInstance(CaptureType.ALL);
+            Capture<Collection<Map<String, Object>>> captureOne = Capture.newInstance(CaptureType.ALL);
             AtomicInteger executionNumber = new AtomicInteger();
             EasyMock.expect(
-                    offsetStorageReader.offset(EasyMock.capture(captureOne))
+                    offsetStorageReader.offsets(EasyMock.capture(captureOne))
             ).andAnswer(() -> {
-                List<Map<String, Object>> capturedValues = captureOne.getValues();
-                Map<String, Object> captured = capturedValues.get(executionNumber.get());
+                List<Collection<Map<String, Object>>> capturedValues = captureOne.getValues();
+                Collection<Map<String, Object>> captured = capturedValues.get(executionNumber.get());
                 executionNumber.addAndGet(1);
-                if (((String) (captured.get("path"))).endsWith(FILE_ALREADY_PROCESSED)) {
-                    return new HashMap<String, Object>() {{
-                        put("offset", (long) NUM_RECORDS);
-                        put("fileSizeBytes", NUM_BYTES_PER_FILE);
-                    }};
-                } else {
-                    return new HashMap<String, Object>() {{
-                        put("offset", (long) NUM_RECORDS / 2);
-                    }};
-                }
+
+                Map<Map<String, Object>, Map<String, Object>> map = new HashMap<>();
+                captured.forEach(part ->{
+                    if (((String) (part.get("path"))).endsWith(FILE_ALREADY_PROCESSED)) {
+                        map.put(part, new HashMap<String, Object>() {{
+                            put("offset", (long) NUM_RECORDS);
+                            put("fileSizeBytes", NUM_BYTES_PER_FILE);
+                        }});
+                    } else {
+                        map.put(part, new HashMap<String, Object>() {{
+                            put("offset", (long) NUM_RECORDS / 2);
+                        }});
+                    }
+                });
+                return map;
             }).times(2);
 
             EasyMock.checkOrder(taskContext, false);

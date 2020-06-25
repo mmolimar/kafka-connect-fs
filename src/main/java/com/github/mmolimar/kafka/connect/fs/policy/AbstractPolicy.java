@@ -213,7 +213,7 @@ abstract class AbstractPolicy implements Policy {
     }
 
     @Override
-    public FileReader offer(FileMetadata metadata, OffsetStorageReader offsetStorageReader) {
+    public FileReader offer(FileMetadata metadata, Map<String, Object> offset) {
         FileSystem current = fileSystems.stream()
                 .filter(fs -> metadata.getPath().startsWith(fs.getWorkingDirectory().toString()))
                 .findFirst()
@@ -224,8 +224,6 @@ abstract class AbstractPolicy implements Policy {
                 current, new Path(metadata.getPath()), conf.originals()
         );
         try {
-            Map<String, Object> partition = Collections.singletonMap("path", metadata.getPath());
-            Map<String, Object> offset = offsetStorageReader.offset(partition);
             if (offset != null && offset.get("offset") != null) {
                 Object offsetObject = offset.get("offset");
                 Object fileSizeBytesObject = offset.get("fileSizeBytes");
