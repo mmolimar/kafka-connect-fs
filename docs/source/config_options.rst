@@ -250,7 +250,29 @@ In order to configure custom properties for this reader, the name you must use i
   * Type: string
   * Importance: medium
 
-.. _config_options-filereaders-sequencefile:
+.. _config_options-filereaders-orc:
+
+ORC
+--------------------------------------------
+
+In order to configure custom properties for this reader, the name you must use is ``orc``.
+
+``file_reader.orc.use_zerocopy``
+  Use zero-copy when reading a ORC file.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: medium
+
+``file_reader.orc.skip_corrupt_records``
+  If reader will skip corrupt data or not. If disabled, an exception will be thrown when there is
+  corrupted data in the file.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: medium
+
+.. _config_options-filereaders-json:
 
 SequenceFile
 --------------------------------------------
@@ -880,6 +902,13 @@ To configure custom properties for this reader, the name you must use is ``agnos
 
   * Type: string
   * Default: ``avro``
+  * Importance: medium
+
+``file_reader.agnostic.extensions.orc``
+  A comma-separated string list with the accepted extensions for ORC files.
+
+  * Type: string
+  * Default: ``orc``
   * Importance: medium
 
 ``file_reader.agnostic.extensions.sequence``
