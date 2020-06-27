@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -74,10 +75,17 @@ public class FsSourceTask extends SourceTask {
     public List<SourceRecord> poll() {
         while (!stop.get() && policy != null && !policy.hasEnded()) {
             log.trace("Polling for new data...");
+            Function<FileMetadata, Map<String, Object>> makePartitionKey = (FileMetadata metadata) ->
+                    Collections.singletonMap("path", metadata.getPath());
 
-            List<SourceRecord> totalRecords = filesToProcess().map(metadata -> {
+            // Fetch all the offsets upfront to avoid fetching offsets once per file
+            List<FileMetadata> filesToProcess = filesToProcess().collect(Collectors.toList());
+            List<Map<String, Object>> partitions = filesToProcess.stream().map(makePartitionKey).collect(Collectors.toList());
+            Map<Map<String, Object>, Map<String, Object>> offsets = context.offsetStorageReader().offsets(partitions);
+
+            List<SourceRecord> totalRecords = filesToProcess.stream().map(metadata -> {
                 List<SourceRecord> records = new ArrayList<>();
-                try (FileReader reader = policy.offer(metadata, context.offsetStorageReader())) {
+                try (FileReader reader = policy.offer(metadata, offsets.get(makePartitionKey.apply(metadata)))) {
                     log.info("Processing records for file {}.", metadata);
                     while (reader.hasNext()) {
                         records.add(convert(metadata, reader.currentOffset() + 1, reader.next()));
