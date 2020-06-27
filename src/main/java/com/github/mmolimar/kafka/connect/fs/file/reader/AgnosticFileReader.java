@@ -22,6 +22,7 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_PARQUET = FILE_READER_AGNOSTIC_EXTENSIONS + "parquet";
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_AVRO = FILE_READER_AGNOSTIC_EXTENSIONS + "avro";
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_SEQUENCE = FILE_READER_AGNOSTIC_EXTENSIONS + "sequence";
+    public static final String FILE_READER_AGNOSTIC_EXTENSIONS_ORC = FILE_READER_AGNOSTIC_EXTENSIONS + "orc";
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_JSON = FILE_READER_AGNOSTIC_EXTENSIONS + "json";
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_CSV = FILE_READER_AGNOSTIC_EXTENSIONS + "csv";
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_TSV = FILE_READER_AGNOSTIC_EXTENSIONS + "tsv";
@@ -29,7 +30,7 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_TEXT = FILE_READER_AGNOSTIC_EXTENSIONS + "text";
 
     private final AbstractFileReader<Object> reader;
-    private Set<String> parquetExtensions, avroExtensions, sequenceExtensions,
+    private Set<String> parquetExtensions, avroExtensions, sequenceExtensions, orcExtensions,
             jsonExtensions, csvExtensions, tsvExtensions, fixedExtensions;
 
     public AgnosticFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws Exception {
@@ -54,6 +55,8 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
             clz = AvroFileReader.class;
         } else if (sequenceExtensions.contains(extension)) {
             clz = SequenceFileReader.class;
+        } else if (orcExtensions.contains(extension)) {
+            clz = OrcFileReader.class;
         } else if (jsonExtensions.contains(extension)) {
             clz = JsonFileReader.class;
         } else if (csvExtensions.contains(extension)) {
@@ -76,6 +79,8 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
         this.avroExtensions = Arrays.stream(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_AVRO, "avro")
                 .toLowerCase().split(",")).collect(Collectors.toSet());
         this.sequenceExtensions = Arrays.stream(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_SEQUENCE, "seq")
+                .toLowerCase().split(",")).collect(Collectors.toSet());
+        this.orcExtensions = Arrays.stream(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_ORC, "orc")
                 .toLowerCase().split(",")).collect(Collectors.toSet());
         this.jsonExtensions = Arrays.stream(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_JSON, "json")
                 .toLowerCase().split(",")).collect(Collectors.toSet());
