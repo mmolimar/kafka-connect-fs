@@ -16,6 +16,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.math.BigInteger;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.*;
 import java.util.stream.IntStream;
@@ -25,10 +26,12 @@ import static org.junit.jupiter.api.Assertions.*;
 public class JsonFileReaderTest extends FileReaderTestBase {
 
     private static final String FIELD_INTEGER = "integerField";
+    private static final String FIELD_BIG_INTEGER = "bigIntegerField";
     private static final String FIELD_LONG = "longField";
     private static final String FIELD_BOOLEAN = "booleanField";
     private static final String FIELD_STRING = "stringField";
     private static final String FIELD_DECIMAL = "decimalField";
+    private static final String FIELD_BINARY = "binaryField";
     private static final String FIELD_ARRAY_SIMPLE = "arraySimpleField";
     private static final String FIELD_ARRAY_COMPLEX = "arrayComplexField";
     private static final String FIELD_STRUCT = "structField";
@@ -47,10 +50,12 @@ public class JsonFileReaderTest extends FileReaderTestBase {
             IntStream.range(0, numRecords).forEach(index -> {
                 ObjectNode json = JsonNodeFactory.instance.objectNode()
                         .put(FIELD_INTEGER, index)
+                        .put(FIELD_BIG_INTEGER, new BigInteger("9999999999999999999"))
                         .put(FIELD_LONG, Long.MAX_VALUE)
                         .put(FIELD_STRING, String.format("%d_%s", index, UUID.randomUUID()))
                         .put(FIELD_BOOLEAN, true)
                         .put(FIELD_DECIMAL, Double.parseDouble(index + "." + index))
+                        .put(FIELD_BINARY, "test".getBytes())
                         .put(FIELD_NULL, (String) null);
                 json.putArray(FIELD_ARRAY_SIMPLE)
                         .add("elm[" + index + "]")
@@ -199,12 +204,14 @@ public class JsonFileReaderTest extends FileReaderTestBase {
         Struct subrecord = record.getStruct(FIELD_STRUCT);
         assertAll(
                 () -> assertEquals(index, (int) record.get(FIELD_INTEGER)),
+                () -> assertEquals(new BigInteger("9999999999999999999").longValue(), record.get(FIELD_BIG_INTEGER)),
                 () -> assertEquals(Long.MAX_VALUE, (long) record.get(FIELD_LONG)),
                 () -> assertTrue(record.get(FIELD_STRING).toString().startsWith(index + "_")),
                 () -> assertTrue(Boolean.parseBoolean(record.get(FIELD_BOOLEAN).toString())),
                 () -> assertEquals(Double.parseDouble(index + "." + index), (Double) record.get(FIELD_DECIMAL), 0),
                 () -> assertNull(record.get(FIELD_NULL)),
                 () -> assertNotNull(record.schema().field(FIELD_NULL)),
+                () -> assertEquals("dGVzdA==", record.get(FIELD_BINARY)),
                 () -> assertEquals(Arrays.asList("elm[" + index + "]", "elm[" + (index + 1) + "]"), record.get(FIELD_ARRAY_SIMPLE)),
 
                 () -> assertEquals(index, (int) array.get(0).get(FIELD_INTEGER)),

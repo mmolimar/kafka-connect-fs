@@ -2,6 +2,7 @@ package com.github.mmolimar.kafka.connect.fs.policy;
 
 import com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig;
 import com.github.mmolimar.kafka.connect.fs.file.FileMetadata;
+import com.github.mmolimar.kafka.connect.fs.file.reader.FileReader;
 import com.github.mmolimar.kafka.connect.fs.util.ReflectionUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -242,12 +243,23 @@ abstract class PolicyTestBase {
                 // we wait till FS has registered the files
                 Thread.sleep(3000);
             }
-            
+
             Iterator<FileMetadata> it = policy.execute();
 
             // First batch of files (1 file)
             assertTrue(it.hasNext());
-            String firstPath = it.next().getPath();
+            FileMetadata metadata = it.next();
+            String firstPath = metadata.getPath();
+            FileReader reader = policy.offer(metadata, new HashMap<String, Object>() {{
+                put("offset", "1");
+                put("fileSizeBytes", "0");
+            }});
+            assertFalse(reader.hasNext());
+            reader.seek(1000L);
+            reader.close();
+            assertEquals(0L, reader.currentOffset());
+            assertEquals(metadata.getPath(), reader.getFilePath().toString());
+            assertThrows(NoSuchElementException.class, reader::next);
             assertFalse(it.hasNext());
 
             // Second batch of files (1 file)

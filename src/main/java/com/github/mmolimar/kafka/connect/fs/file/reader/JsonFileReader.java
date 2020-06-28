@@ -115,14 +115,8 @@ public class JsonFileReader extends AbstractFileReader<JsonFileReader.JsonRecord
                     return Schema.OPTIONAL_INT32_SCHEMA;
                 } else if (jsonNode.isLong()) {
                     return Schema.OPTIONAL_INT64_SCHEMA;
-                } else if (jsonNode.isFloat()) {
-                    return Schema.OPTIONAL_FLOAT32_SCHEMA;
-                } else if (jsonNode.isDouble()) {
-                    return Schema.OPTIONAL_FLOAT64_SCHEMA;
                 } else if (jsonNode.isBigInteger()) {
                     return Schema.OPTIONAL_INT64_SCHEMA;
-                } else if (jsonNode.isBigDecimal()) {
-                    return Schema.OPTIONAL_FLOAT64_SCHEMA;
                 } else {
                     return Schema.OPTIONAL_FLOAT64_SCHEMA;
                 }
@@ -177,14 +171,10 @@ public class JsonFileReader extends AbstractFileReader<JsonFileReader.JsonRecord
                         return value.intValue();
                     } else if (value.isLong()) {
                         return value.longValue();
-                    } else if (value.isFloat()) {
-                        return value.floatValue();
-                    } else if (value.isDouble()) {
-                        return value.doubleValue();
                     } else if (value.isBigInteger()) {
-                        return value.bigIntegerValue();
+                        return value.bigIntegerValue().longValue();
                     } else {
-                        return value.numberValue();
+                        return value.numberValue().doubleValue();
                     }
                 case STRING:
                     return value.asText();
