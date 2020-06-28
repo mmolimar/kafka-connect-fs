@@ -157,8 +157,10 @@ public class JsonFileReader extends AbstractFileReader<JsonFileReader.JsonRecord
             if (jsonNode.isNull()) return null;
             Struct struct = new Struct(schema);
             jsonNode.fields()
-                    .forEachRemaining(field -> struct.put(field.getKey(),
-                            mapValue(struct.schema().field(field.getKey()).schema(), field.getValue())));
+                    .forEachRemaining(field -> struct.put(
+                            field.getKey(),
+                            mapValue(struct.schema().field(field.getKey()).schema(), field.getValue())
+                    ));
             return struct;
         }
 
@@ -204,7 +206,7 @@ public class JsonFileReader extends AbstractFileReader<JsonFileReader.JsonRecord
                 case ARRAY:
                     Iterable<JsonNode> arrayElements = value::elements;
                     return StreamSupport.stream(arrayElements.spliterator(), false)
-                            .map(elm -> mapValue(schema, elm))
+                            .map(elm -> mapValue(schema.valueSchema(), elm))
                             .collect(Collectors.toList());
                 case NULL:
                 case MISSING:
