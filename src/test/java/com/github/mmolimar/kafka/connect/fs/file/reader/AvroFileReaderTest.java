@@ -123,7 +123,7 @@ public class AvroFileReaderTest extends FileReaderTestBase {
     @Override
     protected void checkData(Struct record, long index) {
         assertAll(
-                () -> assertEquals((int) (Integer) record.get(FIELD_INDEX), index),
+                () -> assertEquals(index, (int) record.get(FIELD_INDEX)),
                 () -> assertTrue(record.get(FIELD_NAME).toString().startsWith(index + "_")),
                 () -> assertTrue(record.get(FIELD_SURNAME).toString().startsWith(index + "_"))
         );

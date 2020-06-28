@@ -149,7 +149,7 @@ public class SequenceFileReaderTest extends FileReaderTestBase {
 
     private void checkData(String keyFieldName, String valueFieldName, Struct record, long index) {
         assertAll(
-                () -> assertEquals((int) (Integer) record.get(keyFieldName), index),
+                () -> assertEquals(index, (int) record.get(keyFieldName)),
                 () -> assertTrue(record.get(valueFieldName).toString().startsWith(index + "_"))
         );
     }

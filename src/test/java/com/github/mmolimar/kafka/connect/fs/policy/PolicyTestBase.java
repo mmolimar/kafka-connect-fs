@@ -128,11 +128,11 @@ abstract class PolicyTestBase {
         FileSystem fs = fsConfig.getFs();
         for (Path dir : fsConfig.getDirectories()) {
             fs.createNewFile(new Path(dir, System.nanoTime() + ".txt"));
-            //this file does not match the regexp
+            // this file does not match the regexp
             fs.createNewFile(new Path(dir, System.nanoTime() + ".invalid"));
 
-            //we wait till FS has registered the files
-            Thread.sleep(3000);
+            // we wait till FS has registered the files
+            Thread.sleep(5000);
         }
         Iterator<FileMetadata> it = fsConfig.getPolicy().execute();
         assertTrue(it.hasNext());
@@ -150,10 +150,10 @@ abstract class PolicyTestBase {
             Path tmpDir = new Path(dir, String.valueOf(System.nanoTime()));
             fs.mkdirs(tmpDir);
             fs.createNewFile(new Path(tmpDir, System.nanoTime() + ".txt"));
-            //this file does not match the regexp
+            // this file does not match the regexp
             fs.createNewFile(new Path(tmpDir, System.nanoTime() + ".invalid"));
 
-            //we wait till FS has registered the files
+            // we wait till FS has registered the files
             Thread.sleep(3000);
         }
         Iterator<FileMetadata> it = fsConfig.getPolicy().execute();
@@ -236,10 +236,10 @@ abstract class PolicyTestBase {
             FileSystem fs = fsConfig.getFs();
             for (Path dir : fsConfig.getDirectories()) {
                 fs.createNewFile(new Path(dir, System.nanoTime() + ".txt"));
-                //this file does not match the regexp
+                // this file does not match the regexp
                 fs.createNewFile(new Path(dir, System.nanoTime() + ".invalid"));
 
-                //we wait till FS has registered the files
+                // we wait till FS has registered the files
                 Thread.sleep(3000);
             }
             
@@ -263,10 +263,7 @@ abstract class PolicyTestBase {
     public void invalidBatchSize(PolicyFsTestConfig fsConfig) {
         Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
         originals.put(FsSourceTaskConfig.POLICY_BATCH_SIZE, "one");
-        assertThrows(ConfigException.class, () -> {
-            new FsSourceTaskConfig(originals);
-        });
-
+        assertThrows(ConfigException.class, () -> new FsSourceTaskConfig(originals));
     }
 
     protected abstract FsSourceTaskConfig buildSourceTaskConfig(List<Path> directories);

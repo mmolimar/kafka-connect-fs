@@ -47,7 +47,7 @@ public class JsonFileReader extends AbstractFileReader<JsonFileReader.JsonRecord
         if (hasNext()) {
             String line = inner.nextRecord().getValue();
             this.schema = extractSchema(mapper.readTree(line));
-            //back to the first line
+            // back to the first line
             inner.seek(0);
         } else {
             this.schema = SchemaBuilder.struct().build();

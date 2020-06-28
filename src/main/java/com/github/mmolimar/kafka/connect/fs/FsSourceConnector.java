@@ -67,7 +67,7 @@ public class FsSourceConnector extends SourceConnector {
     @Override
     public void stop() {
         log.info("Stopping FsSourceConnector.");
-        //Nothing to do
+        // Nothing to do
     }
 
     @Override

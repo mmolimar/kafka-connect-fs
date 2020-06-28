@@ -91,7 +91,7 @@ public class FsSourceTask extends SourceTask {
                         records.add(convert(metadata, reader.currentOffset() + 1, reader.next()));
                     }
                 } catch (ConnectException | IOException e) {
-                    //when an exception happens reading a file, the connector continues
+                    // when an exception happens reading a file, the connector continues
                     log.error("Error reading file [{}]. Keep going...", metadata.getPath(), e);
                 }
                 log.debug("Read [{}] records from file [{}].", records.size(), metadata.getPath());
@@ -116,7 +116,7 @@ public class FsSourceTask extends SourceTask {
             return asStream(policy.execute())
                     .filter(metadata -> metadata.getLen() > 0);
         } catch (IOException | ConnectException e) {
-            //when an exception happens executing the policy, the connector continues
+            // when an exception happens executing the policy, the connector continues
             log.error("Cannot retrieve files to process from the FS: {}. " +
                             "There was an error executing the policy but the task tolerates this and continues.",
                     policy.getURIs(), e);

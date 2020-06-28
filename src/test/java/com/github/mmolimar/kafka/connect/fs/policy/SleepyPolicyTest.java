@@ -121,7 +121,7 @@ public class SleepyPolicyTest extends PolicyTestBase {
 
         try (Policy policy = ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
                 .getClass(FsSourceTaskConfig.POLICY_CLASS), sleepConfig)) {
-            //it never ends
+            // it never ends
             for (int i = 0; i < 100; i++) {
                 assertFalse(policy.hasEnded());
                 policy.execute();
@@ -130,5 +130,4 @@ public class SleepyPolicyTest extends PolicyTestBase {
             assertTrue(policy.hasEnded());
         }
     }
-
 }

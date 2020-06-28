@@ -60,7 +60,7 @@ abstract class FileReaderTestBase {
             try {
                 fsConfig.getReader().close();
             } catch (Exception e) {
-                //ignoring
+                // ignoring
             }
         }
     }

@@ -11,8 +11,6 @@ public interface FileReader extends Iterator<Struct>, Closeable {
 
     Path getFilePath();
 
-    boolean hasNext();
-
     Struct next();
 
     void seek(long offset);

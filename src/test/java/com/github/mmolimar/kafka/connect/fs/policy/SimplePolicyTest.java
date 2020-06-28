@@ -50,10 +50,10 @@ public class SimplePolicyTest extends PolicyTestBase {
             FileSystem fs = fsConfig.getFs();
             for (Path dir : fsConfig.getDirectories()) {
                 fs.createNewFile(new Path(dir, System.nanoTime() + ".txt"));
-                //this file does not match the regexp
+                // this file does not match the regexp
                 fs.createNewFile(new Path(dir, System.nanoTime() + ".invalid"));
 
-                //we wait till FS has registered the files
+                // we wait till FS has registered the files
                 Thread.sleep(3000);
             }
             
@@ -74,5 +74,4 @@ public class SimplePolicyTest extends PolicyTestBase {
             assertTrue(policy.hasEnded());
         }
     }
-
 }

@@ -2,20 +2,19 @@ package com.github.mmolimar.kafka.connect.fs.policy;
 
 import com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig;
 import com.github.mmolimar.kafka.connect.fs.file.FileMetadata;
-import com.github.mmolimar.kafka.connect.fs.file.reader.EmptyFileReader;
 import com.github.mmolimar.kafka.connect.fs.file.reader.FileReader;
+import com.github.mmolimar.kafka.connect.fs.util.Iterators;
 import com.github.mmolimar.kafka.connect.fs.util.ReflectionUtils;
 import com.github.mmolimar.kafka.connect.fs.util.TailCall;
-import com.google.common.collect.Iterators;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.kafka.common.utils.Utils;
+import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.errors.IllegalWorkerStateException;
-import org.apache.kafka.connect.storage.OffsetStorageReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +39,7 @@ abstract class AbstractPolicy implements Policy {
     private final AtomicLong executions;
     private final boolean recursive;
     private final int batchSize;
-    private Iterator<List<FileMetadata>> previous;
+    private Iterator<Iterator<FileMetadata>> partitions;
     private boolean interrupted;
 
     public AbstractPolicy(FsSourceTaskConfig conf) throws IOException {
@@ -51,7 +50,7 @@ abstract class AbstractPolicy implements Policy {
         this.fileRegexp = Pattern.compile(conf.getString(FsSourceTaskConfig.POLICY_REGEXP));
         this.batchSize = conf.getInt(FsSourceTaskConfig.POLICY_BATCH_SIZE);
         this.interrupted = false;
-        this.previous = Collections.emptyIterator();
+        this.partitions = Collections.emptyIterator();
 
         Map<String, Object> customConfigs = customConfigs();
         logAll(customConfigs);
@@ -112,9 +111,8 @@ abstract class AbstractPolicy implements Policy {
         if (hasEnded()) {
             throw new IllegalWorkerStateException("Policy has ended. Cannot be retried.");
         }
-
-        if (batchSize > 0 && previous.hasNext()) {
-            return previous.next().iterator();
+        if (partitions.hasNext()) {
+            return partitions.next();
         }
 
         preCheck();
@@ -124,16 +122,11 @@ abstract class AbstractPolicy implements Policy {
         for (FileSystem fs : fileSystems) {
             files = concat(files, listFiles(fs));
         }
+
         postCheck();
 
-        if (batchSize > 0) {
-            previous = Iterators.partition(files, batchSize);
-            if (!previous.hasNext())
-                return Collections.emptyIterator();
-            return previous.next().iterator();
-        }
-
-        return files;
+        partitions = Iterators.partition(files, batchSize);
+        return partitions.hasNext() ? partitions.next() : Collections.emptyIterator();
     }
 
     @Override
@@ -193,8 +186,7 @@ abstract class AbstractPolicy implements Policy {
         if (interrupted) {
             return true;
         }
-
-        return !previous.hasNext() && isPolicyCompleted();
+        return !partitions.hasNext() && isPolicyCompleted();
     }
 
     protected abstract boolean isPolicyCompleted();
@@ -213,7 +205,7 @@ abstract class AbstractPolicy implements Policy {
     }
 
     @Override
-    public FileReader offer(FileMetadata metadata, Map<String, Object> offset) {
+    public FileReader offer(FileMetadata metadata, Map<String, Object> offsetMap) {
         FileSystem current = fileSystems.stream()
                 .filter(fs -> metadata.getPath().startsWith(fs.getWorkingDirectory().toString()))
                 .findFirst()
@@ -224,28 +216,30 @@ abstract class AbstractPolicy implements Policy {
                 current, new Path(metadata.getPath()), conf.originals()
         );
         try {
-            if (offset != null && offset.get("offset") != null) {
-                Object offsetObject = offset.get("offset");
-                Object fileSizeBytesObject = offset.get("fileSizeBytes");
-
-                // Only new versions of kafka-connect-fs store the file size bytes
-                // If we have the byte offset, we can skip reading the entire file if the file size has not changed
-                if (fileSizeBytesObject != null) {
-                    Long byteOffset = (Long) fileSizeBytesObject;
-                    if (metadata.getLen() == byteOffset) {
-                        log.info("Skipping file [{}] due to it was already processed.", metadata.getPath());
-                        return new EmptyFileReader(current, new Path(metadata.getPath()), conf.originals());
-                    }
-                }
-
-                log.info("Seeking to offset [{}] for file [{}].", offset.get("offset"), metadata.getPath());
-                FileReader reader = makeReader.get();
-                reader.seek((Long) offsetObject);
-                return reader;
-            }
-            return makeReader.get();
+            return Optional.ofNullable(offsetMap.get("offset"))
+                    .map(offset -> Long.parseLong(offset.toString()))
+                    .filter(offset -> offset > 0)
+                    .map(offset -> {
+                        long fileSizeBytes = Long.parseLong(offsetMap.getOrDefault("fileSizeBytes", "0").toString());
+                        if (metadata.getLen() == fileSizeBytes) {
+                            log.info("Skipping file [{}] due to it was already processed.", metadata.getPath());
+                            return emptyFileReader(new Path(metadata.getPath()));
+                        } else {
+                            log.info("Seeking to offset [{}] for file [{}].", offsetMap.get("offset"), metadata.getPath());
+                            FileReader reader = makeReader.get();
+                            reader.seek(offset);
+                            return reader;
+                        }
+                    }).orElse(makeReader.get());
         } catch (Exception e) {
             throw new ConnectException("An error has occurred when creating reader for file: " + metadata.getPath(), e);
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        for (FileSystem fs : fileSystems) {
+            fs.close();
         }
     }
 
@@ -264,11 +258,36 @@ abstract class AbstractPolicy implements Policy {
         };
     }
 
-    @Override
-    public void close() throws IOException {
-        for (FileSystem fs : fileSystems) {
-            fs.close();
-        }
+    private FileReader emptyFileReader(Path filePath) {
+        return new FileReader() {
+            @Override
+            public Path getFilePath() {
+                return filePath;
+            }
+
+            @Override
+            public Struct next() {
+                throw new NoSuchElementException();
+            }
+
+            @Override
+            public void seek(long offset) {
+            }
+
+            @Override
+            public long currentOffset() {
+                return 0;
+            }
+
+            @Override
+            public void close() {
+            }
+
+            @Override
+            public boolean hasNext() {
+                return false;
+            }
+        };
     }
 
     private void logAll(Map<String, Object> conf) {

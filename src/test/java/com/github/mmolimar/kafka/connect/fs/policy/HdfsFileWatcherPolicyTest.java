@@ -50,7 +50,7 @@ public class HdfsFileWatcherPolicyTest extends PolicyTestBase {
         return new FsSourceTaskConfig(cfg);
     }
 
-    //This policy does not throw any exception. Just stop watching those nonexistent dirs
+    // This policy does not throw any exception. Just stop watching those nonexistent dirs
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
     @Override
@@ -67,7 +67,7 @@ public class HdfsFileWatcherPolicyTest extends PolicyTestBase {
         }
     }
 
-    //This policy never ends. We have to interrupt it
+    // This policy never ends. We have to interrupt it
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
     @Override

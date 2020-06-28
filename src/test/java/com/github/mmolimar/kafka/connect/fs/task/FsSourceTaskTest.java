@@ -75,7 +75,7 @@ public class FsSourceTaskTest {
                 put(FsSourceTaskConfig.POLICY_REGEXP, "^[0-9]*\\.txt$");
             }};
 
-            //Mock initialization
+            // Mock initialization
             SourceTaskContext taskContext = PowerMock.createMock(SourceTaskContext.class);
             OffsetStorageReader offsetStorageReader = PowerMock.createMock(OffsetStorageReader.class);
 
@@ -84,7 +84,7 @@ public class FsSourceTaskTest {
                     .times(2);
 
             // Every time the `offsetStorageReader.offsets(params)` method is called we want to capture the offsets params
-            // And return a different result based on the offset params passed in
+            // and return a different result based on the offset params passed in
             // In this case, returning a different result based on the file path of the params
             Capture<Collection<Map<String, Object>>> captureOne = Capture.newInstance(CaptureType.ALL);
             AtomicInteger executionNumber = new AtomicInteger();
@@ -145,7 +145,7 @@ public class FsSourceTaskTest {
     public void pollNoData(TaskFsTestConfig fsConfig) {
         fsConfig.getTask().start(fsConfig.getTaskConfig());
         assertEquals(0, fsConfig.getTask().poll().size());
-        //policy has ended
+        // policy has ended
         assertNull(fsConfig.getTask().poll());
     }
 
@@ -154,12 +154,12 @@ public class FsSourceTaskTest {
     public void emptyFilesToProcess(TaskFsTestConfig fsConfig) throws IOException {
         for (Path dir : fsConfig.getDirectories()) {
             fsConfig.getFs().createNewFile(new Path(dir, System.nanoTime() + ".txt"));
-            //this file does not match the regexp
+            // this file does not match the regexp
             fsConfig.getFs().createNewFile(new Path(dir, String.valueOf(System.nanoTime())));
         }
         fsConfig.getTask().start(fsConfig.getTaskConfig());
         assertEquals(0, fsConfig.getTask().poll().size());
-        //policy has ended
+        // policy has ended
         assertNull(fsConfig.getTask().poll());
     }
 
@@ -169,7 +169,7 @@ public class FsSourceTaskTest {
         for (Path dir : fsConfig.getDirectories()) {
             Path dataFile = new Path(dir, System.nanoTime() + ".txt");
             createDataFile(fsConfig.getFs(), dataFile);
-            //this file does not match the regexp
+            // this file does not match the regexp
             fsConfig.getFs().createNewFile(new Path(dir, String.valueOf(System.nanoTime())));
         }
 
@@ -177,7 +177,7 @@ public class FsSourceTaskTest {
         List<SourceRecord> records = fsConfig.getTask().poll();
         assertEquals((NUM_RECORDS * fsConfig.getDirectories().size()) / 2, records.size());
         checkRecords(records);
-        //policy has ended
+        // policy has ended
         assertNull(fsConfig.getTask().poll());
     }
 
@@ -185,7 +185,7 @@ public class FsSourceTaskTest {
     @MethodSource("fileSystemConfigProvider")
     public void skipsFetchingFileIfByteOffsetExistsAndMatchesFileLength(TaskFsTestConfig fsConfig) throws IOException {
         for (Path dir : fsConfig.getDirectories()) {
-            //this file will be skipped since the byte offset for the file is equal to the byte size of the file
+            // this file will be skipped since the byte offset for the file is equal to the byte size of the file
             Path dataFile = new Path(dir, FILE_ALREADY_PROCESSED);
             createDataFile(fsConfig.getFs(), dataFile);
         }
@@ -317,7 +317,7 @@ public class FsSourceTaskTest {
         fsConfig.getTask().start(props);
 
         assertEquals(0, fsConfig.getTask().poll().size());
-        //policy has ended
+        // policy has ended
         assertNull(fsConfig.getTask().poll());
     }
 
@@ -326,7 +326,7 @@ public class FsSourceTaskTest {
     public void emptyFilesToProcessWithBatch(TaskFsTestConfig fsConfig) throws IOException {
         for (Path dir : fsConfig.getDirectories()) {
             fsConfig.getFs().createNewFile(new Path(dir, System.nanoTime() + ".txt"));
-            //this file does not match the regexp
+            // this file does not match the regexp
             fsConfig.getFs().createNewFile(new Path(dir, String.valueOf(System.nanoTime())));
         }
         Map<String, String> props = new HashMap<>(fsConfig.getTaskConfig());
@@ -341,7 +341,7 @@ public class FsSourceTaskTest {
         }
         assertEquals(0, records.size());
 
-        //policy has ended
+        // policy has ended
         assertNull(fsConfig.getTask().poll());
     }
 
@@ -351,7 +351,7 @@ public class FsSourceTaskTest {
         for (Path dir : fsConfig.getDirectories()) {
             Path dataFile = new Path(dir, System.nanoTime() + ".txt");
             createDataFile(fsConfig.getFs(), dataFile);
-            //this file does not match the regexp
+            // this file does not match the regexp
             fsConfig.getFs().createNewFile(new Path(dir, String.valueOf(System.nanoTime())));
         }
 
@@ -368,7 +368,7 @@ public class FsSourceTaskTest {
 
         assertEquals((NUM_RECORDS * fsConfig.getDirectories().size()) / 2, records.size());
         checkRecords(records);
-        //policy has ended
+        // policy has ended
         assertNull(fsConfig.getTask().poll());
     }
 
@@ -382,7 +382,7 @@ public class FsSourceTaskTest {
         for (Path dir : fsConfig.getDirectories()) {
             Path dataFile = new Path(dir, System.nanoTime() + ".txt");
             createDataFile(fsConfig.getFs(), dataFile);
-            //this file does not match the regexp
+            // this file does not match the regexp
             fsConfig.getFs().createNewFile(new Path(dir, String.valueOf(System.nanoTime())));
         }
 
@@ -396,7 +396,7 @@ public class FsSourceTaskTest {
 
         assertEquals((NUM_RECORDS * fsConfig.getDirectories().size()) / 2, records.size());
         checkRecords(records);
-        //policy has ended
+        // policy has ended
         assertNull(fsConfig.getTask().poll());
     }
 
