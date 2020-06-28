@@ -48,7 +48,7 @@ public class OrcFileReader extends AbstractFileReader<OrcFileReader.OrcRecord> {
         this.reader = orcReader.rows(options);
         this.numberOfRows = orcReader.getNumberOfRows();
         this.batch = orcReader.getSchema().createRowBatch();
-        this.schema = hasNext() ? extractSchema(orcReader.getSchema()) : SchemaBuilder.struct().build();
+        this.schema = hasNext() ? buildSchema(orcReader.getSchema()) : SchemaBuilder.struct().build();
         this.vectorIndex = 0;
         this.closed = false;
     }
@@ -57,6 +57,16 @@ public class OrcFileReader extends AbstractFileReader<OrcFileReader.OrcRecord> {
     protected void configure(Map<String, String> config) {
         this.useZeroCopy = Boolean.parseBoolean(config.getOrDefault(FILE_READER_ORC_USE_ZEROCOPY, "false"));
         this.skipCorruptRecords = Boolean.parseBoolean(config.getOrDefault(FILE_READER_ORC_SKIP_CORRUPT_RECORDS, "false"));
+    }
+
+    private Schema buildSchema(TypeDescription typeDescription) {
+        TypeDescription td;
+        if (typeDescription.getChildren() == null || typeDescription.getChildren().isEmpty()) {
+            td = TypeDescription.createStruct().addField(typeDescription.getCategory().getName(), typeDescription);
+        } else {
+            td = typeDescription;
+        }
+        return extractSchema(td);
     }
 
     private Schema extractSchema(TypeDescription typeDescription) {

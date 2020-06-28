@@ -145,6 +145,31 @@ public class OrcFileReaderTest extends FileReaderTestBase {
         return path;
     }
 
+    private Path createDataFileWithoutStruct(ReaderFsTestConfig fsConfig, Object... args) throws IOException {
+        int numRecords = args.length < 1 ? NUM_RECORDS : (int) args[0];
+        File orcFile = File.createTempFile("test-", "." + getFileExtension());
+
+        TypeDescription schema = TypeDescription.createLong();
+        Properties props = new Properties();
+        props.put(OrcConf.OVERWRITE_OUTPUT_FILE.getAttribute(), "true");
+        OrcFile.WriterOptions opts = OrcFile.writerOptions(props, fsConfig.getFs().getConf()).setSchema(schema);
+        try (Writer writer = OrcFile.createWriter(new Path(orcFile.toURI()), opts)) {
+            VectorizedRowBatch batch = schema.createRowBatch(numRecords);
+            LongColumnVector longField = (LongColumnVector) batch.cols[0];
+
+            for (int index = 0; index < numRecords; index++) {
+                longField.vector[index] = index;
+
+                fsConfig.offsetsByIndex().put(index, (long) index);
+            }
+            batch.size = numRecords;
+            writer.addRowBatch(batch);
+        }
+        Path path = new Path(new Path(fsConfig.getFsUri()), orcFile.getName());
+        fsConfig.getFs().moveFromLocalFile(new Path(orcFile.getAbsolutePath()), path);
+        return path;
+    }
+
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
     public void emptyFile(ReaderFsTestConfig fsConfig) throws IOException {
@@ -173,6 +198,24 @@ public class OrcFileReaderTest extends FileReaderTestBase {
         readAllData(fsConfig);
     }
 
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void readDataWithoutStruct(ReaderFsTestConfig fsConfig) throws IOException {
+        Path file = createDataFileWithoutStruct(fsConfig, NUM_RECORDS);
+        FileReader reader = getReader(fsConfig.getFs(), file, getReaderConfig());
+
+        assertTrue(reader.hasNext());
+
+        int recordCount = 0;
+        while (reader.hasNext()) {
+            Struct record = reader.next();
+            checkDataWithoutStruct(record, recordCount);
+            recordCount++;
+        }
+        reader.close();
+        assertEquals(NUM_RECORDS, recordCount, "The number of records in the file does not match");
+    }
+
     @Override
     protected Class<? extends FileReader> getReaderClass() {
         return OrcFileReader.class;
@@ -188,8 +231,8 @@ public class OrcFileReaderTest extends FileReaderTestBase {
         Struct struct = record.getStruct(FIELD_STRUCT);
         Struct union = record.getStruct(FIELD_UNION);
         assertAll(
-                () -> assertEquals(index, (int) (Integer) record.get(FIELD_INTEGER)),
-                () -> assertEquals(Long.MAX_VALUE, (long) (Long) record.get(FIELD_LONG)),
+                () -> assertEquals(index, (int) record.get(FIELD_INTEGER)),
+                () -> assertEquals(Long.MAX_VALUE, (long) record.get(FIELD_LONG)),
                 () -> assertTrue(record.get(FIELD_STRING).toString().startsWith(index + "_")),
                 () -> assertTrue(Boolean.parseBoolean(record.get(FIELD_BOOLEAN).toString())),
                 () -> assertEquals(Double.parseDouble(index + "." + index), (Double) record.get(FIELD_DECIMAL), 0),
@@ -199,10 +242,12 @@ public class OrcFileReaderTest extends FileReaderTestBase {
                 () -> assertEquals((short) index, (short) record.get(FIELD_SHORT)),
                 () -> assertEquals(Float.parseFloat(index + "." + index), record.get(FIELD_FLOAT)),
                 () -> assertTrue(new String((byte[]) record.get(FIELD_BINARY)).startsWith(index + "_")),
+                () -> assertNotNull(record.get(FIELD_TIMESTAMP)),
+                () -> assertNotNull(record.get(FIELD_TIMESTAMP_INSTANT)),
                 () -> assertEquals(Collections.singletonMap("key[" + index + "]", "value[" + index + "]"), record.get(FIELD_MAP)),
                 () -> assertEquals(Collections.singletonList("elm[" + index + "]"), record.get(FIELD_ARRAY)),
-                () -> assertEquals(index, (int) (Integer) struct.get(FIELD_INTEGER)),
-                () -> assertEquals(Long.MAX_VALUE, (long) (Long) struct.get(FIELD_LONG)),
+                () -> assertEquals(index, (int) struct.get(FIELD_INTEGER)),
+                () -> assertEquals(Long.MAX_VALUE, (long) struct.get(FIELD_LONG)),
                 () -> assertTrue(struct.get(FIELD_STRING).toString().startsWith(index + "_")),
                 () -> assertTrue(Boolean.parseBoolean(struct.get(FIELD_BOOLEAN).toString())),
                 () -> assertEquals(Double.parseDouble(index + "." + index), (Double) struct.get(FIELD_DECIMAL), 0),
@@ -210,6 +255,10 @@ public class OrcFileReaderTest extends FileReaderTestBase {
                 () -> assertNotNull(struct.schema().field(FIELD_EMPTY)),
                 () -> assertEquals((int) index, union.get("field1"))
         );
+    }
+
+    private void checkDataWithoutStruct(Struct record, long index) {
+        assertEquals(index, (long) record.get("bigint"));
     }
 
     @Override
