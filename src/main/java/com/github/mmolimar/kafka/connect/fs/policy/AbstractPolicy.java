@@ -230,7 +230,7 @@ abstract class AbstractPolicy implements Policy {
                             reader.seek(offset);
                             return reader;
                         }
-                    }).orElse(makeReader.get());
+                    }).orElseGet(makeReader);
         } catch (Exception e) {
             throw new ConnectException("An error has occurred when creating reader for file: " + metadata.getPath(), e);
         }

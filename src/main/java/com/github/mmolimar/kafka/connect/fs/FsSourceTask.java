@@ -85,7 +85,8 @@ public class FsSourceTask extends SourceTask {
 
             List<SourceRecord> totalRecords = filesToProcess.stream().map(metadata -> {
                 List<SourceRecord> records = new ArrayList<>();
-                try (FileReader reader = policy.offer(metadata, offsets.get(makePartitionKey.apply(metadata)))) {
+                Map<String, Object> partitionKey = makePartitionKey.apply(metadata);
+                try (FileReader reader = policy.offer(metadata, offsets.getOrDefault(partitionKey, new HashMap<>()))) {
                     log.info("Processing records for file {}.", metadata);
                     while (reader.hasNext()) {
                         records.add(convert(metadata, reader.currentOffset() + 1, reader.next()));
