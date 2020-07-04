@@ -39,21 +39,11 @@ public class SequenceFileReaderTest extends FileReaderTestBase {
                 try {
                     writer.append(key, value);
                     writer.sync();
+                    fsConfig.offsetsByIndex().put(index, (long) index);
                 } catch (IOException ioe) {
                     throw new RuntimeException(ioe);
                 }
             });
-        }
-        try (SequenceFile.Reader reader = new SequenceFile.Reader(fs.getConf(),
-                SequenceFile.Reader.file(new Path(seqFile.getAbsolutePath())))) {
-            Writable key = (Writable) ReflectionUtils.newInstance(reader.getKeyClass(), fs.getConf());
-            Writable value = (Writable) ReflectionUtils.newInstance(reader.getValueClass(), fs.getConf());
-            int index = 0;
-            long pos = reader.getPosition() - 1;
-            while (reader.next(key, value)) {
-                fsConfig.offsetsByIndex().put(index++, pos);
-                pos = reader.getPosition();
-            }
         }
         Path path = new Path(new Path(fsConfig.getFsUri()), seqFile.getName());
         fs.moveFromLocalFile(new Path(seqFile.getAbsolutePath()), path);

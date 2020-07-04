@@ -220,8 +220,9 @@ abstract class AbstractPolicy implements Policy {
                     .map(offset -> Long.parseLong(offset.toString()))
                     .filter(offset -> offset > 0)
                     .map(offset -> {
-                        long fileSizeBytes = Long.parseLong(offsetMap.getOrDefault("fileSizeBytes", "0").toString());
-                        if (metadata.getLen() == fileSizeBytes) {
+                        long fileSize = Long.parseLong(offsetMap.getOrDefault("file-size", "0").toString());
+                        boolean eof = Boolean.parseBoolean(offsetMap.getOrDefault("eof", "false").toString());
+                        if (metadata.getLen() == fileSize && eof) {
                             log.info("Skipping file [{}] due to it was already processed.", metadata.getPath());
                             return emptyFileReader(new Path(metadata.getPath()));
                         } else {

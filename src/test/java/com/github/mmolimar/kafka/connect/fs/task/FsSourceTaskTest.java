@@ -4,6 +4,7 @@ import com.github.mmolimar.kafka.connect.fs.FsSourceTask;
 import com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig;
 import com.github.mmolimar.kafka.connect.fs.file.reader.AvroFileReader;
 import com.github.mmolimar.kafka.connect.fs.file.reader.TextFileReader;
+import com.github.mmolimar.kafka.connect.fs.policy.CronPolicy;
 import com.github.mmolimar.kafka.connect.fs.policy.Policy;
 import com.github.mmolimar.kafka.connect.fs.policy.SimplePolicy;
 import org.apache.hadoop.fs.FileSystem;
@@ -31,6 +32,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
@@ -96,11 +98,12 @@ public class FsSourceTaskTest {
                 executionNumber.addAndGet(1);
 
                 Map<Map<String, Object>, Map<String, Object>> map = new HashMap<>();
-                captured.forEach(part ->{
+                captured.forEach(part -> {
                     if (((String) (part.get("path"))).endsWith(FILE_ALREADY_PROCESSED)) {
                         map.put(part, new HashMap<String, Object>() {{
                             put("offset", (long) NUM_RECORDS);
-                            put("fileSizeBytes", NUM_BYTES_PER_FILE);
+                            put("eof", true);
+                            put("file-size", NUM_BYTES_PER_FILE);
                         }});
                     } else {
                         map.put(part, new HashMap<String, Object>() {{
@@ -178,6 +181,77 @@ public class FsSourceTaskTest {
         assertEquals((NUM_RECORDS * fsConfig.getDirectories().size()) / 2, records.size());
         checkRecords(records);
         // policy has ended
+        assertNull(fsConfig.getTask().poll());
+    }
+
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void oneFilePerFsWithFileReaderInBatch(TaskFsTestConfig fsConfig) throws IOException {
+        for (Path dir : fsConfig.getDirectories()) {
+            Path dataFile = new Path(dir, System.nanoTime() + ".txt");
+            createDataFile(fsConfig.getFs(), dataFile);
+            // this file does not match the regexp
+            fsConfig.getFs().createNewFile(new Path(dir, String.valueOf(System.nanoTime())));
+        }
+
+        int readerBatchSize = 8;
+        Map<String, String> taskConfig = fsConfig.getTaskConfig();
+        taskConfig.put(FsSourceTaskConfig.POLICY_CLASS, CronPolicy.class.getName());
+        taskConfig.put(CronPolicy.CRON_POLICY_EXPRESSION, "0/2 * * * * ?");
+        taskConfig.put(CronPolicy.CRON_POLICY_END_DATE, LocalDateTime.now().plusDays(1).toString());
+        taskConfig.put(FsSourceTaskConfig.FILE_READER_BATCH_SIZE, String.valueOf(readerBatchSize));
+        taskConfig.put(FsSourceTaskConfig.POLL_INTERVAL_MS, "1000");
+        fsConfig.getTask().start(taskConfig);
+
+        List<SourceRecord> records = fsConfig.getTask().poll();
+        assertEquals(((readerBatchSize % (NUM_RECORDS / 2)) * fsConfig.getDirectories().size()), records.size());
+        checkRecords(records);
+
+        records = fsConfig.getTask().poll();
+        assertEquals(((readerBatchSize % (NUM_RECORDS / 2)) * fsConfig.getDirectories().size()), records.size());
+        checkRecords(records);
+
+        // policy has ended
+        fsConfig.getTask().stop();
+        assertNull(fsConfig.getTask().poll());
+    }
+
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void oneFilePerFsWithBatchAndFileReaderInBatch(TaskFsTestConfig fsConfig) throws IOException {
+        for (Path dir : fsConfig.getDirectories()) {
+            Path dataFile = new Path(dir, System.nanoTime() + ".txt");
+            createDataFile(fsConfig.getFs(), dataFile);
+            // this file does not match the regexp
+            fsConfig.getFs().createNewFile(new Path(dir, String.valueOf(System.nanoTime())));
+        }
+
+        int readerBatchSize = 8;
+        Map<String, String> taskConfig = fsConfig.getTaskConfig();
+        taskConfig.put(FsSourceTaskConfig.POLICY_CLASS, CronPolicy.class.getName());
+        taskConfig.put(FsSourceTaskConfig.POLICY_BATCH_SIZE, "1");
+        taskConfig.put(CronPolicy.CRON_POLICY_EXPRESSION, "0/2 * * * * ?");
+        taskConfig.put(CronPolicy.CRON_POLICY_END_DATE, LocalDateTime.now().plusDays(1).toString());
+        taskConfig.put(FsSourceTaskConfig.FILE_READER_BATCH_SIZE, String.valueOf(readerBatchSize));
+        taskConfig.put(FsSourceTaskConfig.POLL_INTERVAL_MS, "1000");
+        fsConfig.getTask().start(taskConfig);
+
+        List<SourceRecord> firstBatch = fsConfig.getTask().poll();
+        assertEquals(readerBatchSize % (NUM_RECORDS / 2), firstBatch.size());
+        checkRecords(firstBatch);
+
+        List<SourceRecord> secondBatch = fsConfig.getTask().poll();
+        assertEquals(readerBatchSize % (NUM_RECORDS / 2), secondBatch.size());
+        checkRecords(secondBatch);
+        assertEquals(firstBatch.size(), secondBatch.size());
+        IntStream.range(0, firstBatch.size())
+                .forEach(index -> assertNotEquals(
+                        firstBatch.get(index).sourcePartition().get("path"),
+                        secondBatch.get(index).sourcePartition().get("path")
+                ));
+
+        // policy has ended
+        fsConfig.getTask().stop();
         assertNull(fsConfig.getTask().poll());
     }
 
@@ -432,5 +506,4 @@ public class FsSourceTaskTest {
         }
         return txtFile;
     }
-
 }

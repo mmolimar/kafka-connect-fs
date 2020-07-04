@@ -1,5 +1,6 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader;
 
+import com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig;
 import com.github.mmolimar.kafka.connect.fs.util.ReflectionUtils;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
@@ -148,8 +149,31 @@ abstract class FileReaderTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
+    public void readAllDataInBatches(ReaderFsTestConfig fsConfig) {
+        Map<String, Object> config = getReaderConfig();
+        int batchSize = 5;
+        config.put(FsSourceTaskConfig.FILE_READER_BATCH_SIZE, batchSize);
+        AbstractFileReader<?> reader = (AbstractFileReader<?>) getReader(fsConfig.getFs(), fsConfig.getDataFile(), config);
+        assertTrue(reader.hasNext());
+
+        int recordCount = 0;
+        while (reader.hasNextBatch()) {
+            reader.nextBatch();
+            while (reader.hasNext()) {
+                Struct record = reader.next();
+                checkData(record, recordCount);
+                recordCount++;
+            }
+            assertEquals(0, recordCount % batchSize);
+        }
+        assertThrows(NoSuchElementException.class, reader::nextBatch);
+        assertEquals(NUM_RECORDS, recordCount, "The number of records in the file does not match");
+    }
+
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
     public void seekFile(ReaderFsTestConfig fsConfig) {
-        FileReader reader = fsConfig.getReader();
+        FileReader reader = getReader(fsConfig.getFs(), fsConfig.getDataFile(), getReaderConfig());
         int recordIndex = NUM_RECORDS / 2;
         reader.seek(fsConfig.offsetsByIndex().get(recordIndex));
         assertTrue(reader.hasNext());

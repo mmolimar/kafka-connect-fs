@@ -118,8 +118,7 @@ public class TextFileReader extends AbstractFileReader<TextFileReader.TextRecord
             reader.close();
             reader = new LineNumberReader(getFileReader(getFs().open(getFilePath())));
         }
-        while (reader.getLineNumber() < offset) {
-            reader.readLine();
+        while (reader.getLineNumber() < offset && reader.readLine() != null) {
         }
         setOffset(reader.getLineNumber());
     }

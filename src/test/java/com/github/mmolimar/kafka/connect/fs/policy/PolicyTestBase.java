@@ -252,14 +252,15 @@ abstract class PolicyTestBase {
             String firstPath = metadata.getPath();
             FileReader reader = policy.offer(metadata, new HashMap<String, Object>() {{
                 put("offset", "1");
-                put("fileSizeBytes", "0");
+                put("file-size", "0");
             }});
             assertFalse(reader.hasNext());
             reader.seek(1000L);
+            assertThrows(NoSuchElementException.class, reader::next);
             reader.close();
             assertEquals(0L, reader.currentOffset());
             assertEquals(metadata.getPath(), reader.getFilePath().toString());
-            assertThrows(NoSuchElementException.class, reader::next);
+            assertThrows(ConnectException.class, reader::next);
             assertFalse(it.hasNext());
 
             // Second batch of files (1 file)

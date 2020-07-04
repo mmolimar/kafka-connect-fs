@@ -1,6 +1,7 @@
 package com.github.mmolimar.kafka.connect.fs;
 
 import com.github.mmolimar.kafka.connect.fs.file.FileMetadata;
+import com.github.mmolimar.kafka.connect.fs.file.reader.AbstractFileReader;
 import com.github.mmolimar.kafka.connect.fs.file.reader.FileReader;
 import com.github.mmolimar.kafka.connect.fs.policy.Policy;
 import com.github.mmolimar.kafka.connect.fs.util.ReflectionUtils;
@@ -86,10 +87,15 @@ public class FsSourceTask extends SourceTask {
             List<SourceRecord> totalRecords = filesToProcess.stream().map(metadata -> {
                 List<SourceRecord> records = new ArrayList<>();
                 Map<String, Object> partitionKey = makePartitionKey.apply(metadata);
-                try (FileReader reader = policy.offer(metadata, offsets.getOrDefault(partitionKey, new HashMap<>()))) {
+                Map<String, Object> offset = Optional.ofNullable(offsets.get(partitionKey)).orElse(new HashMap<>());
+                try (FileReader reader = policy.offer(metadata, offset)) {
                     log.info("Processing records for file {}.", metadata);
                     while (reader.hasNext()) {
-                        records.add(convert(metadata, reader.currentOffset() + 1, reader.next()));
+                        Struct record = reader.next();
+                        // TODO change FileReader interface in the next major version
+                        boolean hasNext = (reader instanceof AbstractFileReader) ?
+                                ((AbstractFileReader) reader).hasNextBatch() || reader.hasNext() : reader.hasNext();
+                        records.add(convert(metadata, reader.currentOffset(), !hasNext, record));
                     }
                 } catch (ConnectException | IOException e) {
                     // when an exception happens reading a file, the connector continues
@@ -130,13 +136,14 @@ public class FsSourceTask extends SourceTask {
         return StreamSupport.stream(iterable.spliterator(), false);
     }
 
-    private SourceRecord convert(FileMetadata metadata, long offset, Struct struct) {
-        Map<String, Long> offsetMap = new HashMap<>();
-        offsetMap.put("offset", offset);
-        offsetMap.put("fileSizeBytes", metadata.getLen());
+    private SourceRecord convert(FileMetadata metadata, long offset, boolean eof, Struct struct) {
         return new SourceRecord(
                 Collections.singletonMap("path", metadata.getPath()),
-                offsetMap,
+                new HashMap<String, Object>() {{
+                    put("offset", offset);
+                    put("file-size", metadata.getLen());
+                    put("eof", eof);
+                }},
                 config.getTopic(),
                 struct.schema(),
                 struct
