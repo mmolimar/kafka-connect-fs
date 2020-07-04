@@ -15,7 +15,7 @@ public class Version {
             props.load(Version.class.getResourceAsStream("/kafka-connect-fs-version.properties"));
             version = props.getProperty("version", version).trim();
         } catch (Exception e) {
-            log.warn("Error while loading version:", e);
+            log.warn("Error while loading version: {}", e.getMessage(), e);
         }
     }
 

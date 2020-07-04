@@ -28,7 +28,7 @@ public class FsSourceConnector extends SourceConnector {
 
     @Override
     public void start(Map<String, String> properties) {
-        log.info("Starting FsSourceConnector...");
+        log.info("{} Starting connector...", this);
         try {
             config = new FsSourceConnectorConfig(properties);
         } catch (ConfigException ce) {
@@ -59,19 +59,24 @@ public class FsSourceConnector extends SourceConnector {
                     taskConfigs.add(taskProps);
                 });
 
-        log.debug("Partitions grouped as: {}", taskConfigs);
+        log.debug("{} Partitions grouped as: {}", this, taskConfigs);
 
         return taskConfigs;
     }
 
     @Override
     public void stop() {
-        log.info("Stopping FsSourceConnector.");
+        log.info("{} Stopping FsSourceConnector.", this);
         // Nothing to do
     }
 
     @Override
     public ConfigDef config() {
         return FsSourceConnectorConfig.conf();
+    }
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName();
     }
 }

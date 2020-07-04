@@ -68,7 +68,8 @@ public class JsonFileReader extends AbstractFileReader<JsonFileReader.JsonRecord
                         mapper.configure(DeserializationFeature.valueOf(feature),
                                 Boolean.parseBoolean(entry.getValue()));
                     } else {
-                        log.warn("Ignoring deserialization configuration '{}' due to it does not exist.", feature);
+                        log.warn("{} Ignoring deserialization configuration [{}] due to it does not exist.",
+                                this, feature);
                     }
                 });
     }

@@ -17,8 +17,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -236,7 +235,12 @@ abstract class PolicyTestBase {
 
             FileSystem fs = fsConfig.getFs();
             for (Path dir : fsConfig.getDirectories()) {
-                fs.createNewFile(new Path(dir, System.nanoTime() + ".txt"));
+                File tmp = File.createTempFile("test-", ".txt");
+                try (PrintWriter writer = new PrintWriter(new FileOutputStream(tmp))) {
+                    writer.append("test");
+                }
+                fs.moveFromLocalFile(new Path(tmp.getAbsolutePath()), new Path(dir, System.nanoTime() + ".txt"));
+
                 // this file does not match the regexp
                 fs.createNewFile(new Path(dir, System.nanoTime() + ".invalid"));
 
@@ -249,10 +253,14 @@ abstract class PolicyTestBase {
             // First batch of files (1 file)
             assertTrue(it.hasNext());
             FileMetadata metadata = it.next();
+            FileMetadata metadataFromFs = ((AbstractPolicy) policy)
+                    .toMetadata(fs.listLocatedStatus(new Path(metadata.getPath())).next());
+            assertEquals(metadata, metadataFromFs);
             String firstPath = metadata.getPath();
             FileReader reader = policy.offer(metadata, new HashMap<String, Object>() {{
                 put("offset", "1");
-                put("file-size", "0");
+                put("file-size", "4");
+                put("eof", "true");
             }});
             assertFalse(reader.hasNext());
             reader.seek(1000L);
@@ -260,7 +268,6 @@ abstract class PolicyTestBase {
             reader.close();
             assertEquals(0L, reader.currentOffset());
             assertEquals(metadata.getPath(), reader.getFilePath().toString());
-            assertThrows(ConnectException.class, reader::next);
             assertFalse(it.hasNext());
 
             // Second batch of files (1 file)

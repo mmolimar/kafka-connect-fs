@@ -38,7 +38,7 @@ public abstract class AbstractFileReader<T> implements FileReader {
         this.offset = 0;
 
         configure(readerConfig(config));
-        log.trace("Initialized file reader [{}] for file [{}].", getClass().getName(), filePath);
+        log.trace("{} Initialized file reader with batch size [{}] for file [{}].", this, this.batchSize, this.filePath);
     }
 
     protected final Map<String, String> readerConfig(Map<String, Object> config) {
@@ -132,6 +132,11 @@ public abstract class AbstractFileReader<T> implements FileReader {
         } catch (IOException ioe) {
             throw new ConnectException("Error seeking file: " + getFilePath(), ioe);
         }
+    }
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName();
     }
 
     protected ReaderAdapter<T> getAdapter() {

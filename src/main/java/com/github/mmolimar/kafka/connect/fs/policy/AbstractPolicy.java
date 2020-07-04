@@ -56,6 +56,8 @@ abstract class AbstractPolicy implements Policy {
         logAll(customConfigs);
         configFs(customConfigs);
         configPolicy(customConfigs);
+
+        log.info("{} Initialized policy with batch size [{}].", this, batchSize);
     }
 
     private Map<String, Object> customConfigs() {
@@ -196,7 +198,6 @@ abstract class AbstractPolicy implements Policy {
     }
 
     FileMetadata toMetadata(LocatedFileStatus fileStatus) {
-
         List<FileMetadata.BlockInfo> blocks = Arrays.stream(fileStatus.getBlockLocations())
                 .map(block -> new FileMetadata.BlockInfo(block.getOffset(), block.getLength(), block.isCorrupt()))
                 .collect(Collectors.toList());
@@ -223,10 +224,11 @@ abstract class AbstractPolicy implements Policy {
                         long fileSize = Long.parseLong(offsetMap.getOrDefault("file-size", "0").toString());
                         boolean eof = Boolean.parseBoolean(offsetMap.getOrDefault("eof", "false").toString());
                         if (metadata.getLen() == fileSize && eof) {
-                            log.info("Skipping file [{}] due to it was already processed.", metadata.getPath());
+                            log.info("{} Skipping file [{}] due to it was already processed.", this, metadata.getPath());
                             return emptyFileReader(new Path(metadata.getPath()));
                         } else {
-                            log.info("Seeking to offset [{}] for file [{}].", offsetMap.get("offset"), metadata.getPath());
+                            log.info("{} Seeking to offset [{}] for file [{}].",
+                                    this, offsetMap.get("offset"), metadata.getPath());
                             FileReader reader = makeReader.get();
                             reader.seek(offset);
                             return reader;
@@ -242,6 +244,11 @@ abstract class AbstractPolicy implements Policy {
         for (FileSystem fs : fileSystems) {
             fs.close();
         }
+    }
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName();
     }
 
     private Iterator<FileMetadata> concat(final Iterator<FileMetadata> it1, final Iterator<FileMetadata> it2) {

@@ -64,7 +64,7 @@ public class HdfsFileWatcherPolicy extends AbstractPolicy {
                     "number (long). Got: " + customConfigs.get(HDFS_FILE_WATCHER_POLICY_RETRY_MS));
         }
         this.fsEvenStream = new HashMap<>();
-        fileSystems.stream()
+        this.fileSystems.stream()
                 .filter(fs -> fs.getWorkingDirectory().toString().startsWith(URI_PREFIX))
                 .forEach(fs -> {
                     try {
@@ -89,7 +89,9 @@ public class HdfsFileWatcherPolicy extends AbstractPolicy {
         Set<FileMetadata> files = new HashSet<>();
         FileMetadata metadata;
         while ((metadata = fileQueue.poll()) != null) {
-            files.add(metadata);
+            FileMetadata fm = metadata;
+            files.removeIf(f -> f.getPath().equals(fm.getPath()));
+            files.add(fm);
         }
         return files.iterator();
     }
@@ -116,6 +118,11 @@ public class HdfsFileWatcherPolicy extends AbstractPolicy {
         super.close();
     }
 
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName();
+    }
+
     private class EventStreamThread extends Thread {
         private final FileSystem fs;
         private final HdfsAdmin admin;
@@ -139,62 +146,75 @@ public class HdfsFileWatcherPolicy extends AbstractPolicy {
                         EventBatch batch = eventStream.poll();
                         if (batch == null) continue;
 
+                        Set<String> files = new HashSet<>();
                         for (Event event : batch.getEvents()) {
                             switch (event.getEventType()) {
                                 case CREATE:
                                     if (!((Event.CreateEvent) event).getPath().endsWith("._COPYING_")) {
-                                        enqueue(((Event.CreateEvent) event).getPath());
+                                        files.add(((Event.CreateEvent) event).getPath());
                                     }
                                     break;
                                 case APPEND:
                                     if (!((Event.AppendEvent) event).getPath().endsWith("._COPYING_")) {
-                                        enqueue(((Event.AppendEvent) event).getPath());
+                                        files.add(((Event.AppendEvent) event).getPath());
                                     }
                                     break;
                                 case RENAME:
                                     if (((Event.RenameEvent) event).getSrcPath().endsWith("._COPYING_")) {
-                                        enqueue(((Event.RenameEvent) event).getDstPath());
+                                        files.add(((Event.RenameEvent) event).getDstPath());
                                     }
                                     break;
                                 case CLOSE:
                                     if (!((Event.CloseEvent) event).getPath().endsWith("._COPYING_")) {
-                                        enqueue(((Event.CloseEvent) event).getPath());
+                                        files.add(((Event.CloseEvent) event).getPath());
                                     }
                                     break;
                                 default:
                                     break;
                             }
                         }
+                        enqueue(files);
                     }
                 } catch (IOException ioe) {
                     if (retrySleepMs > 0) {
                         time.sleep(retrySleepMs);
                     } else {
-                        log.warn("Error watching path [{}]. Stopping it...", fs.getWorkingDirectory(), ioe);
+                        log.warn("{} Error watching path [{}]: {}. Stopping it...",
+                                this, fs.getWorkingDirectory(), ioe.getMessage(), ioe);
                         throw new IllegalWorkerStateException(ioe);
                     }
                 } catch (Exception e) {
-                    log.warn("Stopping watcher due to an unexpected exception when watching path [{}].",
-                            fs.getWorkingDirectory(), e);
+                    log.warn("{} Stopping watcher due to an unexpected exception when watching path [{}]: {}",
+                            this, fs.getWorkingDirectory(), e.getMessage(), e);
                     throw new IllegalWorkerStateException(e);
                 }
             }
         }
 
-        private void enqueue(String path) throws IOException {
-            Path filePath = new Path(path);
-            if (!fs.exists(filePath) || fs.getFileStatus(filePath) == null) {
-                log.info("Cannot enqueue file [{}] because it does not exist but got an event from the FS", filePath);
-                return;
-            }
+        private void enqueue(Set<String> paths) throws IOException {
+            for (String path : paths) {
+                Path filePath = new Path(path);
+                if (!fs.exists(filePath) || fs.getFileStatus(filePath) == null) {
+                    log.info("{} Cannot enqueue file [{}] because it does not exist but got an event from the FS",
+                            this, filePath);
+                    return;
+                }
 
-            log.debug("Enqueuing file to process [{}]", filePath);
-            RemoteIterator<LocatedFileStatus> it = fs.listFiles(filePath, false);
-            while (it.hasNext()) {
-                LocatedFileStatus status = it.next();
-                if (!status.isFile() || !fileRegexp.matcher(status.getPath().getName()).find()) continue;
-                fileQueue.offer(toMetadata(status));
+                RemoteIterator<LocatedFileStatus> it = fs.listFiles(filePath, false);
+                while (it.hasNext()) {
+                    LocatedFileStatus status = it.next();
+                    if (status.isFile() && fileRegexp.matcher(status.getPath().getName()).find()) {
+                        FileMetadata metadata = toMetadata(status);
+                        log.debug("{} Enqueuing file to process [{}].", this, metadata.getPath());
+                        fileQueue.offer(metadata);
+                    }
+                }
             }
+        }
+
+        @Override
+        public String toString() {
+            return this.getClass().getSimpleName();
         }
     }
 }
