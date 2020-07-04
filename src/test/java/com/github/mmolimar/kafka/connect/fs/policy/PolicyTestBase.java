@@ -154,7 +154,7 @@ abstract class PolicyTestBase {
             fs.createNewFile(new Path(tmpDir, System.nanoTime() + ".invalid"));
 
             // we wait till FS has registered the files
-            Thread.sleep(3000);
+            Thread.sleep(5000);
         }
         Iterator<FileMetadata> it = fsConfig.getPolicy().execute();
         assertTrue(it.hasNext());
@@ -245,7 +245,7 @@ abstract class PolicyTestBase {
                 fs.createNewFile(new Path(dir, System.nanoTime() + ".invalid"));
 
                 // we wait till FS has registered the files
-                Thread.sleep(3000);
+                Thread.sleep(5000);
             }
 
             Iterator<FileMetadata> it = policy.execute();
