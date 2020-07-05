@@ -19,6 +19,7 @@
         <orc.version>1.6.3</orc.version>
         <univocity.version>2.8.4</univocity.version>
         <cron-utils.version>9.0.2</cron-utils.version>
+        <jsch.version>0.1.54</jsch.version>
         <junit-jupiter.version>5.6.2</junit-jupiter.version>
         <easymock.version>4.2</easymock.version>
         <powermock.version>2.0.7</powermock.version>
@@ -89,6 +90,11 @@
             <groupId>com.cronutils</groupId>
             <artifactId>cron-utils</artifactId>
             <version>${cron-utils.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.jcraft</groupId>
+            <artifactId>jsch</artifactId>
+            <version>${jsch.version}</version>
         </dependency>
 
         <!-- test dependencies -->
@@ -260,7 +266,7 @@
                 <enabled>true</enabled>
             </releases>
             <snapshots>
-                <enabled>true</enabled>
+                <enabled>false</enabled>
             </snapshots>
             <url>http://packages.confluent.io/maven/</url>
         </repository>

@@ -69,6 +69,7 @@ abstract class AbstractPolicy implements Policy {
     private void configFs(Map<String, Object> customConfigs) throws IOException {
         for (String uri : this.conf.getFsUris()) {
             Configuration fsConfig = new Configuration();
+            fsConfig.set("fs.sftp.impl", "org.apache.hadoop.fs.sftp.SFTPFileSystem");
             customConfigs.entrySet().stream()
                     .filter(entry -> entry.getKey().startsWith(FsSourceTaskConfig.POLICY_PREFIX_FS))
                     .forEach(entry -> fsConfig.set(entry.getKey().replace(FsSourceTaskConfig.POLICY_PREFIX_FS, ""),
@@ -104,7 +105,9 @@ abstract class AbstractPolicy implements Policy {
     @Override
     public List<String> getURIs() {
         List<String> uris = new ArrayList<>();
-        fileSystems.forEach(fs -> uris.add(fs.getWorkingDirectory().toString()));
+        fileSystems.forEach(fs ->
+                uris.add(Optional.ofNullable(fs.getWorkingDirectory()).orElse(new Path("./")).toString())
+        );
         return uris;
     }
 
@@ -210,7 +213,7 @@ abstract class AbstractPolicy implements Policy {
         FileSystem current = fileSystems.stream()
                 .filter(fs -> metadata.getPath().startsWith(fs.getWorkingDirectory().toString()))
                 .findFirst()
-                .orElse(null);
+                .orElse(fileSystems.stream().findFirst().orElseThrow(() -> new ConnectException(("Invalid FS."))));
 
         Supplier<FileReader> makeReader = () -> ReflectionUtils.makeReader(
                 (Class<? extends FileReader>) conf.getClass(FsSourceTaskConfig.FILE_READER_CLASS),
