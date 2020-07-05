@@ -42,6 +42,9 @@ Obviously, this depends of the files in the FS(s) but having several URIs in
 the connector might be a good idea to adjust the number of tasks
 to process those URIs in parallel ( ``tasks.max`` connector property).
 
+Also, using the properties ``policy.batch_size`` and/or ``file_reader.batch_size``
+in case you have tons of files or files too large might help.
+
 **I removed a file from the FS but the connector is still sending messages
 with the contents of that file.**
 

@@ -117,6 +117,13 @@ General config properties for this connector.
   * Type: string
   * Importance: high
 
+``file_reader.batch_size``
+  Number of records to process at a time. Non-positive values disable batching.
+
+  * Type: int
+  * Default: ``0``
+  * Importance: medium
+
 ``file_reader.<file_reader_name>.<file_reader_property>``
   This represents custom properties you can include based on the file reader class specified.
 
