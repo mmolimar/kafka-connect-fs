@@ -33,28 +33,22 @@ public class SleepyPolicy extends AbstractPolicy {
         try {
             this.sleep = Long.parseLong((String) customConfigs.get(SLEEPY_POLICY_SLEEP_MS));
         } catch (NumberFormatException nfe) {
-            throw new ConfigException(SLEEPY_POLICY_SLEEP_MS + " property is required and must be a number(long). Got: " +
+            throw new ConfigException(SLEEPY_POLICY_SLEEP_MS + " property is required and must be a number (long). Got: " +
                     customConfigs.get(SLEEPY_POLICY_SLEEP_MS));
         }
-        if (customConfigs.get(SLEEPY_POLICY_MAX_EXECS) != null) {
-            try {
-                this.maxExecs = Long.parseLong((String) customConfigs.get(SLEEPY_POLICY_MAX_EXECS));
-            } catch (NumberFormatException nfe) {
-                throw new ConfigException(SLEEPY_POLICY_MAX_EXECS + " property must be a number(long). Got: " +
-                        customConfigs.get(SLEEPY_POLICY_MAX_EXECS));
-            }
-        } else {
-            this.maxExecs = DEFAULT_MAX_EXECS;
+        try {
+            this.maxExecs = Long.parseLong((String) customConfigs.getOrDefault(SLEEPY_POLICY_MAX_EXECS,
+                    String.valueOf(DEFAULT_MAX_EXECS)));
+        } catch (NumberFormatException nfe) {
+            throw new ConfigException(SLEEPY_POLICY_MAX_EXECS + " property must be a number (long). Got: " +
+                    customConfigs.get(SLEEPY_POLICY_MAX_EXECS));
         }
-        if (customConfigs.get(SLEEPY_POLICY_SLEEP_FRACTION) != null) {
-            try {
-                this.sleepFraction = Long.parseLong((String) customConfigs.get(SLEEPY_POLICY_SLEEP_FRACTION));
-            } catch (NumberFormatException nfe) {
-                throw new ConfigException(SLEEPY_POLICY_SLEEP_FRACTION + " property must be a number(long). Got: " +
-                        customConfigs.get(SLEEPY_POLICY_SLEEP_FRACTION));
-            }
-        } else {
-            this.sleepFraction = DEFAULT_SLEEP_FRACTION;
+        try {
+            this.sleepFraction = Long.parseLong((String) customConfigs.getOrDefault(SLEEPY_POLICY_SLEEP_FRACTION,
+                    String.valueOf(DEFAULT_SLEEP_FRACTION)));
+        } catch (NumberFormatException nfe) {
+            throw new ConfigException(SLEEPY_POLICY_SLEEP_FRACTION + " property must be a number (long). Got: " +
+                    customConfigs.get(SLEEPY_POLICY_SLEEP_FRACTION));
         }
     }
 
@@ -71,7 +65,7 @@ public class SleepyPolicy extends AbstractPolicy {
                     Thread.sleep(sleep / sleepFraction);
                     counter++;
                 } catch (InterruptedException ie) {
-                    log.warn("An interrupted exception has occurred.", ie);
+                    log.warn("{} An interrupted exception has occurred when sleeping: {}", this, ie.getMessage(), ie);
                 }
             }
         }

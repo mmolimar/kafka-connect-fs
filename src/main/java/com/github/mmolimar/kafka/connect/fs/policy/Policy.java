@@ -8,12 +8,13 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 public interface Policy extends Closeable {
 
     Iterator<FileMetadata> execute() throws IOException;
 
-    FileReader offer(FileMetadata metadata, OffsetStorageReader offsetStorageReader) throws IOException;
+    FileReader offer(FileMetadata metadata, Map<String, Object> offset) throws IOException;
 
     boolean hasEnded();
 

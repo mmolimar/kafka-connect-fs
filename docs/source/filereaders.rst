@@ -26,6 +26,22 @@ way as the Avro file reader does.
 
 More information about properties of this file reader :ref:`here<config_options-filereaders-parquet>`.
 
+ORC
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+`ORC files <https://orc.apache.org>`__ are a self-describing type-aware
+columnar file format designed for Hadoop workloads.
+
+This reader can process this file format, translating its schema and building
+a Kafka message with the content.
+
+.. warning:: If you have ORC files with ``union`` data types, this sort of
+             data types will be transformed in a ``map`` object in the Kafka message.
+             The value of each key will be ``fieldN``, where ``N`` represents
+             the index within the data type.
+
+More information about properties of this file reader :ref:`here<config_options-filereaders-orc>`.
+
 SequenceFile
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -100,13 +116,14 @@ Agnostic
 Actually, this reader is a wrapper of the readers listing above.
 
 It tries to read any kind of file format using an internal reader based on the file extension,
-applying the proper one (Parquet, Avro, SequenceFile, CSV, TSV or Text). In case of no
+applying the proper one (Parquet, Avro, ORC, SequenceFile, CSV, TSV or Text). In case of no
 extension has been matched, the Text file reader will be applied.
 
 Default extensions for each format (configurable):
 
 * Parquet: ``.parquet``
 * Avro: ``.avro``
+* ORC: ``.orc``
 * SequenceFile: ``.seq``
 * JSON: ``.json``
 * CSV: ``.csv``

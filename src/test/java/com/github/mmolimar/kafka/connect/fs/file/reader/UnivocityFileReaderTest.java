@@ -249,43 +249,43 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
     @Override
     protected void checkData(Struct record, long index) {
         assertAll(
-                () -> assertEquals(record.get(FIELD_COLUMN1), (byte) 2),
-                () -> assertEquals(record.get(FIELD_COLUMN2), (short) 4),
-                () -> assertEquals(record.get(FIELD_COLUMN3), 8),
-                () -> assertEquals(record.get(FIELD_COLUMN4), 16L),
-                () -> assertEquals(record.get(FIELD_COLUMN5), 32.32f),
-                () -> assertEquals(record.get(FIELD_COLUMN6), 64.64d),
-                () -> assertEquals(record.get(FIELD_COLUMN7), true),
-                () -> assertEquals(new String((byte[]) record.get(FIELD_COLUMN8)), "test bytes"),
-                () -> assertEquals(record.get(FIELD_COLUMN9), "test string")
+                () -> assertEquals((byte) 2, record.get(FIELD_COLUMN1)),
+                () -> assertEquals((short) 4, record.get(FIELD_COLUMN2)),
+                () -> assertEquals(8, record.get(FIELD_COLUMN3)),
+                () -> assertEquals(16L, record.get(FIELD_COLUMN4)),
+                () -> assertEquals(32.32f, record.get(FIELD_COLUMN5)),
+                () -> assertEquals(64.64d, record.get(FIELD_COLUMN6)),
+                () -> assertEquals(true, record.get(FIELD_COLUMN7)),
+                () -> assertEquals("test bytes", new String((byte[]) record.get(FIELD_COLUMN8))),
+                () -> assertEquals("test string", record.get(FIELD_COLUMN9))
         );
     }
 
     protected void checkDataString(Struct record) {
         assertAll(
-                () -> assertEquals(record.get(FIELD_COLUMN1), "2"),
-                () -> assertEquals(record.get(FIELD_COLUMN2), "4"),
-                () -> assertEquals(record.get(FIELD_COLUMN3), "8"),
-                () -> assertEquals(record.get(FIELD_COLUMN4), "16"),
-                () -> assertEquals(record.get(FIELD_COLUMN5), "32.320000"),
-                () -> assertEquals(record.get(FIELD_COLUMN6), "64.640000"),
-                () -> assertEquals(record.get(FIELD_COLUMN7), "true"),
-                () -> assertEquals(record.get(FIELD_COLUMN8), "test bytes"),
-                () -> assertEquals(record.get(FIELD_COLUMN9), "test string")
+                () -> assertEquals("2", record.get(FIELD_COLUMN1)),
+                () -> assertEquals("4", record.get(FIELD_COLUMN2)),
+                () -> assertEquals("8", record.get(FIELD_COLUMN3)),
+                () -> assertEquals("16", record.get(FIELD_COLUMN4)),
+                () -> assertEquals("32.320000", record.get(FIELD_COLUMN5)),
+                () -> assertEquals("64.640000", record.get(FIELD_COLUMN6)),
+                () -> assertEquals("true", record.get(FIELD_COLUMN7)),
+                () -> assertEquals("test bytes", record.get(FIELD_COLUMN8)),
+                () -> assertEquals("test string", record.get(FIELD_COLUMN9))
         );
     }
 
     protected void checkDataNull(Struct record) {
         assertAll(
-                () -> assertEquals(record.get(FIELD_COLUMN1), null),
-                () -> assertEquals(record.get(FIELD_COLUMN2), null),
-                () -> assertEquals(record.get(FIELD_COLUMN3), null),
-                () -> assertEquals(record.get(FIELD_COLUMN4), null),
-                () -> assertEquals(record.get(FIELD_COLUMN5), null),
-                () -> assertEquals(record.get(FIELD_COLUMN6), null),
-                () -> assertEquals(record.get(FIELD_COLUMN7), null),
-                () -> assertEquals(record.get(FIELD_COLUMN8), null),
-                () -> assertEquals(record.get(FIELD_COLUMN9), null)
+                () -> assertNull(record.get(FIELD_COLUMN1)),
+                () -> assertNull(record.get(FIELD_COLUMN2)),
+                () -> assertNull(record.get(FIELD_COLUMN3)),
+                () -> assertNull(record.get(FIELD_COLUMN4)),
+                () -> assertNull(record.get(FIELD_COLUMN5)),
+                () -> assertNull(record.get(FIELD_COLUMN6)),
+                () -> assertNull(record.get(FIELD_COLUMN7)),
+                () -> assertNull(record.get(FIELD_COLUMN8)),
+                () -> assertNull(record.get(FIELD_COLUMN9))
         );
     }
 

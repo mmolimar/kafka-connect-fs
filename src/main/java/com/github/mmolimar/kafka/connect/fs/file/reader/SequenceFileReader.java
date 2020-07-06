@@ -31,7 +31,6 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
     private final Writable key, value;
     private final Schema schema;
     private String keyFieldName, valueFieldName;
-    private long recordIndex, hasNextIndex;
     private boolean hasNext;
     private boolean closed;
 
@@ -47,7 +46,6 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
                 .field(keyFieldName, getSchema(this.key))
                 .field(valueFieldName, getSchema(this.value))
                 .build();
-        this.recordIndex = this.hasNextIndex = -1;
         this.hasNext = false;
         this.closed = false;
     }
@@ -82,9 +80,7 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
     @Override
     public boolean hasNextRecord() throws IOException {
         try {
-            if (hasNextIndex == -1 || hasNextIndex == recordIndex) {
-                hasNextIndex++;
-                incrementOffset();
+            if (!hasNext) {
                 hasNext = reader.next(key, value);
             }
             return hasNext;
@@ -95,16 +91,24 @@ public class SequenceFileReader extends AbstractFileReader<SequenceFileReader.Se
 
     @Override
     protected SequenceRecord<Writable, Writable> nextRecord() {
-        recordIndex++;
+        incrementOffset();
+        hasNext = false;
         return new SequenceRecord<>(schema, keyFieldName, key, valueFieldName, value);
     }
 
     @Override
     public void seekFile(long offset) throws IOException {
-        reader.sync(offset);
-        hasNextIndex = recordIndex = offset;
-        hasNext = false;
-        setOffset(offset - 1);
+        if (offset == currentOffset()) {
+            return;
+        } else if (offset < currentOffset()) {
+            reader.sync(0L);
+            hasNext = false;
+        }
+        while (super.hasNext() && offset > currentOffset()) {
+            super.next();
+            hasNext = false;
+        }
+        setOffset(offset);
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.github.mmolimar.kafka.connect.fs.policy;
 import com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig;
 import com.github.mmolimar.kafka.connect.fs.file.FileMetadata;
 import com.github.mmolimar.kafka.connect.fs.file.reader.FileReader;
+import com.github.mmolimar.kafka.connect.fs.util.Iterators;
 import com.github.mmolimar.kafka.connect.fs.util.ReflectionUtils;
 import com.github.mmolimar.kafka.connect.fs.util.TailCall;
 import org.apache.hadoop.conf.Configuration;
@@ -11,9 +12,9 @@ import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.kafka.common.utils.Utils;
+import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.errors.IllegalWorkerStateException;
-import org.apache.kafka.connect.storage.OffsetStorageReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +23,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -36,6 +38,8 @@ abstract class AbstractPolicy implements Policy {
     private final FsSourceTaskConfig conf;
     private final AtomicLong executions;
     private final boolean recursive;
+    private final int batchSize;
+    private Iterator<Iterator<FileMetadata>> partitions;
     private boolean interrupted;
 
     public AbstractPolicy(FsSourceTaskConfig conf) throws IOException {
@@ -44,12 +48,16 @@ abstract class AbstractPolicy implements Policy {
         this.executions = new AtomicLong(0);
         this.recursive = conf.getBoolean(FsSourceTaskConfig.POLICY_RECURSIVE);
         this.fileRegexp = Pattern.compile(conf.getString(FsSourceTaskConfig.POLICY_REGEXP));
+        this.batchSize = conf.getInt(FsSourceTaskConfig.POLICY_BATCH_SIZE);
         this.interrupted = false;
+        this.partitions = Collections.emptyIterator();
 
         Map<String, Object> customConfigs = customConfigs();
         logAll(customConfigs);
         configFs(customConfigs);
         configPolicy(customConfigs);
+
+        log.info("{} Initialized policy with batch size [{}].", this, batchSize);
     }
 
     private Map<String, Object> customConfigs() {
@@ -61,6 +69,7 @@ abstract class AbstractPolicy implements Policy {
     private void configFs(Map<String, Object> customConfigs) throws IOException {
         for (String uri : this.conf.getFsUris()) {
             Configuration fsConfig = new Configuration();
+            fsConfig.set("fs.sftp.impl", "org.apache.hadoop.fs.sftp.SFTPFileSystem");
             customConfigs.entrySet().stream()
                     .filter(entry -> entry.getKey().startsWith(FsSourceTaskConfig.POLICY_PREFIX_FS))
                     .forEach(entry -> fsConfig.set(entry.getKey().replace(FsSourceTaskConfig.POLICY_PREFIX_FS, ""),
@@ -96,7 +105,9 @@ abstract class AbstractPolicy implements Policy {
     @Override
     public List<String> getURIs() {
         List<String> uris = new ArrayList<>();
-        fileSystems.forEach(fs -> uris.add(fs.getWorkingDirectory().toString()));
+        fileSystems.forEach(fs ->
+                uris.add(Optional.ofNullable(fs.getWorkingDirectory()).orElse(new Path("./")).toString())
+        );
         return uris;
     }
 
@@ -105,6 +116,10 @@ abstract class AbstractPolicy implements Policy {
         if (hasEnded()) {
             throw new IllegalWorkerStateException("Policy has ended. Cannot be retried.");
         }
+        if (partitions.hasNext()) {
+            return partitions.next();
+        }
+
         preCheck();
 
         executions.incrementAndGet();
@@ -115,7 +130,8 @@ abstract class AbstractPolicy implements Policy {
 
         postCheck();
 
-        return files;
+        partitions = Iterators.partition(files, batchSize);
+        return partitions.hasNext() ? partitions.next() : Collections.emptyIterator();
     }
 
     @Override
@@ -143,8 +159,7 @@ abstract class AbstractPolicy implements Policy {
                         current = it.next();
                         return this::hasNextRec;
                     }
-                    if (current.isFile() &
-                            fileRegexp.matcher(current.getPath().getName()).find()) {
+                    if (current.isFile() && fileRegexp.matcher(current.getPath().getName()).find()) {
                         return TailCall.done(true);
                     }
                     current = null;
@@ -173,7 +188,10 @@ abstract class AbstractPolicy implements Policy {
 
     @Override
     public final boolean hasEnded() {
-        return interrupted || isPolicyCompleted();
+        if (interrupted) {
+            return true;
+        }
+        return !partitions.hasNext() && isPolicyCompleted();
     }
 
     protected abstract boolean isPolicyCompleted();
@@ -183,7 +201,6 @@ abstract class AbstractPolicy implements Policy {
     }
 
     FileMetadata toMetadata(LocatedFileStatus fileStatus) {
-
         List<FileMetadata.BlockInfo> blocks = Arrays.stream(fileStatus.getBlockLocations())
                 .map(block -> new FileMetadata.BlockInfo(block.getOffset(), block.getLength(), block.isCorrupt()))
                 .collect(Collectors.toList());
@@ -192,29 +209,52 @@ abstract class AbstractPolicy implements Policy {
     }
 
     @Override
-    public FileReader offer(FileMetadata metadata, OffsetStorageReader offsetStorageReader) {
+    public FileReader offer(FileMetadata metadata, Map<String, Object> offsetMap) {
         FileSystem current = fileSystems.stream()
                 .filter(fs -> metadata.getPath().startsWith(fs.getWorkingDirectory().toString()))
                 .findFirst()
-                .orElse(null);
+                .orElse(fileSystems.stream().findFirst().orElseThrow(() -> new ConnectException(("Invalid FS."))));
+
+        Supplier<FileReader> makeReader = () -> ReflectionUtils.makeReader(
+                (Class<? extends FileReader>) conf.getClass(FsSourceTaskConfig.FILE_READER_CLASS),
+                current, new Path(metadata.getPath()), conf.originals()
+        );
         try {
-            FileReader reader = ReflectionUtils.makeReader(
-                    (Class<? extends FileReader>) conf.getClass(FsSourceTaskConfig.FILE_READER_CLASS),
-                    current, new Path(metadata.getPath()), conf.originals());
-            Map<String, Object> partition = Collections.singletonMap("path", metadata.getPath());
-            Map<String, Object> offset = offsetStorageReader.offset(partition);
-            if (offset != null && offset.get("offset") != null) {
-                log.info("Seeking to offset [{}] for file [{}].", offset.get("offset"), metadata.getPath());
-                reader.seek((Long) offset.get("offset"));
-            }
-            return reader;
+            return Optional.ofNullable(offsetMap.get("offset"))
+                    .map(offset -> Long.parseLong(offset.toString()))
+                    .filter(offset -> offset > 0)
+                    .map(offset -> {
+                        long fileSize = Long.parseLong(offsetMap.getOrDefault("file-size", "0").toString());
+                        boolean eof = Boolean.parseBoolean(offsetMap.getOrDefault("eof", "false").toString());
+                        if (metadata.getLen() == fileSize && eof) {
+                            log.info("{} Skipping file [{}] due to it was already processed.", this, metadata.getPath());
+                            return emptyFileReader(new Path(metadata.getPath()));
+                        } else {
+                            log.info("{} Seeking to offset [{}] for file [{}].",
+                                    this, offsetMap.get("offset"), metadata.getPath());
+                            FileReader reader = makeReader.get();
+                            reader.seek(offset);
+                            return reader;
+                        }
+                    }).orElseGet(makeReader);
         } catch (Exception e) {
             throw new ConnectException("An error has occurred when creating reader for file: " + metadata.getPath(), e);
         }
     }
 
-    private Iterator<FileMetadata> concat(final Iterator<FileMetadata> it1,
-                                          final Iterator<FileMetadata> it2) {
+    @Override
+    public void close() throws IOException {
+        for (FileSystem fs : fileSystems) {
+            fs.close();
+        }
+    }
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName();
+    }
+
+    private Iterator<FileMetadata> concat(final Iterator<FileMetadata> it1, final Iterator<FileMetadata> it2) {
         return new Iterator<FileMetadata>() {
 
             @Override
@@ -229,11 +269,36 @@ abstract class AbstractPolicy implements Policy {
         };
     }
 
-    @Override
-    public void close() throws IOException {
-        for (FileSystem fs : fileSystems) {
-            fs.close();
-        }
+    private FileReader emptyFileReader(Path filePath) {
+        return new FileReader() {
+            @Override
+            public Path getFilePath() {
+                return filePath;
+            }
+
+            @Override
+            public Struct next() {
+                throw new NoSuchElementException();
+            }
+
+            @Override
+            public void seek(long offset) {
+            }
+
+            @Override
+            public long currentOffset() {
+                return 0;
+            }
+
+            @Override
+            public void close() {
+            }
+
+            @Override
+            public boolean hasNext() {
+                return false;
+            }
+        };
     }
 
     private void logAll(Map<String, Object> conf) {

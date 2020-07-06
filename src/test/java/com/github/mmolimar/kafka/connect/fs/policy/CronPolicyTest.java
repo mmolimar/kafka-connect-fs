@@ -89,15 +89,16 @@ public class CronPolicyTest extends PolicyTestBase {
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
     public void canBeInterrupted(PolicyFsTestConfig fsConfig) throws IOException {
-        Policy policy = ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
+        try (Policy policy = ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
                         .getClass(FsSourceTaskConfig.POLICY_CLASS),
-                fsConfig.getSourceTaskConfig());
+                fsConfig.getSourceTaskConfig())) {
 
-        for (int i = 0; i < 5; i++) {
-            assertFalse(policy.hasEnded());
-            policy.execute();
+            for (int i = 0; i < 5; i++) {
+                assertFalse(policy.hasEnded());
+                policy.execute();
+            }
+            policy.interrupt();
+            assertTrue(policy.hasEnded());
         }
-        policy.interrupt();
-        assertTrue(policy.hasEnded());
     }
 }

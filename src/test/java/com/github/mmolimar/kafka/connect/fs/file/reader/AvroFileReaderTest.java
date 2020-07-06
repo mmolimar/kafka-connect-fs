@@ -55,7 +55,7 @@ public class AvroFileReaderTest extends FileReaderTestBase {
                 datum.put(FIELD_NAME, String.format("%d_name_%s", index, UUID.randomUUID()));
                 datum.put(FIELD_SURNAME, String.format("%d_surname_%s", index, UUID.randomUUID()));
                 try {
-                    fsConfig.offsetsByIndex().put(index, dataFileWriter.sync() - 16L);
+                    fsConfig.offsetsByIndex().put(index, (long) index);
                     dataFileWriter.append(datum);
                 } catch (IOException ioe) {
                     throw new RuntimeException(ioe);
@@ -123,7 +123,7 @@ public class AvroFileReaderTest extends FileReaderTestBase {
     @Override
     protected void checkData(Struct record, long index) {
         assertAll(
-                () -> assertEquals((int) (Integer) record.get(FIELD_INDEX), index),
+                () -> assertEquals(index, (int) record.get(FIELD_INDEX)),
                 () -> assertTrue(record.get(FIELD_NAME).toString().startsWith(index + "_")),
                 () -> assertTrue(record.get(FIELD_SURNAME).toString().startsWith(index + "_"))
         );

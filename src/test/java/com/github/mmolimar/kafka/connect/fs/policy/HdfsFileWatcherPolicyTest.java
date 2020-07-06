@@ -50,7 +50,7 @@ public class HdfsFileWatcherPolicyTest extends PolicyTestBase {
         return new FsSourceTaskConfig(cfg);
     }
 
-    //This policy does not throw any exception. Just stop watching those nonexistent dirs
+    // This policy does not throw any exception. Just stop watching those nonexistent dirs
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
     @Override
@@ -67,7 +67,7 @@ public class HdfsFileWatcherPolicyTest extends PolicyTestBase {
         }
     }
 
-    //This policy never ends. We have to interrupt it
+    // This policy never ends. We have to interrupt it
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
     @Override
@@ -81,21 +81,22 @@ public class HdfsFileWatcherPolicyTest extends PolicyTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void notReachableFileSystem(PolicyFsTestConfig fsConfig) throws InterruptedException {
+    public void notReachableFileSystem(PolicyFsTestConfig fsConfig) throws InterruptedException, IOException {
         Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
         originals.put(FsSourceTaskConfig.FS_URIS, "hdfs://localhost:65432/data");
         originals.put(HdfsFileWatcherPolicy.HDFS_FILE_WATCHER_POLICY_POLL_MS, "0");
         originals.put(HdfsFileWatcherPolicy.HDFS_FILE_WATCHER_POLICY_RETRY_MS, "0");
         FsSourceTaskConfig cfg = new FsSourceTaskConfig(originals);
-        Policy policy = ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
-                .getClass(FsSourceTaskConfig.POLICY_CLASS), cfg);
-        int count = 0;
-        while (!policy.hasEnded() && count < 10) {
-            Thread.sleep(500);
-            count++;
+        try(Policy policy = ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
+                .getClass(FsSourceTaskConfig.POLICY_CLASS), cfg)) {
+            int count = 0;
+            while (!policy.hasEnded() && count < 10) {
+                Thread.sleep(500);
+                count++;
+            }
+            assertTrue(count < 10);
+            assertTrue(policy.hasEnded());
         }
-        assertTrue(count < 10);
-        assertTrue(policy.hasEnded());
     }
 
     @ParameterizedTest

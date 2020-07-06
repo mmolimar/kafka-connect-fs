@@ -1,6 +1,7 @@
 package com.github.mmolimar.kafka.connect.fs.file;
 
 import java.util.List;
+import java.util.Optional;
 
 public class FileMetadata {
     private String path;
@@ -8,7 +9,7 @@ public class FileMetadata {
     private List<BlockInfo> blocks;
 
     public FileMetadata(String path, long length, List<BlockInfo> blocks) {
-        this.path = path;
+        this.path = Optional.ofNullable(path).orElse("");
         this.length = length;
         this.blocks = blocks;
     }
@@ -42,7 +43,7 @@ public class FileMetadata {
     }
 
     public int hashCode() {
-        return path == null ? 0 : path.hashCode();
+        return path.hashCode();
     }
 
 
@@ -55,6 +56,17 @@ public class FileMetadata {
             this.offset = offset;
             this.length = length;
             this.corrupt = corrupt;
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (this == object) return true;
+            if (!(object instanceof BlockInfo)) return false;
+
+            BlockInfo blockInfo = (BlockInfo) object;
+            return this.offset == blockInfo.offset &&
+                    this.length == blockInfo.length &&
+                    this.corrupt == blockInfo.corrupt;
         }
 
         @Override

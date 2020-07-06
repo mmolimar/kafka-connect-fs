@@ -4,20 +4,57 @@
 
     <groupId>com.github.mmolimar.kafka.connect</groupId>
     <artifactId>kafka-connect-fs</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <packaging>jar</packaging>
 
     <name>kafka-connect-fs</name>
+    <description>
+        Kafka Connect FileSystem Connector is a source connector for reading records from different
+        sort of file formats and from different file system types and load them into Kafka.
+    </description>
+    <url>https://github.com/mmolimar/kafka-connect-fs</url>
+
+    <licenses>
+        <license>
+            <name>Apache License 2.0</name>
+            <url>https://github.com/mmolimar/kafka-connect-fs/blob/master/LICENSE</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Mario Molina</name>
+            <url>https://github.com/mmolimar</url>
+            <roles>
+                <role>Committer</role>
+            </roles>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:https://github.com/mmolimar/kafka-connect-fs.git</connection>
+        <developerConnection>scm:git:git@github.com:mmolimar/kafka-connect-fs.git</developerConnection>
+        <url>https://github.com/mmolimar/kafka-connect-fs</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <issueManagement>
+        <system>github</system>
+        <url>https://github.com/mmolimar/kafka-connect-fs/issues</url>
+    </issueManagement>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kafka.version>2.5.0</kafka.version>
         <confluent.version>5.5.0</confluent.version>
         <hadoop.version>3.2.1</hadoop.version>
-        <gcs-connector.version>hadoop3-2.1.2</gcs-connector.version>
+        <gcs-connector.version>hadoop3-2.1.3</gcs-connector.version>
         <parquet.version>1.11.0</parquet.version>
+        <orc.version>1.6.3</orc.version>
         <univocity.version>2.8.4</univocity.version>
         <cron-utils.version>9.0.2</cron-utils.version>
+        <jsch.version>0.1.54</jsch.version>
         <junit-jupiter.version>5.6.2</junit-jupiter.version>
         <easymock.version>4.2</easymock.version>
         <powermock.version>2.0.7</powermock.version>
@@ -25,10 +62,10 @@
         <maven-compiler.target>${maven-compiler.source}</maven-compiler.target>
         <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
-        <maven-assembly-plugin.version>3.2.0</maven-assembly-plugin.version>
+        <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
         <maven-jacoco-plugin.version>0.8.5</maven-jacoco-plugin.version>
         <maven-coveralls-plugin.version>4.3.0</maven-coveralls-plugin.version>
-        <maven-surfire-plugin.version>3.0.0-M4</maven-surfire-plugin.version>
+        <maven-surfire-plugin.version>3.0.0-M5</maven-surfire-plugin.version>
         <maven-kafka-connect-plugin.version>0.11.3</maven-kafka-connect-plugin.version>
     </properties>
 
@@ -75,6 +112,11 @@
             <version>${parquet.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.apache.orc</groupId>
+            <artifactId>orc-core</artifactId>
+            <version>${orc.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.univocity</groupId>
             <artifactId>univocity-parsers</artifactId>
             <version>${univocity.version}</version>
@@ -83,6 +125,11 @@
             <groupId>com.cronutils</groupId>
             <artifactId>cron-utils</artifactId>
             <version>${cron-utils.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.jcraft</groupId>
+            <artifactId>jsch</artifactId>
+            <version>${jsch.version}</version>
         </dependency>
 
         <!-- test dependencies -->
@@ -192,25 +239,32 @@
                         <configuration>
                             <name>kafka-connect-fs</name>
                             <title>Kafka Connect FileSystem</title>
-                            <documentationUrl>https://kafka-connect-fs.readthedocs.io/</documentationUrl>
+                            <documentationUrl>https://kafka-connect-fs.readthedocs.io</documentationUrl>
                             <sourceUrl>https://github.com/mmolimar/kafka-connect-fs</sourceUrl>
                             <description>
-                                Kafka Connect FileSystem Connector is a source connector for reading records from files
-                                in the file systems specified and load them into Kafka.
+                                Kafka Connect FileSystem Connector is a source connector for reading records from
+                                different sort of file formats and from different file system types and load them
+                                into Kafka.
                             </description>
+                            <sourceUrl>https://github.com/mmolimar/kafka-connect-fs</sourceUrl>
+
                             <supportProviderName>Mario Molina</supportProviderName>
                             <supportSummary>This connector is supported by the open source community.</supportSummary>
                             <supportUrl>https://github.com/mmolimar/kafka-connect-fs/issues</supportUrl>
+
                             <ownerUsername>mmolimar</ownerUsername>
                             <ownerType>user</ownerType>
                             <ownerName>Mario Molina</ownerName>
                             <ownerUrl>https://github.com/mmolimar</ownerUrl>
+
                             <dockerNamespace>mmolimar</dockerNamespace>
                             <dockerName>kafka-connect-fs</dockerName>
                             <dockerTag>${project.version}</dockerTag>
+
                             <componentTypes>
                                 <componentType>source</componentType>
                             </componentTypes>
+
                             <tags>
                                 <tag>filesystem</tag>
                                 <tag>files</tag>
@@ -221,18 +275,22 @@
                                 <tag>google</tag>
                                 <tag>gcs</tag>
                                 <tag>azure</tag>
+                                <tag>sftp</tag>
+                                <tag>ftp</tag>
                                 <tag>txt</tag>
                                 <tag>csv</tag>
                                 <tag>tsv</tag>
                                 <tag>json</tag>
                                 <tag>avro</tag>
                                 <tag>parquet</tag>
+                                <tag>orc</tag>
                                 <tag>sequence</tag>
                             </tags>
-                            <requirements/>
+
                             <deliveryGuarantee>
                                 <deliveryGuarantee>atLeastOnce</deliveryGuarantee>
                             </deliveryGuarantee>
+
                             <confluentControlCenterIntegration>true</confluentControlCenterIntegration>
                         </configuration>
                     </execution>
@@ -254,7 +312,7 @@
                 <enabled>true</enabled>
             </releases>
             <snapshots>
-                <enabled>true</enabled>
+                <enabled>false</enabled>
             </snapshots>
             <url>http://packages.confluent.io/maven/</url>
         </repository>

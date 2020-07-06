@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.hadoop.fs.Path;
@@ -15,11 +16,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.math.BigInteger;
 import java.nio.charset.UnsupportedCharsetException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,11 +26,14 @@ import static org.junit.jupiter.api.Assertions.*;
 public class JsonFileReaderTest extends FileReaderTestBase {
 
     private static final String FIELD_INTEGER = "integerField";
+    private static final String FIELD_BIG_INTEGER = "bigIntegerField";
     private static final String FIELD_LONG = "longField";
     private static final String FIELD_BOOLEAN = "booleanField";
     private static final String FIELD_STRING = "stringField";
     private static final String FIELD_DECIMAL = "decimalField";
-    private static final String FIELD_ARRAY = "arrayField";
+    private static final String FIELD_BINARY = "binaryField";
+    private static final String FIELD_ARRAY_SIMPLE = "arraySimpleField";
+    private static final String FIELD_ARRAY_COMPLEX = "arrayComplexField";
     private static final String FIELD_STRUCT = "structField";
     private static final String FIELD_NULL = "nullField";
     private static final String FILE_EXTENSION = "jsn";
@@ -48,14 +50,31 @@ public class JsonFileReaderTest extends FileReaderTestBase {
             IntStream.range(0, numRecords).forEach(index -> {
                 ObjectNode json = JsonNodeFactory.instance.objectNode()
                         .put(FIELD_INTEGER, index)
+                        .put(FIELD_BIG_INTEGER, new BigInteger("9999999999999999999"))
+                        .put(FIELD_LONG, Long.MAX_VALUE)
+                        .put(FIELD_STRING, String.format("%d_%s", index, UUID.randomUUID()))
+                        .put(FIELD_BOOLEAN, true)
+                        .put(FIELD_DECIMAL, Double.parseDouble(index + "." + index))
+                        .put(FIELD_BINARY, "test".getBytes())
+                        .put(FIELD_NULL, (String) null);
+                json.putArray(FIELD_ARRAY_SIMPLE)
+                        .add("elm[" + index + "]")
+                        .add("elm[" + (index + 1) + "]");
+                ArrayNode array = json.putArray(FIELD_ARRAY_COMPLEX);
+                array.addObject()
+                        .put(FIELD_INTEGER, index)
                         .put(FIELD_LONG, Long.MAX_VALUE)
                         .put(FIELD_STRING, String.format("%d_%s", index, UUID.randomUUID()))
                         .put(FIELD_BOOLEAN, true)
                         .put(FIELD_DECIMAL, Double.parseDouble(index + "." + index))
                         .put(FIELD_NULL, (String) null);
-                json.putArray(FIELD_ARRAY)
-                        .add("elm[" + index + "]")
-                        .add("elm[" + (index + 1) + "]");
+                array.addObject()
+                        .put(FIELD_INTEGER, index + 1)
+                        .put(FIELD_LONG, Long.MAX_VALUE)
+                        .put(FIELD_STRING, String.format("%d_%s", index, UUID.randomUUID()))
+                        .put(FIELD_BOOLEAN, true)
+                        .put(FIELD_DECIMAL, Double.parseDouble(index + "." + index))
+                        .put(FIELD_NULL, (String) null);
                 json.putObject(FIELD_STRUCT)
                         .put(FIELD_INTEGER, (short) index)
                         .put(FIELD_LONG, Long.MAX_VALUE)
@@ -181,21 +200,40 @@ public class JsonFileReaderTest extends FileReaderTestBase {
 
     @Override
     protected void checkData(Struct record, long index) {
+        List<Struct> array = record.getArray(FIELD_ARRAY_COMPLEX);
         Struct subrecord = record.getStruct(FIELD_STRUCT);
         assertAll(
-                () -> assertEquals((int) (Integer) record.get(FIELD_INTEGER), index),
-                () -> assertEquals((long) (Long) record.get(FIELD_LONG), Long.MAX_VALUE),
+                () -> assertEquals(index, (int) record.get(FIELD_INTEGER)),
+                () -> assertEquals(new BigInteger("9999999999999999999").longValue(), record.get(FIELD_BIG_INTEGER)),
+                () -> assertEquals(Long.MAX_VALUE, (long) record.get(FIELD_LONG)),
                 () -> assertTrue(record.get(FIELD_STRING).toString().startsWith(index + "_")),
                 () -> assertTrue(Boolean.parseBoolean(record.get(FIELD_BOOLEAN).toString())),
-                () -> assertEquals((Double) record.get(FIELD_DECIMAL), Double.parseDouble(index + "." + index), 0),
+                () -> assertEquals(Double.parseDouble(index + "." + index), (Double) record.get(FIELD_DECIMAL), 0),
                 () -> assertNull(record.get(FIELD_NULL)),
                 () -> assertNotNull(record.schema().field(FIELD_NULL)),
-                () -> assertEquals(record.get(FIELD_ARRAY), Arrays.asList("elm[" + index + "]", "elm[" + (index + 1) + "]")),
-                () -> assertEquals((int) (Integer) subrecord.get(FIELD_INTEGER), index),
-                () -> assertEquals((long) (Long) subrecord.get(FIELD_LONG), Long.MAX_VALUE),
+                () -> assertEquals("dGVzdA==", record.get(FIELD_BINARY)),
+                () -> assertEquals(Arrays.asList("elm[" + index + "]", "elm[" + (index + 1) + "]"), record.get(FIELD_ARRAY_SIMPLE)),
+
+                () -> assertEquals(index, (int) array.get(0).get(FIELD_INTEGER)),
+                () -> assertEquals(Long.MAX_VALUE, (long) array.get(0).get(FIELD_LONG)),
+                () -> assertTrue(array.get(0).get(FIELD_STRING).toString().startsWith(index + "_")),
+                () -> assertTrue(Boolean.parseBoolean(array.get(0).get(FIELD_BOOLEAN).toString())),
+                () -> assertEquals(Double.parseDouble(index + "." + index), (Double) array.get(0).get(FIELD_DECIMAL), 0),
+                () -> assertNull(array.get(0).get(FIELD_NULL)),
+                () -> assertNotNull(array.get(0).schema().field(FIELD_NULL)),
+                () -> assertEquals(index + 1, (int) array.get(1).get(FIELD_INTEGER)),
+                () -> assertEquals(Long.MAX_VALUE, (long) array.get(1).get(FIELD_LONG)),
+                () -> assertTrue(array.get(1).get(FIELD_STRING).toString().startsWith(index + "_")),
+                () -> assertTrue(Boolean.parseBoolean(array.get(1).get(FIELD_BOOLEAN).toString())),
+                () -> assertEquals(Double.parseDouble(index + "." + index), (Double) array.get(1).get(FIELD_DECIMAL), 0),
+                () -> assertNull(array.get(1).get(FIELD_NULL)),
+                () -> assertNotNull(array.get(1).schema().field(FIELD_NULL)),
+
+                () -> assertEquals(index, (int) subrecord.get(FIELD_INTEGER)),
+                () -> assertEquals(Long.MAX_VALUE, (long) subrecord.get(FIELD_LONG)),
                 () -> assertTrue(subrecord.get(FIELD_STRING).toString().startsWith(index + "_")),
                 () -> assertTrue(Boolean.parseBoolean(subrecord.get(FIELD_BOOLEAN).toString())),
-                () -> assertEquals((Double) subrecord.get(FIELD_DECIMAL), Double.parseDouble(index + "." + index), 0),
+                () -> assertEquals(Double.parseDouble(index + "." + index), (Double) subrecord.get(FIELD_DECIMAL), 0),
                 () -> assertNull(subrecord.get(FIELD_NULL)),
                 () -> assertNotNull(subrecord.schema().field(FIELD_NULL))
         );

@@ -15,7 +15,7 @@ Among others, these are some file systems it supports:
 * S3.
 * Google Cloud Storage.
 * Azure Blob Storage & Azure Data Lake Store.
-* FTP.
+* FTP & SFTP.
 * WebHDFS.
 * Local File System.
 * Hadoop Archive File System.
@@ -52,7 +52,9 @@ The ``kafka-connect-fs.properties`` file defines the following properties as req
    policy.class=<Policy class>
    policy.recursive=true
    policy.regexp=.*
+   policy.batch_size=0
    file_reader.class=<File reader class>
+   file_reader.batch_size=0
 
 #. The connector name.
 #. Class indicating the connector.
@@ -65,8 +67,10 @@ The ``kafka-connect-fs.properties`` file defines the following properties as req
    ``com.github.mmolimar.kafka.connect.fs.policy.Policy`` interface).
 #. Flag to activate traversed recursion in subdirectories when listing files.
 #. Regular expression to filter files from the FS.
+#. Number of files that should be handled at a time. Non-positive values disable batching.
 #. File reader class to read files from the FS
    (must implement ``com.github.mmolimar.kafka.connect.fs.file.reader.FileReader`` interface).
+#. Number of records to process at a time. Non-positive values disable batching.
 
 A more detailed information about these properties can be found :ref:`here<config_options-general>`.
 

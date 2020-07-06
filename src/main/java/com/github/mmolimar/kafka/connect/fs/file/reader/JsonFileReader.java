@@ -47,7 +47,7 @@ public class JsonFileReader extends AbstractFileReader<JsonFileReader.JsonRecord
         if (hasNext()) {
             String line = inner.nextRecord().getValue();
             this.schema = extractSchema(mapper.readTree(line));
-            //back to the first line
+            // back to the first line
             inner.seek(0);
         } else {
             this.schema = SchemaBuilder.struct().build();
@@ -68,7 +68,8 @@ public class JsonFileReader extends AbstractFileReader<JsonFileReader.JsonRecord
                         mapper.configure(DeserializationFeature.valueOf(feature),
                                 Boolean.parseBoolean(entry.getValue()));
                     } else {
-                        log.warn("Ignoring deserialization configuration '{}' due to it does not exist.", feature);
+                        log.warn("{} Ignoring deserialization configuration [{}] due to it does not exist.",
+                                this, feature);
                     }
                 });
     }
@@ -115,14 +116,8 @@ public class JsonFileReader extends AbstractFileReader<JsonFileReader.JsonRecord
                     return Schema.OPTIONAL_INT32_SCHEMA;
                 } else if (jsonNode.isLong()) {
                     return Schema.OPTIONAL_INT64_SCHEMA;
-                } else if (jsonNode.isFloat()) {
-                    return Schema.OPTIONAL_FLOAT32_SCHEMA;
-                } else if (jsonNode.isDouble()) {
-                    return Schema.OPTIONAL_FLOAT64_SCHEMA;
                 } else if (jsonNode.isBigInteger()) {
                     return Schema.OPTIONAL_INT64_SCHEMA;
-                } else if (jsonNode.isBigDecimal()) {
-                    return Schema.OPTIONAL_FLOAT64_SCHEMA;
                 } else {
                     return Schema.OPTIONAL_FLOAT64_SCHEMA;
                 }
@@ -157,8 +152,10 @@ public class JsonFileReader extends AbstractFileReader<JsonFileReader.JsonRecord
             if (jsonNode.isNull()) return null;
             Struct struct = new Struct(schema);
             jsonNode.fields()
-                    .forEachRemaining(field -> struct.put(field.getKey(),
-                            mapValue(struct.schema().field(field.getKey()).schema(), field.getValue())));
+                    .forEachRemaining(field -> struct.put(
+                            field.getKey(),
+                            mapValue(struct.schema().field(field.getKey()).schema(), field.getValue())
+                    ));
             return struct;
         }
 
@@ -175,14 +172,10 @@ public class JsonFileReader extends AbstractFileReader<JsonFileReader.JsonRecord
                         return value.intValue();
                     } else if (value.isLong()) {
                         return value.longValue();
-                    } else if (value.isFloat()) {
-                        return value.floatValue();
-                    } else if (value.isDouble()) {
-                        return value.doubleValue();
                     } else if (value.isBigInteger()) {
-                        return value.bigIntegerValue();
+                        return value.bigIntegerValue().longValue();
                     } else {
-                        return value.numberValue();
+                        return value.numberValue().doubleValue();
                     }
                 case STRING:
                     return value.asText();
@@ -204,7 +197,7 @@ public class JsonFileReader extends AbstractFileReader<JsonFileReader.JsonRecord
                 case ARRAY:
                     Iterable<JsonNode> arrayElements = value::elements;
                     return StreamSupport.stream(arrayElements.spliterator(), false)
-                            .map(elm -> mapValue(schema, elm))
+                            .map(elm -> mapValue(schema.valueSchema(), elm))
                             .collect(Collectors.toList());
                 case NULL:
                 case MISSING:
