@@ -84,7 +84,12 @@ abstract class UnivocityFileReader<T extends CommonParserSettings<?>>
         super(fs, filePath, new UnivocityToStruct(), config);
 
         this.iterator = iterateRecords();
-        this.schema = buildSchema(this.iterator, settings.isHeaderExtractionEnabled(), config);
+        Boolean hasHeader = settings.isHeaderExtractionEnabled();
+        if (!hasHeader) {
+            String[] headers = settings.getHeaders();
+            hasHeader = headers != null && headers.length > 0;
+        }
+        this.schema = buildSchema(this.iterator, hasHeader, config);
     }
 
     private Schema buildSchema(ResultIterator<Record, ParsingContext> it, boolean hasHeader, Map<String, Object> config) {
