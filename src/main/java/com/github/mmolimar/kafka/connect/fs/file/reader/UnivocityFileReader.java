@@ -84,29 +84,24 @@ abstract class UnivocityFileReader<T extends CommonParserSettings<?>>
         super(fs, filePath, new UnivocityToStruct(), config);
 
         this.iterator = iterateRecords();
-        Boolean hasHeader = settings.isHeaderExtractionEnabled();
-        if (!hasHeader) {
-            String[] headers = settings.getHeaders();
-            hasHeader = headers != null && headers.length > 0;
-        }
-        this.schema = buildSchema(this.iterator, hasHeader, config);
+        this.schema = buildSchema(this.iterator, config);
     }
 
-    private Schema buildSchema(ResultIterator<Record, ParsingContext> it, boolean hasHeader, Map<String, Object> config) {
+    private Schema buildSchema(ResultIterator<Record, ParsingContext> it, Map<String, Object> config) {
         SchemaBuilder builder = SchemaBuilder.struct();
-        if (it.hasNext() && !hasHeader) {
-            Record first = it.next();
-            List<Schema> dataTypes = getDataTypes(config, first.getValues());
-            IntStream.range(0, first.getValues().length)
-                    .forEach(index -> builder.field(DEFAULT_COLUMN_NAME + (index + 1), dataTypes.get(index)));
-            seek(0);
-        } else if (hasHeader) {
-            Optional.ofNullable(it.getContext().headers()).ifPresent(headers -> {
-                List<Schema> dataTypes = getDataTypes(config, headers);
-                IntStream.range(0, headers.length)
-                        .forEach(index -> builder.field(headers[index], dataTypes.get(index)));
-            });
-        }
+        Optional.ofNullable(it.getContext().headers()).ifPresentOrElse(headers -> {
+            List<Schema> dataTypes = getDataTypes(config, headers);
+            IntStream.range(0, headers.length).forEach(index -> builder.field(headers[index], dataTypes.get(index)));
+        }, () -> {
+            if (it.hasNext()) {
+                Record first = it.next();
+                List<Schema> dataTypes = getDataTypes(config, first.getValues());
+                IntStream.range(0, first.getValues().length)
+                        .forEach(index -> builder.field(DEFAULT_COLUMN_NAME + (index + 1), dataTypes.get(index)));
+                seek(0);
+            }
+
+        });
         return builder.build();
     }
 
