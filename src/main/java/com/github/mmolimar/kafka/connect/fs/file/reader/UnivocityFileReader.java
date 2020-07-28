@@ -91,7 +91,8 @@ abstract class UnivocityFileReader<T extends CommonParserSettings<?>>
         SchemaBuilder builder = SchemaBuilder.struct();
         Optional.ofNullable(it.getContext().headers()).ifPresentOrElse(headers -> {
             List<Schema> dataTypes = getDataTypes(config, headers);
-            IntStream.range(0, headers.length).forEach(index -> builder.field(headers[index], dataTypes.get(index)));
+            IntStream.range(0, headers.length)
+                    .forEach(index -> builder.field(headers[index], dataTypes.get(index)));
         }, () -> {
             if (it.hasNext()) {
                 Record first = it.next();
