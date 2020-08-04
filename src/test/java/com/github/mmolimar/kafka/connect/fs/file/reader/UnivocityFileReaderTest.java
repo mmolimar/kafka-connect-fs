@@ -287,12 +287,14 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
     protected void checkDataWithHeaders(Struct record, long index, String[] headers) {
         assertAll(() -> assertEquals((byte) 2, record.get(headers[0])),
                 () -> assertEquals((short) 4, record.get(headers[1])),
-                () -> assertEquals(8, record.get(headers[2])), () -> assertEquals(16L, record.get(headers[3])),
+                () -> assertEquals(8, record.get(headers[2])),
+                () -> assertEquals(16L, record.get(headers[3])),
                 () -> assertEquals(32.32f, record.get(headers[4])),
                 () -> assertEquals(64.64d, record.get(headers[5])),
                 () -> assertEquals(true, record.get(headers[6])),
                 () -> assertEquals("test bytes", new String((byte[]) record.get(headers[7]))),
-                () -> assertEquals("test string", record.get(headers[8])));
+                () -> assertEquals("test string", record.get(headers[8]))
+        );
     }
 
     protected void checkDataString(Struct record) {
