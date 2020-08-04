@@ -89,11 +89,12 @@ abstract class UnivocityFileReader<T extends CommonParserSettings<?>>
 
     private Schema buildSchema(ResultIterator<Record, ParsingContext> it, Map<String, Object> config) {
         SchemaBuilder builder = SchemaBuilder.struct();
-        Optional.ofNullable(it.getContext().headers()).ifPresentOrElse(headers -> {
+        String[] headers = it.getContext().headers();
+        if (headers != null) {
             List<Schema> dataTypes = getDataTypes(config, headers);
             IntStream.range(0, headers.length)
                     .forEach(index -> builder.field(headers[index], dataTypes.get(index)));
-        }, () -> {
+        } else {
             if (it.hasNext()) {
                 Record first = it.next();
                 List<Schema> dataTypes = getDataTypes(config, first.getValues());
@@ -102,7 +103,7 @@ abstract class UnivocityFileReader<T extends CommonParserSettings<?>>
                 seek(0);
             }
 
-        });
+        }
         return builder.build();
     }
 
