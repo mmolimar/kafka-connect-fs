@@ -89,17 +89,18 @@ abstract class UnivocityFileReader<T extends CommonParserSettings<?>>
 
     private Schema buildSchema(ResultIterator<Record, ParsingContext> it, Map<String, Object> config) {
         SchemaBuilder builder = SchemaBuilder.struct();
+        // User provided or extracted headers
         String[] headers = it.getContext().headers();
-        if (it.hasNext() && headers == null) {
-            Record first = it.next();
-            List<Schema> dataTypes = getDataTypes(config, first.getValues());
-            IntStream.range(0, first.getValues().length)
-                    .forEach(index -> builder.field(DEFAULT_COLUMN_NAME + (index + 1), dataTypes.get(index)));
-            seek(0);
-        } else if (headers != null) {
+        if (headers != null && headers.length > 0) {
             List<Schema> dataTypes = getDataTypes(config, headers);
             IntStream.range(0, headers.length)
                     .forEach(index -> builder.field(headers[index], dataTypes.get(index)));
+        } else if (it.hasNext()) {
+            String[] values = it.next().getValues();
+            List<Schema> dataTypes = getDataTypes(config, values);
+            IntStream.range(0, values.length)
+                    .forEach(index -> builder.field(DEFAULT_COLUMN_NAME + (index + 1), dataTypes.get(index)));
+            seek(0);
         }
         return builder.build();
     }
