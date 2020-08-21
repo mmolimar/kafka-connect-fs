@@ -89,18 +89,24 @@ abstract class UnivocityFileReader<T extends CommonParserSettings<?>>
 
     private Schema buildSchema(ResultIterator<Record, ParsingContext> it, Map<String, Object> config) {
         SchemaBuilder builder = SchemaBuilder.struct();
-        // User provided or extracted headers
-        String[] headers = it.getContext().headers();
-        if (headers != null && headers.length > 0) {
+        if (iterator.hasNext() && !settings.isHeaderExtractionEnabled()) {
+            String[] headers;
+            if (settings.getHeaders() == null || settings.getHeaders().length == 0) {
+                Record first = iterator.next();
+                headers = new String[first.getValues().length];
+                IntStream.range(0, headers.length).forEach(index -> headers[index] = DEFAULT_COLUMN_NAME + (index + 1));
+                seek(0);
+            } else {
+                headers = settings.getHeaders();
+            }
             List<Schema> dataTypes = getDataTypes(config, headers);
-            IntStream.range(0, headers.length)
-                    .forEach(index -> builder.field(headers[index], dataTypes.get(index)));
-        } else if (it.hasNext()) {
-            String[] values = it.next().getValues();
-            List<Schema> dataTypes = getDataTypes(config, values);
-            IntStream.range(0, values.length)
-                    .forEach(index -> builder.field(DEFAULT_COLUMN_NAME + (index + 1), dataTypes.get(index)));
-            seek(0);
+            IntStream.range(0, headers.length).forEach(index -> builder.field(headers[index], dataTypes.get(index)));
+        } else if (settings.isHeaderExtractionEnabled()) {
+            Optional.ofNullable(iterator.getContext().headers()).ifPresent(headers -> {
+                List<Schema> dataTypes = getDataTypes(config, headers);
+                IntStream.range(0, headers.length)
+                        .forEach(index -> builder.field(headers[index], dataTypes.get(index)));
+            });
         }
         return builder.build();
     }
