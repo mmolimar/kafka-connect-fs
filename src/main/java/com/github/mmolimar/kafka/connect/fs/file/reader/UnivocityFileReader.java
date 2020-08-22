@@ -84,19 +84,25 @@ abstract class UnivocityFileReader<T extends CommonParserSettings<?>>
         super(fs, filePath, new UnivocityToStruct(), config);
 
         this.iterator = iterateRecords();
-        this.schema = buildSchema(this.iterator, settings.isHeaderExtractionEnabled(), config);
+        this.schema = buildSchema(this.iterator, config);
     }
 
-    private Schema buildSchema(ResultIterator<Record, ParsingContext> it, boolean hasHeader, Map<String, Object> config) {
+    private Schema buildSchema(ResultIterator<Record, ParsingContext> it, Map<String, Object> config) {
         SchemaBuilder builder = SchemaBuilder.struct();
-        if (it.hasNext() && !hasHeader) {
-            Record first = it.next();
-            List<Schema> dataTypes = getDataTypes(config, first.getValues());
-            IntStream.range(0, first.getValues().length)
-                    .forEach(index -> builder.field(DEFAULT_COLUMN_NAME + (index + 1), dataTypes.get(index)));
-            seek(0);
-        } else if (hasHeader) {
-            Optional.ofNullable(it.getContext().headers()).ifPresent(headers -> {
+        if (iterator.hasNext() && !settings.isHeaderExtractionEnabled()) {
+            String[] headers;
+            if (settings.getHeaders() == null || settings.getHeaders().length == 0) {
+                Record first = iterator.next();
+                headers = new String[first.getValues().length];
+                IntStream.range(0, headers.length).forEach(index -> headers[index] = DEFAULT_COLUMN_NAME + (index + 1));
+                seek(0);
+            } else {
+                headers = settings.getHeaders();
+            }
+            List<Schema> dataTypes = getDataTypes(config, headers);
+            IntStream.range(0, headers.length).forEach(index -> builder.field(headers[index], dataTypes.get(index)));
+        } else if (settings.isHeaderExtractionEnabled()) {
+            Optional.ofNullable(iterator.getContext().headers()).ifPresent(headers -> {
                 List<Schema> dataTypes = getDataTypes(config, headers);
                 IntStream.range(0, headers.length)
                         .forEach(index -> builder.field(headers[index], dataTypes.get(index)));
