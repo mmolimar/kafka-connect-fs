@@ -89,7 +89,7 @@ public class FsSourceTask extends SourceTask {
                 Map<String, Object> partitionKey = makePartitionKey.apply(metadata);
                 Map<String, Object> offset = Optional.ofNullable(offsets.get(partitionKey)).orElse(new HashMap<>());
                 try (FileReader reader = policy.offer(metadata, offset)) {
-                    log.info("{} Processing records for file {}...", this, metadata);
+                    if (reader.hasNext()) log.info("{} Processing records for file {}...", this, metadata);
                     while (reader.hasNext()) {
                         Struct record = reader.next();
                         // TODO change FileReader interface in the next major version
