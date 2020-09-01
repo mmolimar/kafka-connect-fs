@@ -7,10 +7,7 @@ import com.github.mmolimar.kafka.connect.fs.util.Iterators;
 import com.github.mmolimar.kafka.connect.fs.util.ReflectionUtils;
 import com.github.mmolimar.kafka.connect.fs.util.TailCall;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.LocatedFileStatus;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.RemoteIterator;
+import org.apache.hadoop.fs.*;
 import org.apache.kafka.common.utils.Utils;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.errors.ConnectException;
@@ -39,8 +36,15 @@ abstract class AbstractPolicy implements Policy {
     private final AtomicLong executions;
     private final boolean recursive;
     private final int batchSize;
+    private final Cleanup cleanup;
+    private final String cleanupDir;
+    private final String prefixCleanup;
     private Iterator<Iterator<FileMetadata>> partitions;
     private boolean interrupted;
+
+    enum Cleanup {
+        NONE, MOVE, DELETE
+    }
 
     public AbstractPolicy(FsSourceTaskConfig conf) throws IOException {
         this.fileSystems = new ArrayList<>();
@@ -49,6 +53,11 @@ abstract class AbstractPolicy implements Policy {
         this.recursive = conf.getBoolean(FsSourceTaskConfig.POLICY_RECURSIVE);
         this.fileRegexp = Pattern.compile(conf.getString(FsSourceTaskConfig.POLICY_REGEXP));
         this.batchSize = conf.getInt(FsSourceTaskConfig.POLICY_BATCH_SIZE);
+        this.cleanup = Optional.ofNullable(conf.getString(FsSourceTaskConfig.POLICY_CLEANUP))
+                .map(c -> Cleanup.valueOf(c.toUpperCase())).orElse(Cleanup.NONE);
+        this.prefixCleanup = Optional.ofNullable(conf.getString(FsSourceTaskConfig.POLICY_CLEANUP_MOVE_DIR_PREFIX))
+                .orElse("");
+        this.cleanupDir = conf.getString(FsSourceTaskConfig.POLICY_CLEANUP_MOVE_DIR);
         this.interrupted = false;
         this.partitions = Collections.emptyIterator();
 
@@ -227,8 +236,7 @@ abstract class AbstractPolicy implements Policy {
                         long fileSize = Long.parseLong(offsetMap.getOrDefault("file-size", "0").toString());
                         boolean eof = Boolean.parseBoolean(offsetMap.getOrDefault("eof", "false").toString());
                         if (metadata.getLen() == fileSize && eof) {
-                            log.info("{} Skipping file [{}] due to it was already processed.", this, metadata.getPath());
-                            return emptyFileReader(new Path(metadata.getPath()));
+                            return cleanupAndReturn(current, new Path(metadata.getPath()));
                         } else {
                             log.info("{} Seeking to offset [{}] for file [{}].",
                                     this, offsetMap.get("offset"), metadata.getPath());
@@ -269,7 +277,27 @@ abstract class AbstractPolicy implements Policy {
         };
     }
 
-    private FileReader emptyFileReader(Path filePath) {
+    private FileReader cleanupAndReturn(FileSystem srcFs, Path filePath) {
+        try {
+            switch (cleanup) {
+                case NONE:
+                    log.info("{} Skipping file [{}] due to it was already processed.", this, filePath);
+                    break;
+                case MOVE:
+                    Path target = new Path(cleanupDir, prefixCleanup + filePath.getName());
+                    FileSystem dstFs = FileSystem.newInstance(target.toUri(), srcFs.getConf());
+                    log.info("{} Moving file [{}] to [{}] due to it was already processed.", this, filePath, target);
+                    FileUtil.copy(srcFs, filePath, srcFs, target, true, true, dstFs.getConf());
+                    break;
+                case DELETE:
+                    log.info("{} Deleting file [{}] due to it was already processed.", this, filePath);
+                    srcFs.delete(filePath, false);
+                    break;
+            }
+        } catch (IOException ioe) {
+            log.warn("{} Cannot apply cleanup of type {} in file [{}]. Error message: {}", this, cleanup, filePath, ioe.getMessage());
+        }
+
         return new FileReader() {
             @Override
             public Path getFilePath() {

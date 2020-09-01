@@ -25,6 +25,18 @@ public class FsSourceTaskConfig extends FsSourceConnectorConfig {
     private static final String POLICY_BATCH_SIZE_DOC = "Number of files to process at a time. Non-positive values disable batching.";
     private static final String POLICY_BATCH_SIZE_DISPLAY = "Files per batch";
 
+    public static final String POLICY_CLEANUP = POLICY_PREFIX + "cleanup";
+    private static final String POLICY_CLEANUP_DOC = "Cleanup strategy to use when skipping files.";
+    private static final String POLICY_CLEANUP_DISPLAY = "Cleanup strategy";
+
+    public static final String POLICY_CLEANUP_MOVE_DIR = POLICY_CLEANUP + ".move";
+    private static final String POLICY_CLEANUP_MOVE_DIR_DOC = "Target directory to move files for MOVE cleanup strategy.";
+    private static final String POLICY_CLEANUP_MOVE_DIR_DISPLAY = "Target directory";
+
+    public static final String POLICY_CLEANUP_MOVE_DIR_PREFIX = POLICY_CLEANUP_MOVE_DIR + ".prefix";
+    private static final String POLICY_CLEANUP_MOVE_DIR_PREFIX_DOC = "Prefix to set to moved files.";
+    private static final String POLICY_CLEANUP_MOVE_DIR_PREFIX_DISPLAY = "File prefix";
+
     public static final String POLICY_PREFIX_FS = POLICY_PREFIX + "fs.";
 
     public static final String FILE_READER_CLASS = FILE_READER_PREFIX + "class";
@@ -95,6 +107,36 @@ public class FsSourceTaskConfig extends FsSourceConnectorConfig {
                         ++order,
                         ConfigDef.Width.MEDIUM,
                         POLICY_BATCH_SIZE_DISPLAY
+                ).define(
+                        POLICY_CLEANUP,
+                        ConfigDef.Type.STRING,
+                        null,
+                        ConfigDef.Importance.MEDIUM,
+                        POLICY_CLEANUP_DOC,
+                        POLICY_GROUP,
+                        ++order,
+                        ConfigDef.Width.MEDIUM,
+                        POLICY_CLEANUP_DISPLAY
+                ).define(
+                        POLICY_CLEANUP_MOVE_DIR,
+                        ConfigDef.Type.STRING,
+                        null,
+                        ConfigDef.Importance.MEDIUM,
+                        POLICY_CLEANUP_MOVE_DIR_DOC,
+                        POLICY_GROUP,
+                        ++order,
+                        ConfigDef.Width.MEDIUM,
+                        POLICY_CLEANUP_MOVE_DIR_DISPLAY
+                ).define(
+                        POLICY_CLEANUP_MOVE_DIR_PREFIX,
+                        ConfigDef.Type.STRING,
+                        null,
+                        ConfigDef.Importance.LOW,
+                        POLICY_CLEANUP_MOVE_DIR_PREFIX_DOC,
+                        POLICY_GROUP,
+                        ++order,
+                        ConfigDef.Width.MEDIUM,
+                        POLICY_CLEANUP_MOVE_DIR_PREFIX_DISPLAY
                 ).define(
                         FILE_READER_CLASS,
                         ConfigDef.Type.CLASS,
