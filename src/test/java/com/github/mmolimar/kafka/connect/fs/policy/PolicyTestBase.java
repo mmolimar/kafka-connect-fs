@@ -92,6 +92,17 @@ abstract class PolicyTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
+    public void invalidConfigCleanup(PolicyFsTestConfig fsConfig) {
+        Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
+        originals.put(FsSourceTaskConfig.POLICY_CLEANUP, "invalid");
+        assertThrows(ConnectException.class, () ->
+                ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
+                                .getClass(FsSourceTaskConfig.POLICY_CLASS),
+                        new FsSourceTaskConfig(originals)));
+    }
+
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
     public void interruptPolicy(PolicyFsTestConfig fsConfig) throws IOException {
         fsConfig.getPolicy().execute();
         fsConfig.getPolicy().interrupt();
@@ -140,6 +151,79 @@ abstract class PolicyTestBase {
         assertTrue(it.hasNext());
         it.next();
         assertFalse(it.hasNext());
+    }
+
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void oneFilePerFsWithMoveCleanup(PolicyFsTestConfig fsConfig) throws IOException {
+        FileSystem fs = fsConfig.getFs();
+
+        Path source = new Path(fsConfig.getFsUri().toString(), "source");
+        Path target = new Path(fsConfig.getFsUri().toString(), "target");
+        fs.mkdirs(source);
+        fs.mkdirs(target);
+        Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
+        originals.put(FsSourceTaskConfig.FS_URIS, source.toString());
+        originals.put(FsSourceTaskConfig.POLICY_CLEANUP, AbstractPolicy.Cleanup.MOVE.toString());
+        originals.put(FsSourceTaskConfig.POLICY_CLEANUP_MOVE_DIR, target.toString());
+        originals.put(FsSourceTaskConfig.POLICY_CLEANUP_MOVE_DIR_PREFIX, "processed_");
+
+        FsSourceTaskConfig cfg = new FsSourceTaskConfig(originals);
+        try (Policy policy = ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
+                .getClass(FsSourceTaskConfig.POLICY_CLASS), cfg)) {
+            Path tmpDir = new Path(source, String.valueOf(System.nanoTime()));
+            fs.mkdirs(tmpDir);
+            String filename = System.nanoTime() + ".txt";
+            Path filePath = new Path(tmpDir, filename);
+            fs.createNewFile(filePath);
+
+            FileMetadata metadata = new FileMetadata(filePath.toString(), 0L, Collections.emptyList());
+            Map<String, Object> offset = new HashMap<>();
+            offset.put("offset", 1);
+            offset.put("eof", true);
+            FileReader reader = policy.offer(metadata, offset);
+            assertFalse(reader.hasNext());
+
+            assertFalse(fs.exists(new Path(source, filename)));
+            assertTrue(fs.exists(new Path(target, "processed_" + filename)));
+
+            metadata = new FileMetadata(System.nanoTime() + ".txt", 0L, Collections.emptyList());
+            reader = policy.offer(metadata, offset);
+            assertFalse(reader.hasNext());
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void oneFilePerFsWithDeleteCleanup(PolicyFsTestConfig fsConfig) throws IOException {
+        FileSystem fs = fsConfig.getFs();
+
+        Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
+        originals.put(FsSourceTaskConfig.FS_URIS, fsConfig.getFsUri().toString());
+        originals.put(FsSourceTaskConfig.POLICY_CLEANUP, AbstractPolicy.Cleanup.DELETE.toString());
+
+        FsSourceTaskConfig cfg = new FsSourceTaskConfig(originals);
+        try (Policy policy = ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
+                .getClass(FsSourceTaskConfig.POLICY_CLASS), cfg)) {
+            Path tmpDir = new Path(fsConfig.getFsUri().toString(), String.valueOf(System.nanoTime()));
+            fs.mkdirs(tmpDir);
+            String filename = System.nanoTime() + ".txt";
+            Path filePath = new Path(tmpDir, filename);
+            fs.createNewFile(filePath);
+
+            FileMetadata metadata = new FileMetadata(filePath.toString(), 0L, Collections.emptyList());
+            Map<String, Object> offset = new HashMap<>();
+            offset.put("offset", 1);
+            offset.put("eof", true);
+            FileReader reader = policy.offer(metadata, offset);
+            assertFalse(reader.hasNext());
+
+            assertFalse(fs.exists(new Path(tmpDir, filename)));
+
+            metadata = new FileMetadata(System.nanoTime() + ".txt", 0L, Collections.emptyList());
+            reader = policy.offer(metadata, offset);
+            assertFalse(reader.hasNext());
+        }
     }
 
     @ParameterizedTest

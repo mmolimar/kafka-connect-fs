@@ -53,6 +53,7 @@ The ``kafka-connect-fs.properties`` file defines the following properties as req
    policy.recursive=true
    policy.regexp=.*
    policy.batch_size=0
+   policy.cleanup=none
    file_reader.class=<File reader class>
    file_reader.batch_size=0
 
@@ -68,6 +69,7 @@ The ``kafka-connect-fs.properties`` file defines the following properties as req
 #. Flag to activate traversed recursion in subdirectories when listing files.
 #. Regular expression to filter files from the FS.
 #. Number of files that should be handled at a time. Non-positive values disable batching.
+#. Cleanup strategy to manage processed files.
 #. File reader class to read files from the FS
    (must implement ``com.github.mmolimar.kafka.connect.fs.file.reader.FileReader`` interface).
 #. Number of records to process at a time. Non-positive values disable batching.

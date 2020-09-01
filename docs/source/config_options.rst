@@ -98,6 +98,26 @@ General config properties for this connector.
   * Default: ``0``
   * Importance: medium
 
+``policy.cleanup``
+  Cleanup strategy to use when skipping files.
+
+  * Type: enum (available values ``none``, ``move`` and ``delete``)
+  * Default: ``none``
+  * Importance: medium
+
+``policy.cleanup.move``
+  Target directory to move files for the ``move`` cleanup strategy. Mandatory just in case of using this strategy.
+
+  * Type: string
+  * Importance: medium
+
+``policy.cleanup.move.prefix``
+  Prefix to set to the filename in moved files.
+
+  * Type: string
+  * Default: ````
+  * Importance: low
+
 ``policy.<policy_name>.<policy_property>``
   This represents custom properties you can include based on the policy class specified.
 
