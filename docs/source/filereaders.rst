@@ -54,6 +54,17 @@ by default but you can customize these field names.
 
 More information about properties of this file reader :ref:`here<config_options-filereaders-sequencefile>`.
 
+Cobol
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Mainframe files (Cobol/EBCDIC binary files) can be processed with this reader which uses the
+`Cobrix <https://github.com/AbsaOSS/cobrix/>`__ parser.
+
+By means of the corresponding copybook -representing its schema-, it parses each record and
+translate it into a Kafka message with the schema.
+
+More information about properties of this file reader :ref:`here<config_options-filereaders-cobol>`.
+
 JSON
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

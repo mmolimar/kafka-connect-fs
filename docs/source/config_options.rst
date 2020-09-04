@@ -299,7 +299,7 @@ In order to configure custom properties for this reader, the name you must use i
   * Default: ``false``
   * Importance: medium
 
-.. _config_options-filereaders-json:
+.. _config_options-filereaders-sequencefile:
 
 SequenceFile
 --------------------------------------------
@@ -325,6 +325,231 @@ In order to configure custom properties for this reader, the name you must use i
 
   * Type: int
   * Default: ``4096``
+  * Importance: low
+
+.. _config_options-filereaders-cobol:
+
+Cobol
+--------------------------------------------
+
+In order to configure custom properties for this reader, the name you must use is ``cobol``.
+
+``file_reader.cobol.copybook.content``
+  The content of the copybook. It is mandatory if property ``file_reader.cobol.copybook.path`` is not set.
+
+  * Type: string
+  * Default: ``null``
+  * Importance: high
+
+``file_reader.cobol.copybook.path``
+  Copybook file path in the file system to be used. It is mandatory if property ``file_reader.cobol.copybook.content``
+  is not set.
+
+  * Type: string
+  * Default: ``null``
+  * Importance: high
+
+``file_reader.cobol.reader.is_ebcdic``
+  If the input data file encoding is EBCDIC, otherwise it is ASCII.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: medium
+
+``file_reader.cobol.reader.ebcdic_code_page``
+  Code page to be used for EBCDIC to ASCII/Unicode conversions.
+
+  * Type: string
+  * Default: ``common``
+  * Importance: medium
+
+``file_reader.cobol.reader.ebcdic_code_page_class``
+  Custom code page conversion class provided.
+
+  * Type: string
+  * Default: ``null``
+  * Importance: low
+
+``file_reader.cobol.reader.ascii_charset``
+  Charset for ASCII data.
+
+  * Type: string
+  * Default: ````
+  * Importance: low
+
+``file_reader.cobol.reader.is_uft16_big_endian``
+  Flag to consider UTF-16 strings as big-endian.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: low
+
+``file_reader.cobol.reader.floating_point_format``
+  Format used for the floating-point numbers.
+
+  * Type: enum (available values ``ibm``, ``ibm_little_endian``, ``ieee754``, and ``ieee754_little_endian``)
+  * Default: ``ibm``
+  * Importance: medium
+
+``file_reader.cobol.reader.variable_size_occurs``
+  If true, occurs depending on data size will depend on the number of elements.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: low
+
+``file_reader.cobol.reader.length_field_name``
+  The name for a field that contains the record length. If not set, the copybook record length will be used.
+
+  * Type: string
+  * Default: ``null``
+  * Importance: low
+
+``file_reader.cobol.reader.is_record_sequence``
+  If the input file has 4 byte record length headers.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: medium
+
+``file_reader.cobol.reader.is_rdw_big_endian``
+  If the RDW is big endian.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: low
+
+``file_reader.cobol.reader.is_rdw_part_rec_length``
+  If the RDW count itself as part of record length itself.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: low
+
+``file_reader.cobol.reader.rdw_adjustment``
+  Controls a mismatch between RDW and record length.
+
+  * Type: int
+  * Default: ``0``
+  * Importance: low
+
+``file_reader.cobol.reader.is_index_generation_needed``
+  If the indexing input file before processing is requested.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: low
+
+``file_reader.cobol.reader.input_split_records``
+  The number of records to include in each partition.
+
+  * Type: int
+  * Default: ``null``
+  * Importance: low
+
+``file_reader.cobol.reader.input_split_size_mb``
+  A partition size to target.
+
+  * Type: int
+  * Default: ``null``
+  * Importance: low
+
+``file_reader.cobol.reader.hdfs_default_block_size``
+  Default HDFS block size for the HDFS filesystem used.
+
+  * Type: int
+  * Default: ``null``
+  * Importance: low
+
+``file_reader.cobol.reader.start_offset``
+  An offset to the start of the record in each binary data block.
+
+  * Type: int
+  * Default: ``0``
+  * Importance: medium
+
+``file_reader.cobol.reader.end_offset``
+  An offset from the end of the record to the end of the binary data block.
+
+  * Type: int
+  * Default: ``0``
+  * Importance: medium
+
+``file_reader.cobol.reader.file_start_offset``
+  A number of bytes to skip at the beginning of each file.
+
+  * Type: int
+  * Default: ``0``
+  * Importance: medium
+
+``file_reader.cobol.reader.file_end_offset``
+  A number of bytes to skip at the end of each file.
+
+  * Type: int
+  * Default: ``0``
+  * Importance: medium
+
+``file_reader.cobol.reader.schema_policy``
+  Specifies a policy to transform the input schema.
+
+  * Type: enum (available values ``keep_original`` and ``collapse_root``)
+  * Default: ``keep_original``
+  * Importance: medium
+
+``file_reader.cobol.reader.string_trimming_policy``
+  The trim to apply for records with string data types.
+
+  * Type: enum (available values ``both``, ``left``, ``right`` and ``none``)
+  * Default: ``both``
+  * Importance: medium
+
+``file_reader.cobol.reader.drop_group_fillers``
+  If true the parser will drop all FILLER fields, even GROUP FILLERS that have non-FILLER nested fields.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: low
+
+``file_reader.cobol.reader.drop_value_fillers``
+  If true the parser will drop all value FILLER fields.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: low
+
+``file_reader.cobol.reader.non_terminals``
+  A comma-separated list of group-type fields to combine and parse as primitive fields.
+
+  * Type: string[]
+  * Default: ``null``
+  * Importance: low
+
+``file_reader.cobol.reader.debug_fields_policy``
+  Specifies if debugging fields need to be added and what should they contain.
+
+  * Type: enum (available values ``hex``, ``raw`` and ``none``)
+  * Default: ``none``
+  * Importance: low
+
+``file_reader.cobol.reader.record_header_parser``
+  Parser to be used to parse data field record headers.
+
+  * Type: string
+  * Default: ``null``
+  * Importance: low
+
+``file_reader.cobol.reader.rhp_additional_info``
+  Extra option to be passed to a custom record header parser.
+
+  * Type: string
+  * Default: ``null``
+  * Importance: low
+
+``file_reader.cobol.reader.input_file_name_column``
+  A column name to add to each record containing the input file name.
+
+  * Type: string
+  * Default: ````
   * Importance: low
 
 .. _config_options-filereaders-json:
@@ -920,56 +1145,56 @@ To configure custom properties for this reader, the name you must use is ``agnos
 ``file_reader.agnostic.extensions.parquet``
   A comma-separated string list with the accepted extensions for Parquet files.
 
-  * Type: string
+  * Type: string[]
   * Default: ``parquet``
   * Importance: medium
 
 ``file_reader.agnostic.extensions.avro``
   A comma-separated string list with the accepted extensions for Avro files.
 
-  * Type: string
+  * Type: string[]
   * Default: ``avro``
   * Importance: medium
 
 ``file_reader.agnostic.extensions.orc``
   A comma-separated string list with the accepted extensions for ORC files.
 
-  * Type: string
+  * Type: string[]
   * Default: ``orc``
   * Importance: medium
 
 ``file_reader.agnostic.extensions.sequence``
   A comma-separated string list with the accepted extensions for Sequence files.
 
-  * Type: string
+  * Type: string[]
   * Default: ``seq``
   * Importance: medium
 
 ``file_reader.agnostic.extensions.json``
   A comma-separated string list with the accepted extensions for JSON files.
 
-  * Type: string
+  * Type: string[]
   * Default: ``json``
   * Importance: medium
 
 ``file_reader.agnostic.extensions.csv``
  A comma-separated string list with the accepted extensions for CSV files.
 
-  * Type: string
+  * Type: string[]
   * Default: ``csv``
   * Importance: medium
 
 ``file_reader.agnostic.extensions.tsv``
  A comma-separated string list with the accepted extensions for TSV files.
 
-  * Type: string
+  * Type: string[]
   * Default: ``tsv``
   * Importance: medium
 
 ``file_reader.agnostic.extensions.fixed``
  A comma-separated string list with the accepted extensions for fixed-width files.
 
-  * Type: string
+  * Type: string[]
   * Default: ``fixed``
   * Importance: medium
 
