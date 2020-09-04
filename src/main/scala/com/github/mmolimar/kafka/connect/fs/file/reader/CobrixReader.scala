@@ -6,7 +6,7 @@ import za.co.absa.cobrix.cobol.reader.{VarLenNestedReader, VarLenReader}
 
 import scala.collection.Seq
 
-protected object CobolReader {
+protected object CobrixReader {
 
   def varLenReader(copybookContent: String, params: ReaderParameters): VarLenReader = {
     new VarLenNestedReader[java.util.Map[String, AnyRef]](Seq(copybookContent), params, new StructHandler())
