@@ -202,4 +202,25 @@ public class AgnosticFileReaderTest {
         }
     }
 
+    @Nested
+    class AgnosticCobolFileReaderTest extends CobolFileReaderTest {
+
+        @Override
+        protected Map<String, Object> getReaderConfig() {
+            Map<String, Object> config = super.getReaderConfig();
+            config.put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_COBOL, getFileExtension());
+            return config;
+        }
+
+        @Override
+        public Class<? extends FileReader> getReaderClass() {
+            return AgnosticFileReader.class;
+        }
+
+        @Override
+        public String getFileExtension() {
+            return "dt";
+        }
+    }
+
 }

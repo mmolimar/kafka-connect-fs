@@ -1170,6 +1170,13 @@ To configure custom properties for this reader, the name you must use is ``agnos
   * Default: ``seq``
   * Importance: medium
 
+``file_reader.agnostic.extensions.cobol``
+  A comma-separated string list with the accepted extensions for Cobol files.
+
+  * Type: string[]
+  * Default: ``dat``
+  * Importance: medium
+
 ``file_reader.agnostic.extensions.json``
   A comma-separated string list with the accepted extensions for JSON files.
 
