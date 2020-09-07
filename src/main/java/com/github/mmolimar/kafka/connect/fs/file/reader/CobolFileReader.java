@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.github.mmolimar.kafka.connect.fs.FsSourceTaskConfig.FILE_READER_PREFIX;
@@ -122,9 +123,14 @@ public class CobolFileReader extends AbstractFileReader<CobolFileReader.CobolRec
     private Schema schemaForField(Statement statement) {
         if (statement instanceof Group) {
             Group group = (Group) statement;
-            SchemaBuilder builder = SchemaBuilder.struct();
-            seqAsJavaList(group.children()).forEach(child -> builder.field(child.name(), schemaForField(child)));
-
+            SchemaBuilder childrenBuilder = SchemaBuilder.struct();
+            seqAsJavaList(group.children()).forEach(child -> childrenBuilder.field(child.name(), schemaForField(child)));
+            SchemaBuilder builder;
+            if (group.isArray()) {
+                builder = SchemaBuilder.array(childrenBuilder.build());
+            } else {
+                builder = childrenBuilder;
+            }
             return builder.build();
         }
         Primitive primitive = (Primitive) statement;
@@ -313,18 +319,25 @@ public class CobolFileReader extends AbstractFileReader<CobolFileReader.CobolRec
                     .filter(col -> col instanceof Map)
                     .forEach(col -> {
                         Map<String, Object> column = (Map<String, Object>) col;
-                        column.forEach((k, v) -> struct.put(k, mapValue(record.schema.field(k).schema(), v)));
+                        column.forEach((k, v) -> struct.put(k, mapValue(record.schema.field(k).schema(), k, v)));
                     });
             return struct;
         }
 
-        private Object mapValue(Schema schema, Object value) {
-            if (schema.type() != Schema.Type.STRUCT || value == null) {
+        private Object mapValue(Schema schema, String fieldName, Object value) {
+            if (value == null) {
+                return null;
+            } else if (schema.type() == Schema.Type.ARRAY) {
+                List<Object> items = (List<Object>) value;
+                return items.stream()
+                        .map(item -> mapValue(schema.valueSchema(), fieldName, ((Map<String, Object>) item).get(fieldName)))
+                        .collect(Collectors.toList());
+            } else if (schema.type() != Schema.Type.STRUCT) {
                 return value;
             }
             Struct struct = new Struct(schema);
             Map<String, Object> map = (Map<String, Object>) value;
-            map.forEach((k, v) -> struct.put(k, mapValue(schema.field(k).schema(), v)));
+            map.forEach((k, v) -> struct.put(k, mapValue(schema.field(k).schema(), k, v)));
             return struct;
         }
     }
@@ -363,8 +376,10 @@ public class CobolFileReader extends AbstractFileReader<CobolFileReader.CobolRec
 
         private Map.Entry<String, Object> transform(Statement child, Object value) {
             Object childValue;
-            if (child instanceof Group) {
+            if (child instanceof Group && value instanceof Map) {
                 childValue = ((Map<String, Object>) value).get(child.name());
+            } else if (value instanceof Object[]) {
+                childValue = Arrays.asList((Object[]) value);
             } else if (value instanceof ScalaNumber) {
                 childValue = value instanceof scala.math.BigDecimal ?
                         ((BigDecimal) value).doubleValue() : ((ScalaNumber) value).longValue();

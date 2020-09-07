@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.IntStream;
@@ -241,6 +242,8 @@ public class CobolFileReaderTest extends FileReaderTestBase {
         Struct companyDetails = record.getStruct("COMPANY_DETAILS");
         Struct staticDetails = companyDetails.getStruct("STATIC_DETAILS");
         Struct taxpayer = staticDetails.getStruct("TAXPAYER");
+        Struct strategy = staticDetails.getStruct("STRATEGY");
+        List<Struct> strategyDetails = strategy.getArray("STRATEGY_DETAIL");
         assertAll(
                 () -> assertEquals("C", companyDetails.getString("SEGMENT_ID")),
                 () -> assertEquals(String.format("%010d", index), companyDetails.getString("COMPANY_ID")),
@@ -250,7 +253,11 @@ public class CobolFileReaderTest extends FileReaderTestBase {
 
                 () -> assertEquals("A", taxpayer.getString("TAXPAYER_TYPE")),
                 () -> assertEquals("88888888", taxpayer.getString("TAXPAYER_STR")),
-                () -> assertNull(taxpayer.getInt32("TAXPAYER_NUM"))
+                () -> assertNull(taxpayer.getInt32("TAXPAYER_NUM")),
+
+                () -> assertEquals(6, strategyDetails.size()),
+                () -> assertEquals(1111111, (strategyDetails.get(0)).getInt32("NUM1")),
+                () -> assertEquals(2222222, (strategyDetails.get(0)).getInt32("NUM2"))
         );
     }
 }

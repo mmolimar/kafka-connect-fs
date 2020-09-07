@@ -9,3 +9,8 @@
                     15  TAXPAYER-STR   PIC X(8).
                     15  TAXPAYER-NUM  REDEFINES TAXPAYER-STR
                                        PIC 9(8) COMP.
+                 10  STRATEGY.
+                   15  STRATEGY_DETAIL OCCURS 6.
+                     25  NUM1 PIC 9(7) COMP.
+                     25  NUM2 PIC 9(7) COMP-3.
+
