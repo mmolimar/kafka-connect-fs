@@ -97,7 +97,7 @@ public class FsSourceTask extends SourceTask {
                                 ((AbstractFileReader) reader).hasNextBatch() || reader.hasNext() : reader.hasNext();
                         records.add(convert(metadata, reader.currentOffset(), !hasNext, record));
                     }
-                } catch (ConnectException | IOException e) {
+                } catch (IOException | ConnectException e) {
                     // when an exception happens reading a file, the connector continues
                     log.warn("{} Error reading file [{}]: {}. Keep going...",
                             this, metadata.getPath(), e.getMessage(), e);

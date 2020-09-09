@@ -207,7 +207,7 @@ public class CobolFileReader extends AbstractFileReader<CobolFileReader.CobolRec
                 Integer.parseInt(config.getOrDefault(FILE_READER_COBOL_READER_END_OFFSET, "0")),  // endOffset
                 Integer.parseInt(config.getOrDefault(FILE_READER_COBOL_READER_FILE_START_OFFSET, "0")),  // fileStartOffset
                 Integer.parseInt(config.getOrDefault(FILE_READER_COBOL_READER_FILE_END_OFFSET, "0")),  // fileEndOffset
-                true, // generateRecordId
+                false, // generateRecordId
                 SchemaRetentionPolicy$.MODULE$.withNameOpt(config.getOrDefault(FILE_READER_COBOL_READER_SCHEMA_POLICY, "keep_original")).get(),  // schemaPolicy
                 StringTrimmingPolicy$.MODULE$.withNameOpt(config.getOrDefault(FILE_READER_COBOL_READER_STRING_TRIMMING_POLICY, "both")).get(),  // stringTrimmingPolicy
                 scala.Option.apply(null),  // multisegment
