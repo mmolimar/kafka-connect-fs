@@ -74,6 +74,24 @@ and marked as optional in the schema all the fields contained.
 
 More information about properties of this file reader :ref:`here<config_options-filereaders-json>`.
 
+XML
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Reads XML files which might contain multiple number of fields with their specified
+data types. The schema for this sort of records is inferred reading the first record
+and marked as optional in the schema all the fields contained.
+
+More information about properties of this file reader :ref:`here<config_options-filereaders-xml>`.
+
+YAML
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Reads YAML files which might contain multiple number of fields with their specified
+data types. The schema for this sort of records is inferred reading the first record
+and marked as optional in the schema all the fields contained.
+
+More information about properties of this file reader :ref:`here<config_options-filereaders-yaml>`.
+
 CSV
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

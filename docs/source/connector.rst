@@ -26,7 +26,7 @@ Getting started
 Prerequisites
 --------------------------------------------
 
--  Apache Kafka 2.5.0
+-  Apache Kafka 2.6.0
 -  Java 8
 -  Confluent Schema Registry (recommended).
 
@@ -146,11 +146,26 @@ They read files and process each record from the FS. The **file reader** is need
 the connector to process each record and includes in the implementation how to seek and iterate over the
 records in the file.
 
-The file reader to be used when processing files is defined in ``file_reader.class`` connector property.
+The file reader to be used when processing files is defined in the ``file_reader.class`` connector property.
 
 In the same way as the policies, the connector provides several sort of readers to parse and read records
 for different file formats. If you don't have a file reader that fits your needs, just implement one
 with the unique restriction that it must implement the interface
 ``com.github.mmolimar.kafka.connect.fs.file.reader.FileReader``.
+
+The are several file readers included which can read the following file formats:
+
+* Parquet.
+* Avro.
+* Cobol/EBCDIC.
+* CSV.
+* TSV.
+* Fixed-width.
+* JSON.
+* XML.
+* YAML.
+* ORC.
+* SequenceFile.
+* Text.
 
 .. include:: filereaders.rst
