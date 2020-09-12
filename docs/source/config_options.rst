@@ -363,6 +363,62 @@ In order to configure custom properties for this reader, the name you must use i
   * Default: ``common``
   * Importance: medium
 
+``file_reader.cobol.reader.is_record_sequence``
+  If the input file has 4 byte record length headers.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: medium
+
+``file_reader.cobol.reader.floating_point_format``
+  Format used for the floating-point numbers.
+
+  * Type: enum (available values ``ibm``, ``ibm_little_endian``, ``ieee754``, and ``ieee754_little_endian``)
+  * Default: ``ibm``
+  * Importance: medium
+
+``file_reader.cobol.reader.schema_policy``
+  Specifies a policy to transform the input schema.
+
+  * Type: enum (available values ``keep_original`` and ``collapse_root``)
+  * Default: ``keep_original``
+  * Importance: medium
+
+``file_reader.cobol.reader.string_trimming_policy``
+  The trim to apply for records with string data types.
+
+  * Type: enum (available values ``both``, ``left``, ``right`` and ``none``)
+  * Default: ``both``
+  * Importance: medium
+
+``file_reader.cobol.reader.start_offset``
+  An offset to the start of the record in each binary data block.
+
+  * Type: int
+  * Default: ``0``
+  * Importance: medium
+
+``file_reader.cobol.reader.end_offset``
+  An offset from the end of the record to the end of the binary data block.
+
+  * Type: int
+  * Default: ``0``
+  * Importance: medium
+
+``file_reader.cobol.reader.file_start_offset``
+  A number of bytes to skip at the beginning of each file.
+
+  * Type: int
+  * Default: ``0``
+  * Importance: medium
+
+``file_reader.cobol.reader.file_end_offset``
+  A number of bytes to skip at the end of each file.
+
+  * Type: int
+  * Default: ``0``
+  * Importance: medium
+
 ``file_reader.cobol.reader.ebcdic_code_page_class``
   Custom code page conversion class provided.
 
@@ -384,13 +440,6 @@ In order to configure custom properties for this reader, the name you must use i
   * Default: ``true``
   * Importance: low
 
-``file_reader.cobol.reader.floating_point_format``
-  Format used for the floating-point numbers.
-
-  * Type: enum (available values ``ibm``, ``ibm_little_endian``, ``ieee754``, and ``ieee754_little_endian``)
-  * Default: ``ibm``
-  * Importance: medium
-
 ``file_reader.cobol.reader.variable_size_occurs``
   If true, occurs depending on data size will depend on the number of elements.
 
@@ -404,13 +453,6 @@ In order to configure custom properties for this reader, the name you must use i
   * Type: string
   * Default: ``null``
   * Importance: low
-
-``file_reader.cobol.reader.is_record_sequence``
-  If the input file has 4 byte record length headers.
-
-  * Type: boolean
-  * Default: ``false``
-  * Importance: medium
 
 ``file_reader.cobol.reader.is_rdw_big_endian``
   If the RDW is big endian.
@@ -460,48 +502,6 @@ In order to configure custom properties for this reader, the name you must use i
   * Type: int
   * Default: ``null``
   * Importance: low
-
-``file_reader.cobol.reader.start_offset``
-  An offset to the start of the record in each binary data block.
-
-  * Type: int
-  * Default: ``0``
-  * Importance: medium
-
-``file_reader.cobol.reader.end_offset``
-  An offset from the end of the record to the end of the binary data block.
-
-  * Type: int
-  * Default: ``0``
-  * Importance: medium
-
-``file_reader.cobol.reader.file_start_offset``
-  A number of bytes to skip at the beginning of each file.
-
-  * Type: int
-  * Default: ``0``
-  * Importance: medium
-
-``file_reader.cobol.reader.file_end_offset``
-  A number of bytes to skip at the end of each file.
-
-  * Type: int
-  * Default: ``0``
-  * Importance: medium
-
-``file_reader.cobol.reader.schema_policy``
-  Specifies a policy to transform the input schema.
-
-  * Type: enum (available values ``keep_original`` and ``collapse_root``)
-  * Default: ``keep_original``
-  * Importance: medium
-
-``file_reader.cobol.reader.string_trimming_policy``
-  The trim to apply for records with string data types.
-
-  * Type: enum (available values ``both``, ``left``, ``right`` and ``none``)
-  * Default: ``both``
-  * Importance: medium
 
 ``file_reader.cobol.reader.drop_group_fillers``
   If true the parser will drop all FILLER fields, even GROUP FILLERS that have non-FILLER nested fields.
@@ -1262,6 +1262,20 @@ To configure custom properties for this reader, the name you must use is ``agnos
 
   * Type: string[]
   * Default: ``json``
+  * Importance: medium
+
+``file_reader.agnostic.extensions.xml``
+  A comma-separated string list with the accepted extensions for XML files.
+
+  * Type: string[]
+  * Default: ``xml``
+  * Importance: medium
+
+``file_reader.agnostic.extensions.yaml``
+  A comma-separated string list with the accepted extensions for YAML files.
+
+  * Type: string[]
+  * Default: ``yaml``
   * Importance: medium
 
 ``file_reader.agnostic.extensions.csv``

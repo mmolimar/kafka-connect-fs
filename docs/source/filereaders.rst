@@ -154,7 +154,10 @@ Default extensions for each format (configurable):
 * Avro: ``.avro``
 * ORC: ``.orc``
 * SequenceFile: ``.seq``
+* Cobol / EBCDIC: ``.dat``
 * JSON: ``.json``
+* XML: ``.xml``
+* YAML: ``.yaml``
 * CSV: ``.csv``
 * TSV: ``.tsv``
 * FixedWidth: ``.fixed``
