@@ -53,6 +53,7 @@
         <parquet.version>1.11.1</parquet.version>
         <orc.version>1.6.3</orc.version>
         <univocity.version>2.9.0</univocity.version>
+        <jackson-dataformat.version>2.10.2</jackson-dataformat.version>
         <cobrix.version>2.1.1</cobrix.version>
         <scala.version>2.12.12</scala.version>
         <cron-utils.version>9.1.1</cron-utils.version>
@@ -123,6 +124,16 @@
             <groupId>com.univocity</groupId>
             <artifactId>univocity-parsers</artifactId>
             <version>${univocity.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-xml</artifactId>
+            <version>${jackson-dataformat.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+            <version>${jackson-dataformat.version}</version>
         </dependency>
         <dependency>
             <groupId>za.co.absa.cobrix</groupId>
@@ -315,6 +326,8 @@
                                 <tag>csv</tag>
                                 <tag>tsv</tag>
                                 <tag>json</tag>
+                                <tag>xml</tag>
+                                <tag>yaml</tag>
                                 <tag>avro</tag>
                                 <tag>parquet</tag>
                                 <tag>orc</tag>
