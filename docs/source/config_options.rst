@@ -244,20 +244,6 @@ File readers
 Some file readers have custom properties to define and others don't. So, depending on the configuration you'll have
 to take into account their properties.
 
-.. _config_options-filereaders-avro:
-
-Avro
---------------------------------------------
-
-In order to configure custom properties for this reader, the name you must use is ``avro``.
-
-``file_reader.avro.schema``
-  Avro schema in JSON format to use when reading a file.
-  If not specified, the reader will use the schema defined in the file.
-
-  * Type: string
-  * Importance: medium
-
 .. _config_options-filereaders-parquet:
 
 Parquet
@@ -273,6 +259,20 @@ In order to configure custom properties for this reader, the name you must use i
 
 ``file_reader.parquet.projection``
   Avro schema in JSON format to use for projecting fields from records in a file.
+
+  * Type: string
+  * Importance: medium
+
+.. _config_options-filereaders-avro:
+
+Avro
+--------------------------------------------
+
+In order to configure custom properties for this reader, the name you must use is ``avro``.
+
+``file_reader.avro.schema``
+  Avro schema in JSON format to use when reading a file.
+  If not specified, the reader will use the schema defined in the file.
 
   * Type: string
   * Importance: medium
@@ -550,130 +550,6 @@ In order to configure custom properties for this reader, the name you must use i
 
   * Type: string
   * Default: ````
-  * Importance: low
-
-.. _config_options-filereaders-json:
-
-JSON
---------------------------------------------
-
-To configure custom properties for this reader, the name you must use is ``json``.
-
-``file_reader.json.record_per_line``
-  If enabled, the reader will read each line as a record. Otherwise, the reader will read the full
-  content of the file as a record.
-
-  * Type: boolean
-  * Default: ``true``
-  * Importance: medium
-
-``file_reader.json.deserialization.<deserialization_feature>``
-  Deserialization feature to use when reading a JSON file. You can add as much as you like
-  based on the ones defined `here. <https://fasterxml.github.io/jackson-databind/javadoc/2.10/com/fasterxml/jackson/databind/DeserializationFeature.html#enum.constant.summary>`__
-
-  * Type: boolean
-  * Importance: medium
-
-``file_reader.json.encoding``
-  Encoding to use for reading a file. If not specified, the reader will use the default encoding.
-
-  * Type: string
-  * Default: based on the locale and charset of the underlying operating system.
-  * Importance: medium
-
-``file_reader.json.compression.type``
-  Compression type to use when reading a file.
-
-  * Type: enum (available values ``bzip2``, ``gzip`` and ``none``)
-  * Default: ``none``
-  * Importance: medium
-
-``file_reader.json.compression.concatenated``
-  Flag to specify if the decompression of the reader will finish at the end of the file or after
-  the first compressed stream.
-
-  * Type: boolean
-  * Default: ``true``
-  * Importance: low
-
-.. _config_options-filereaders-xml:
-
-XML
---------------------------------------------
-
-To configure custom properties for this reader, the name you must use is ``xml``.
-
-``file_reader.xml.record_per_line``
-  If enabled, the reader will read each line as a record. Otherwise, the reader will read the full
-  content of the file as a record.
-
-  * Type: boolean
-  * Default: ``true``
-  * Importance: medium
-
-``file_reader.xml.deserialization.<deserialization_feature>``
-  Deserialization feature to use when reading a XML file. You can add as much as you like
-  based on the ones defined `here. <https://fasterxml.github.io/jackson-databind/javadoc/2.10/com/fasterxml/jackson/databind/DeserializationFeature.html#enum.constant.summary>`__
-
-  * Type: boolean
-  * Importance: medium
-
-``file_reader.xml.encoding``
-  Encoding to use for reading a file. If not specified, the reader will use the default encoding.
-
-  * Type: string
-  * Default: based on the locale and charset of the underlying operating system.
-  * Importance: medium
-
-``file_reader.xml.compression.type``
-  Compression type to use when reading a file.
-
-  * Type: enum (available values ``bzip2``, ``gzip`` and ``none``)
-  * Default: ``none``
-  * Importance: medium
-
-``file_reader.xml.compression.concatenated``
-  Flag to specify if the decompression of the reader will finish at the end of the file or after
-  the first compressed stream.
-
-  * Type: boolean
-  * Default: ``true``
-  * Importance: low
-
-.. _config_options-filereaders-yaml:
-
-YAML
---------------------------------------------
-
-To configure custom properties for this reader, the name you must use is ``yaml``.
-
-``file_reader.yaml.deserialization.<deserialization_feature>``
-  Deserialization feature to use when reading a YAML file. You can add as much as you like
-  based on the ones defined `here. <https://fasterxml.github.io/jackson-databind/javadoc/2.10/com/fasterxml/jackson/databind/DeserializationFeature.html#enum.constant.summary>`__
-
-  * Type: boolean
-  * Importance: medium
-
-``file_reader.yaml.encoding``
-  Encoding to use for reading a file. If not specified, the reader will use the default encoding.
-
-  * Type: string
-  * Default: based on the locale and charset of the underlying operating system.
-  * Importance: medium
-
-``file_reader.yaml.compression.type``
-  Compression type to use when reading a file.
-
-  * Type: enum (available values ``bzip2``, ``gzip`` and ``none``)
-  * Default: ``none``
-  * Importance: medium
-
-``file_reader.yaml.compression.concatenated``
-  Flag to specify if the decompression of the reader will finish at the end of the file or after
-  the first compressed stream.
-
-  * Type: boolean
-  * Default: ``true``
   * Importance: low
 
 .. _config_options-filereaders-csv:
@@ -1164,6 +1040,130 @@ To configure custom properties for this reader, the name you must use is ``delim
   * Importance: medium
 
 ``file_reader.delimited.compression.concatenated``
+  Flag to specify if the decompression of the reader will finish at the end of the file or after
+  the first compressed stream.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: low
+
+.. _config_options-filereaders-json:
+
+JSON
+--------------------------------------------
+
+To configure custom properties for this reader, the name you must use is ``json``.
+
+``file_reader.json.record_per_line``
+  If enabled, the reader will read each line as a record. Otherwise, the reader will read the full
+  content of the file as a record.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: medium
+
+``file_reader.json.deserialization.<deserialization_feature>``
+  Deserialization feature to use when reading a JSON file. You can add as much as you like
+  based on the ones defined `here. <https://fasterxml.github.io/jackson-databind/javadoc/2.10/com/fasterxml/jackson/databind/DeserializationFeature.html#enum.constant.summary>`__
+
+  * Type: boolean
+  * Importance: medium
+
+``file_reader.json.encoding``
+  Encoding to use for reading a file. If not specified, the reader will use the default encoding.
+
+  * Type: string
+  * Default: based on the locale and charset of the underlying operating system.
+  * Importance: medium
+
+``file_reader.json.compression.type``
+  Compression type to use when reading a file.
+
+  * Type: enum (available values ``bzip2``, ``gzip`` and ``none``)
+  * Default: ``none``
+  * Importance: medium
+
+``file_reader.json.compression.concatenated``
+  Flag to specify if the decompression of the reader will finish at the end of the file or after
+  the first compressed stream.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: low
+
+.. _config_options-filereaders-xml:
+
+XML
+--------------------------------------------
+
+To configure custom properties for this reader, the name you must use is ``xml``.
+
+``file_reader.xml.record_per_line``
+  If enabled, the reader will read each line as a record. Otherwise, the reader will read the full
+  content of the file as a record.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: medium
+
+``file_reader.xml.deserialization.<deserialization_feature>``
+  Deserialization feature to use when reading a XML file. You can add as much as you like
+  based on the ones defined `here. <https://fasterxml.github.io/jackson-databind/javadoc/2.10/com/fasterxml/jackson/databind/DeserializationFeature.html#enum.constant.summary>`__
+
+  * Type: boolean
+  * Importance: medium
+
+``file_reader.xml.encoding``
+  Encoding to use for reading a file. If not specified, the reader will use the default encoding.
+
+  * Type: string
+  * Default: based on the locale and charset of the underlying operating system.
+  * Importance: medium
+
+``file_reader.xml.compression.type``
+  Compression type to use when reading a file.
+
+  * Type: enum (available values ``bzip2``, ``gzip`` and ``none``)
+  * Default: ``none``
+  * Importance: medium
+
+``file_reader.xml.compression.concatenated``
+  Flag to specify if the decompression of the reader will finish at the end of the file or after
+  the first compressed stream.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: low
+
+.. _config_options-filereaders-yaml:
+
+YAML
+--------------------------------------------
+
+To configure custom properties for this reader, the name you must use is ``yaml``.
+
+``file_reader.yaml.deserialization.<deserialization_feature>``
+  Deserialization feature to use when reading a YAML file. You can add as much as you like
+  based on the ones defined `here. <https://fasterxml.github.io/jackson-databind/javadoc/2.10/com/fasterxml/jackson/databind/DeserializationFeature.html#enum.constant.summary>`__
+
+  * Type: boolean
+  * Importance: medium
+
+``file_reader.yaml.encoding``
+  Encoding to use for reading a file. If not specified, the reader will use the default encoding.
+
+  * Type: string
+  * Default: based on the locale and charset of the underlying operating system.
+  * Importance: medium
+
+``file_reader.yaml.compression.type``
+  Compression type to use when reading a file.
+
+  * Type: enum (available values ``bzip2``, ``gzip`` and ``none``)
+  * Default: ``none``
+  * Importance: medium
+
+``file_reader.yaml.compression.concatenated``
   Flag to specify if the decompression of the reader will finish at the end of the file or after
   the first compressed stream.
 

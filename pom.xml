@@ -286,11 +286,18 @@
                             <title>Kafka Connect FileSystem</title>
                             <documentationUrl>https://kafka-connect-fs.readthedocs.io</documentationUrl>
                             <sourceUrl>https://github.com/mmolimar/kafka-connect-fs</sourceUrl>
-                            <description>
+                            <description><![CDATA[
                                 Kafka Connect FileSystem Connector is a source connector for reading records from
                                 different sort of file formats and from different file system types and load them
                                 into Kafka.
-                            </description>
+
+                                The following file types are supported: Parquet, Avro, ORC, SequenceFile,
+                                Cobol / EBCDIC, CSV, TSV, Fixed-width, JSON, XML, YAML and Text.
+
+                                Also, the connector has built-in support for file systems such as HDFS, S3,
+                                Google Cloud Storage, Azure Blob Storage, Azure Data Lake Store, FTP, SFTP and
+                                local file system, among others.
+                            ]]></description>
                             <sourceUrl>https://github.com/mmolimar/kafka-connect-fs</sourceUrl>
 
                             <supportProviderName>Mario Molina</supportProviderName>
@@ -322,17 +329,17 @@
                                 <tag>azure</tag>
                                 <tag>sftp</tag>
                                 <tag>ftp</tag>
-                                <tag>txt</tag>
+                                <tag>parquet</tag>
+                                <tag>avro</tag>
+                                <tag>orc</tag>
+                                <tag>sequence</tag>
+                                <tag>cobol</tag>
                                 <tag>csv</tag>
                                 <tag>tsv</tag>
                                 <tag>json</tag>
                                 <tag>xml</tag>
                                 <tag>yaml</tag>
-                                <tag>avro</tag>
-                                <tag>parquet</tag>
-                                <tag>orc</tag>
-                                <tag>sequence</tag>
-                                <tag>cobol</tag>
+                                <tag>txt</tag>
                             </tags>
 
                             <deliveryGuarantee>
