@@ -52,7 +52,7 @@ More information about properties of this file reader :ref:`here<config_options-
 Cobol
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Mainframe files (Cobol/EBCDIC binary files) can be processed with this reader which uses the
+Mainframe files (Cobol / EBCDIC binary files) can be processed with this reader which uses the
 `Cobrix <https://github.com/AbsaOSS/cobrix/>`__ parser.
 
 By means of the corresponding copybook -representing its schema-, it parses each record and
@@ -77,7 +77,7 @@ More information about properties of this file reader :ref:`here<config_options-
 TSV
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-TSV file reader using a tab (``\t``) to distinguish different columns in each line.
+TSV file reader using a tab ``\t`` to distinguish different columns in each line.
 
 Its behaviour is the same one for the CSV file reader regarding the header and the column names.
 
@@ -90,7 +90,7 @@ FixedWidth
 
 FixedWidth is a plain text file reader which distinguishes each column based on the length of each field.
 
-Its behaviour is the same one for the CSV/TSV file readers regarding the header and the column names.
+Its behaviour is the same one for the CSV / TSV file readers regarding the header and the column names.
 
 This reader is based on the `Univocity Fixed-Width parser <https://www.univocity.com/pages/univocity_parsers_fixed_width.html#working-with-fixed-width>`__.
 
@@ -113,7 +113,7 @@ data types. The schema for this sort of records is inferred reading the first re
 and marked as optional in the schema all the fields contained.
 
 .. warning:: Take into account the current
-             `limitations <https://github.com/FasterXML/jackson-dataformat-xml#known-limitations/>`__.
+             `limitations <https://github.com/FasterXML/jackson-dataformat-xml#known-limitations>`__.
 
 More information about properties of this file reader :ref:`here<config_options-filereaders-xml>`.
 

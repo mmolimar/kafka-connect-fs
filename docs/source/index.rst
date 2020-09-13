@@ -11,7 +11,7 @@ The connector supports:
 
 * Several sort of File Systems (FS) to use.
 * Dynamic and static URIs to ingest data from.
-* Policies to define rules about how to look for files.
+* Policies to define rules about how to look for files and clean them up after processing.
 * File readers to parse and read different kind of file formats.
 
 To learn more about the connector you can read :ref:`this section<connector>` and for more detailed

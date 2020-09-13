@@ -34,7 +34,7 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
 
     private final AbstractFileReader<Object> reader;
     private Set<String> parquetExtensions, avroExtensions, sequenceExtensions, orcExtensions, cobolExtensions,
-            jsonExtensions, xmlExtensions, yamlExtensions, csvExtensions, tsvExtensions, fixedExtensions;
+            csvExtensions, tsvExtensions, fixedExtensions, jsonExtensions, xmlExtensions, yamlExtensions;
 
     public AgnosticFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws Exception {
         super(fs, filePath, new AgnosticAdapter(), config);
@@ -62,18 +62,18 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
             clz = OrcFileReader.class;
         } else if (cobolExtensions.contains(extension)) {
             clz = CobolFileReader.class;
-        } else if (jsonExtensions.contains(extension)) {
-            clz = JsonFileReader.class;
-        } else if (xmlExtensions.contains(extension)) {
-            clz = XmlFileReader.class;
-        } else if (yamlExtensions.contains(extension)) {
-            clz = YamlFileReader.class;
         } else if (csvExtensions.contains(extension)) {
             clz = CsvFileReader.class;
         } else if (tsvExtensions.contains(extension)) {
             clz = TsvFileReader.class;
         } else if (fixedExtensions.contains(extension)) {
             clz = FixedWidthFileReader.class;
+        } else if (jsonExtensions.contains(extension)) {
+            clz = JsonFileReader.class;
+        } else if (xmlExtensions.contains(extension)) {
+            clz = XmlFileReader.class;
+        } else if (yamlExtensions.contains(extension)) {
+            clz = YamlFileReader.class;
         } else {
             clz = TextFileReader.class;
         }
@@ -93,17 +93,17 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
                 .toLowerCase().split(",")).collect(Collectors.toSet());
         this.cobolExtensions = Arrays.stream(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_COBOL, "dat")
                 .toLowerCase().split(",")).collect(Collectors.toSet());
-        this.jsonExtensions = Arrays.stream(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_JSON, "json")
-                .toLowerCase().split(",")).collect(Collectors.toSet());
-        this.xmlExtensions = Arrays.stream(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_XML, "xml")
-                .toLowerCase().split(",")).collect(Collectors.toSet());
-        this.yamlExtensions = Arrays.stream(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_YAML, "yaml")
-                .toLowerCase().split(",")).collect(Collectors.toSet());
         this.csvExtensions = Arrays.stream(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_CSV, "csv")
                 .toLowerCase().split(",")).collect(Collectors.toSet());
         this.tsvExtensions = Arrays.stream(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_TSV, "tsv")
                 .toLowerCase().split(",")).collect(Collectors.toSet());
         this.fixedExtensions = Arrays.stream(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_FIXED, "fixed")
+                .toLowerCase().split(",")).collect(Collectors.toSet());
+        this.jsonExtensions = Arrays.stream(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_JSON, "json")
+                .toLowerCase().split(",")).collect(Collectors.toSet());
+        this.xmlExtensions = Arrays.stream(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_XML, "xml")
+                .toLowerCase().split(",")).collect(Collectors.toSet());
+        this.yamlExtensions = Arrays.stream(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_YAML, "yaml")
                 .toLowerCase().split(",")).collect(Collectors.toSet());
     }
 

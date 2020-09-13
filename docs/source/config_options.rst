@@ -39,7 +39,7 @@ General config properties for this connector.
   Comma-separated URIs of the FS(s). They can be URIs pointing directly to a file in the FS and
   also can be dynamic using expressions for modifying the URIs in runtime. These expressions
   have the form ``${XXX}`` where XXX represents a pattern from ``java.time.format.DateTimeFormatter``
-  Java class.
+  `Java class <https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html>`__.
 
   * Type: string
   * Importance: high
@@ -99,7 +99,8 @@ General config properties for this connector.
   * Importance: medium
 
 ``policy.cleanup``
-  Cleanup strategy to use when skipping files.
+  Cleanup strategy to use when skipping files. It's possible to move these files to another folder, remove them
+  or do nothing.
 
   * Type: enum (available values ``none``, ``move`` and ``delete``)
   * Default: ``none``
@@ -357,7 +358,7 @@ In order to configure custom properties for this reader, the name you must use i
   * Importance: medium
 
 ``file_reader.cobol.reader.ebcdic_code_page``
-  Code page to be used for EBCDIC to ASCII/Unicode conversions.
+  Code page to be used for EBCDIC to ASCII / Unicode conversions.
 
   * Type: string
   * Default: ``common``
@@ -1257,27 +1258,6 @@ To configure custom properties for this reader, the name you must use is ``agnos
   * Default: ``dat``
   * Importance: medium
 
-``file_reader.agnostic.extensions.json``
-  A comma-separated string list with the accepted extensions for JSON files.
-
-  * Type: string[]
-  * Default: ``json``
-  * Importance: medium
-
-``file_reader.agnostic.extensions.xml``
-  A comma-separated string list with the accepted extensions for XML files.
-
-  * Type: string[]
-  * Default: ``xml``
-  * Importance: medium
-
-``file_reader.agnostic.extensions.yaml``
-  A comma-separated string list with the accepted extensions for YAML files.
-
-  * Type: string[]
-  * Default: ``yaml``
-  * Importance: medium
-
 ``file_reader.agnostic.extensions.csv``
  A comma-separated string list with the accepted extensions for CSV files.
 
@@ -1297,6 +1277,27 @@ To configure custom properties for this reader, the name you must use is ``agnos
 
   * Type: string[]
   * Default: ``fixed``
+  * Importance: medium
+
+``file_reader.agnostic.extensions.json``
+  A comma-separated string list with the accepted extensions for JSON files.
+
+  * Type: string[]
+  * Default: ``json``
+  * Importance: medium
+
+``file_reader.agnostic.extensions.xml``
+  A comma-separated string list with the accepted extensions for XML files.
+
+  * Type: string[]
+  * Default: ``xml``
+  * Importance: medium
+
+``file_reader.agnostic.extensions.yaml``
+  A comma-separated string list with the accepted extensions for YAML files.
+
+  * Type: string[]
+  * Default: ``yaml``
   * Importance: medium
 
 .. note:: The Agnostic reader uses the previous ones as inner readers. So, in case of using this

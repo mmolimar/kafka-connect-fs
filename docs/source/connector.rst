@@ -4,10 +4,7 @@
 Connector
 ********************************************
 
-Kafka Connect FileSystem Connector is a source connector for reading records from different sort of file
-formats and from different file system types and load them into Kafka.
-
-The connector takes advantage of the abstraction provided from `Hadoop Common <http://hadoop.apache.org/>`__
+The connector takes advantage of the abstraction provided from `Hadoop Common <https://hadoop.apache.org/>`__
 using the implementation of the ``org.apache.hadoop.fs.FileSystem`` class. So, it's possible to use a
 wide variety of FS or if your FS is not included in the Hadoop Common API you can implement an extension
 of this abstraction and using it in a transparent way.
@@ -22,9 +19,6 @@ Among others, these are some file systems it supports:
 * WebHDFS.
 * Local File System.
 * Hadoop Archive File System.
-
-On the other hand, the following file types are supported: Parquet, Avro, ORC, SequenceFile, Cobol / EBCDIC,
-CSV, TSV, Fixed-width, JSON, XML, YAML and Text.
 
 Getting started
 ============================================

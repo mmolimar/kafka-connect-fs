@@ -336,6 +336,7 @@
                                 <tag>cobol</tag>
                                 <tag>csv</tag>
                                 <tag>tsv</tag>
+                                <tag>fixed</tag>
                                 <tag>json</tag>
                                 <tag>xml</tag>
                                 <tag>yaml</tag>
