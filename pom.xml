@@ -49,7 +49,7 @@
         <kafka.version>2.6.0</kafka.version>
         <confluent.version>5.5.1</confluent.version>
         <hadoop.version>3.3.0</hadoop.version>
-        <gcs-connector.version>hadoop3-2.1.4</gcs-connector.version>
+        <gcs-connector.version>hadoop3-2.1.5</gcs-connector.version>
         <parquet.version>1.11.1</parquet.version>
         <orc.version>1.6.3</orc.version>
         <univocity.version>2.9.0</univocity.version>
@@ -58,7 +58,7 @@
         <scala.version>2.12.12</scala.version>
         <cron-utils.version>9.1.1</cron-utils.version>
         <jsch.version>0.1.55</jsch.version>
-        <junit-jupiter.version>5.6.2</junit-jupiter.version>
+        <junit-jupiter.version>5.7.0</junit-jupiter.version>
         <easymock.version>4.2</easymock.version>
         <powermock.version>2.0.7</powermock.version>
         <maven-compiler.source>1.8</maven-compiler.source>
