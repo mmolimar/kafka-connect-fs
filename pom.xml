@@ -271,6 +271,12 @@
                 <groupId>org.eluder.coveralls</groupId>
                 <artifactId>coveralls-maven-plugin</artifactId>
                 <version>${maven-coveralls-plugin.version}</version>
+                <configuration>
+                    <sourceDirectories>
+                        <sourceDirectory>${basedir}/src/main/java</sourceDirectory>
+                        <sourceDirectory>${basedir}/src/main/scala</sourceDirectory>
+                    </sourceDirectories>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>io.confluent</groupId>
