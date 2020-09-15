@@ -17,7 +17,7 @@ Cron
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This policy is scheduled based on cron expressions and their format to put in the configuration
-are based on the library `Quartz Scheduler <https://www.quartz-scheduler.org>`__
+are based on the library `Quartz Scheduler <https://www.quartz-scheduler.org>`__.
 
 After finishing each execution, the policy gets slept until the next one is scheduled, if applicable.
 

@@ -4,7 +4,7 @@
 Connector
 ********************************************
 
-The connector takes advantage of the abstraction provided from `Hadoop Common <http://hadoop.apache.org/>`__
+The connector takes advantage of the abstraction provided from `Hadoop Common <https://hadoop.apache.org/>`__
 using the implementation of the ``org.apache.hadoop.fs.FileSystem`` class. So, it's possible to use a
 wide variety of FS or if your FS is not included in the Hadoop Common API you can implement an extension
 of this abstraction and using it in a transparent way.
@@ -26,8 +26,8 @@ Getting started
 Prerequisites
 --------------------------------------------
 
--  Apache Kafka 2.5.0
--  Java 8
+-  Apache Kafka 2.6.0.
+-  Java 8.
 -  Confluent Schema Registry (recommended).
 
 Building from source
@@ -53,6 +53,7 @@ The ``kafka-connect-fs.properties`` file defines the following properties as req
    policy.recursive=true
    policy.regexp=.*
    policy.batch_size=0
+   policy.cleanup=none
    file_reader.class=<File reader class>
    file_reader.batch_size=0
 
@@ -68,6 +69,7 @@ The ``kafka-connect-fs.properties`` file defines the following properties as req
 #. Flag to activate traversed recursion in subdirectories when listing files.
 #. Regular expression to filter files from the FS.
 #. Number of files that should be handled at a time. Non-positive values disable batching.
+#. Cleanup strategy to manage processed files.
 #. File reader class to read files from the FS
    (must implement ``com.github.mmolimar.kafka.connect.fs.file.reader.FileReader`` interface).
 #. Number of records to process at a time. Non-positive values disable batching.
@@ -116,11 +118,11 @@ Policies
 
 In order to ingest data from the FS(s), the connector needs a **policy** to define the rules to do it.
 
-Basically, the policy tries to connect to each FS included in ``fs.uris`` connector property, lists files
+Basically, the policy tries to connect to each FS included in the ``fs.uris`` connector property, lists files
 (and filter them using the regular expression provided in the ``policy.regexp`` property) and enables
-a file reader to read records from them.
+a file reader to read records.
 
-The policy to be used by the connector is defined in ``policy.class`` connector property.
+The policy to be used by the connector is defined in the ``policy.class`` connector property.
 
 .. important:: When delivering records from the connector to Kafka, they contain their own file offset
                so, if in the next eventual policy execution this file is processed again,
@@ -142,13 +144,28 @@ File readers
 
 They read files and process each record from the FS. The **file reader** is needed by the policy to enable
 the connector to process each record and includes in the implementation how to seek and iterate over the
-records in the file.
+records within the file.
 
-The file reader to be used when processing files is defined in ``file_reader.class`` connector property.
+The file reader to be used when processing files is defined in the ``file_reader.class`` connector property.
 
-In the same way as the policies, the connector provides several sort of readers to parse and read records
+In the same way as policies, the connector provides several sort of readers to parse and read records
 for different file formats. If you don't have a file reader that fits your needs, just implement one
 with the unique restriction that it must implement the interface
 ``com.github.mmolimar.kafka.connect.fs.file.reader.FileReader``.
+
+The are several file readers included which can read the following file formats:
+
+* Parquet.
+* Avro.
+* ORC.
+* SequenceFile.
+* Cobol / EBCDIC.
+* CSV.
+* TSV.
+* Fixed-width.
+* JSON.
+* XML.
+* YAML.
+* Text.
 
 .. include:: filereaders.rst

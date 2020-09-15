@@ -1,15 +1,3 @@
-Avro
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Files with `Avro <http://avro.apache.org/>`__ format can be read with this reader.
-
-The Avro schema is not needed due to is read from the file. The message sent
-to Kafka is created by transforming the record by means of
-`Confluent avro-converter <https://github.com/confluentinc/schema-registry/tree/master/avro-converter>`__
-API.
-
-More information about properties of this file reader :ref:`here<config_options-filereaders-avro>`.
-
 Parquet
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -19,12 +7,19 @@ The reader takes advantage of the Parquet-Avro API and uses the Parquet file
 as if it was an Avro file, so the message sent to Kafka is built in the same
 way as the Avro file reader does.
 
-.. warning:: Seeking Parquet files is a heavy task because the reader has to
-             iterate over all records. If the policy processes the same file
-             over and over again and has to seek the file, the performance
-             can be affected.
-
 More information about properties of this file reader :ref:`here<config_options-filereaders-parquet>`.
+
+Avro
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Files with `Avro <https://avro.apache.org/>`__ format can be read with this reader.
+
+The Avro schema is not needed due to is read from the file. The message sent
+to Kafka is created by transforming the record by means of
+`Confluent avro-converter <https://github.com/confluentinc/schema-registry/tree/master/avro-converter>`__
+API.
+
+More information about properties of this file reader :ref:`here<config_options-filereaders-avro>`.
 
 ORC
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -46,27 +41,29 @@ SequenceFile
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 `Sequence files <https://wiki.apache.org/hadoop/SequenceFile>`__ are one kind of
-the Hadoop file formats which are serialized in key/value pairs.
+the Hadoop file formats which are serialized in key-value pairs.
 
 This reader can process this file format and build a Kafka message with the
-key/value pair. These two values are named ``key`` and ``value`` in the message
+key-value pair. These two values are named ``key`` and ``value`` in the message
 by default but you can customize these field names.
 
 More information about properties of this file reader :ref:`here<config_options-filereaders-sequencefile>`.
 
-JSON
+Cobol
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Reads JSON files which might contain multiple number of fields with their specified
-data types. The schema for this sort of records is inferred reading the first record
-and marked as optional in the schema all the fields contained.
+Mainframe files (Cobol / EBCDIC binary files) can be processed with this reader which uses the
+`Cobrix <https://github.com/AbsaOSS/cobrix/>`__ parser.
 
-More information about properties of this file reader :ref:`here<config_options-filereaders-json>`.
+By means of the corresponding copybook -representing its schema-, it parses each record and
+translate it into a Kafka message with the schema.
+
+More information about properties of this file reader :ref:`here<config_options-filereaders-cobol>`.
 
 CSV
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-CSV file reader using a custom token to distinguish different columns on each line.
+CSV file reader using a custom token to distinguish different columns in each line.
 
 It allows to distinguish a header in the files and set the name of their columns
 in the message sent to Kafka. If there is no header, the value of each column will be in
@@ -80,7 +77,7 @@ More information about properties of this file reader :ref:`here<config_options-
 TSV
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-TSV file reader using a tab (``\t``) to distinguish different columns on each line.
+TSV file reader using a tab ``\t`` to distinguish different columns in each line.
 
 Its behaviour is the same one for the CSV file reader regarding the header and the column names.
 
@@ -93,11 +90,41 @@ FixedWidth
 
 FixedWidth is a plain text file reader which distinguishes each column based on the length of each field.
 
-Its behaviour is the same one for the CSV/TSV file readers regarding the header and the column names.
+Its behaviour is the same one for the CSV / TSV file readers regarding the header and the column names.
 
 This reader is based on the `Univocity Fixed-Width parser <https://www.univocity.com/pages/univocity_parsers_fixed_width.html#working-with-fixed-width>`__.
 
 More information about properties of this file reader :ref:`here<config_options-filereaders-fixedwidth>`.
+
+JSON
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Reads JSON files which might contain multiple number of fields with their specified
+data types. The schema for this sort of records is inferred reading the first record
+and marked as optional in the schema all the fields contained.
+
+More information about properties of this file reader :ref:`here<config_options-filereaders-json>`.
+
+XML
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Reads XML files which might contain multiple number of fields with their specified
+data types. The schema for this sort of records is inferred reading the first record
+and marked as optional in the schema all the fields contained.
+
+.. warning:: Take into account the current
+             `limitations <https://github.com/FasterXML/jackson-dataformat-xml#known-limitations>`__.
+
+More information about properties of this file reader :ref:`here<config_options-filereaders-xml>`.
+
+YAML
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Reads YAML files which might contain multiple number of fields with their specified
+data types. The schema for this sort of records is inferred reading the first record
+and marked as optional in the schema all the fields contained.
+
+More information about properties of this file reader :ref:`here<config_options-filereaders-yaml>`.
 
 Text
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -116,8 +143,8 @@ Agnostic
 Actually, this reader is a wrapper of the readers listing above.
 
 It tries to read any kind of file format using an internal reader based on the file extension,
-applying the proper one (Parquet, Avro, ORC, SequenceFile, CSV, TSV or Text). In case of no
-extension has been matched, the Text file reader will be applied.
+applying the proper one (Parquet, Avro, ORC, SequenceFile, Cobol / EBCDIC, CSV, TSV, FixedWidth, JSON, XML,
+YAML, or Text). In case of no extension has been matched, the Text file reader will be applied.
 
 Default extensions for each format (configurable):
 
@@ -125,10 +152,13 @@ Default extensions for each format (configurable):
 * Avro: ``.avro``
 * ORC: ``.orc``
 * SequenceFile: ``.seq``
-* JSON: ``.json``
+* Cobol / EBCDIC: ``.dat``
 * CSV: ``.csv``
 * TSV: ``.tsv``
 * FixedWidth: ``.fixed``
+* JSON: ``.json``
+* XML: ``.xml``
+* YAML: ``.yaml``
 * Text: any other sort of file extension.
 
 More information about properties of this file reader :ref:`here<config_options-filereaders-agnostic>`.

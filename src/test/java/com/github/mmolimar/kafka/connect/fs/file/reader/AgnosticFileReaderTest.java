@@ -114,6 +114,48 @@ public class AgnosticFileReaderTest {
     }
 
     @Nested
+    class AgnosticXmlFileReaderTest extends XmlFileReaderTest {
+
+        @Override
+        protected Map<String, Object> getReaderConfig() {
+            Map<String, Object> config = super.getReaderConfig();
+            config.put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_XML, getFileExtension());
+            return config;
+        }
+
+        @Override
+        public Class<? extends FileReader> getReaderClass() {
+            return AgnosticFileReader.class;
+        }
+
+        @Override
+        public String getFileExtension() {
+            return FILE_EXTENSION;
+        }
+    }
+
+    @Nested
+    class AgnosticYamlFileReaderTest extends YamlFileReaderTest {
+
+        @Override
+        protected Map<String, Object> getReaderConfig() {
+            Map<String, Object> config = super.getReaderConfig();
+            config.put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_YAML, getFileExtension());
+            return config;
+        }
+
+        @Override
+        public Class<? extends FileReader> getReaderClass() {
+            return AgnosticFileReader.class;
+        }
+
+        @Override
+        public String getFileExtension() {
+            return FILE_EXTENSION;
+        }
+    }
+
+    @Nested
     class AgnosticAvroFileReaderTest extends AvroFileReaderTest {
 
         @Override
@@ -202,4 +244,24 @@ public class AgnosticFileReaderTest {
         }
     }
 
+    @Nested
+    class AgnosticCobolFileReaderTest extends CobolFileReaderTest {
+
+        @Override
+        protected Map<String, Object> getReaderConfig() {
+            Map<String, Object> config = super.getReaderConfig();
+            config.put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_COBOL, getFileExtension());
+            return config;
+        }
+
+        @Override
+        public Class<? extends FileReader> getReaderClass() {
+            return AgnosticFileReader.class;
+        }
+
+        @Override
+        public String getFileExtension() {
+            return "dt";
+        }
+    }
 }

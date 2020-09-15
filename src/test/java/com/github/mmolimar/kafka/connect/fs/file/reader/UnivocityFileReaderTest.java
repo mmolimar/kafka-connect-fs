@@ -96,6 +96,29 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
+    public void readAllDataWithCustomHeaders(ReaderFsTestConfig fsConfig) throws IOException {
+        Path file = createDataFile(fsConfig, false);
+        Map<String, Object> readerConfig = getReaderConfig();
+        readerConfig.put(T.FILE_READER_DELIMITED_SETTINGS_HEADER, "false");
+        // NOTE: 9 custom header names to match the quantity of static fields
+        // FIELD_COLUMN1, ... , FIELD_COLUMN9
+        String[] headers = new String[] { "a", "b", "c", "d", "e", "f", "g", "h", "i" };
+        readerConfig.put(T.FILE_READER_DELIMITED_SETTINGS_HEADER_NAMES, String.join(",", headers));
+        FileReader reader = getReader(fsConfig.getFs(), file, readerConfig);
+
+        assertTrue(reader.hasNext());
+
+        int recordCount = 0;
+        while (reader.hasNext()) {
+            Struct record = reader.next();
+            checkDataWithHeaders(record, recordCount, headers);
+            recordCount++;
+        }
+        assertEquals(NUM_RECORDS, recordCount, "The number of records in the file does not match");
+    }
+
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
     public void readAllDataWithoutSchema(ReaderFsTestConfig fsConfig) throws IOException {
         Path file = createDataFile(fsConfig, true);
         Map<String, Object> readerConfig = getReaderConfig();
@@ -258,6 +281,19 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
                 () -> assertEquals(true, record.get(FIELD_COLUMN7)),
                 () -> assertEquals("test bytes", new String((byte[]) record.get(FIELD_COLUMN8))),
                 () -> assertEquals("test string", record.get(FIELD_COLUMN9))
+        );
+    }
+
+    protected void checkDataWithHeaders(Struct record, long index, String[] headers) {
+        assertAll(() -> assertEquals((byte) 2, record.get(headers[0])),
+                () -> assertEquals((short) 4, record.get(headers[1])),
+                () -> assertEquals(8, record.get(headers[2])),
+                () -> assertEquals(16L, record.get(headers[3])),
+                () -> assertEquals(32.32f, record.get(headers[4])),
+                () -> assertEquals(64.64d, record.get(headers[5])),
+                () -> assertEquals(true, record.get(headers[6])),
+                () -> assertEquals("test bytes", new String((byte[]) record.get(headers[7]))),
+                () -> assertEquals("test string", record.get(headers[8]))
         );
     }
 

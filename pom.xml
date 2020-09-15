@@ -4,7 +4,7 @@
 
     <groupId>com.github.mmolimar.kafka.connect</groupId>
     <artifactId>kafka-connect-fs</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
     <packaging>jar</packaging>
 
     <name>kafka-connect-fs</name>
@@ -46,22 +46,26 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kafka.version>2.5.0</kafka.version>
-        <confluent.version>5.5.0</confluent.version>
-        <hadoop.version>3.2.1</hadoop.version>
-        <gcs-connector.version>hadoop3-2.1.3</gcs-connector.version>
-        <parquet.version>1.11.0</parquet.version>
+        <kafka.version>2.6.0</kafka.version>
+        <confluent.version>5.5.1</confluent.version>
+        <hadoop.version>3.3.0</hadoop.version>
+        <gcs-connector.version>hadoop3-2.1.5</gcs-connector.version>
+        <parquet.version>1.11.1</parquet.version>
         <orc.version>1.6.3</orc.version>
-        <univocity.version>2.8.4</univocity.version>
-        <cron-utils.version>9.0.2</cron-utils.version>
-        <jsch.version>0.1.54</jsch.version>
-        <junit-jupiter.version>5.6.2</junit-jupiter.version>
+        <univocity.version>2.9.0</univocity.version>
+        <jackson-dataformat.version>2.10.2</jackson-dataformat.version>
+        <cobrix.version>2.1.1</cobrix.version>
+        <scala.version>2.12.12</scala.version>
+        <cron-utils.version>9.1.1</cron-utils.version>
+        <jsch.version>0.1.55</jsch.version>
+        <junit-jupiter.version>5.7.0</junit-jupiter.version>
         <easymock.version>4.2</easymock.version>
         <powermock.version>2.0.7</powermock.version>
         <maven-compiler.source>1.8</maven-compiler.source>
         <maven-compiler.target>${maven-compiler.source}</maven-compiler.target>
         <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+        <maven-scala-plugin.version>4.4.0</maven-scala-plugin.version>
         <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
         <maven-jacoco-plugin.version>0.8.5</maven-jacoco-plugin.version>
         <maven-coveralls-plugin.version>4.3.0</maven-coveralls-plugin.version>
@@ -122,6 +126,21 @@
             <version>${univocity.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-xml</artifactId>
+            <version>${jackson-dataformat.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+            <version>${jackson-dataformat.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>za.co.absa.cobrix</groupId>
+            <artifactId>cobol-parser_2.12</artifactId>
+            <version>${cobrix.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.cronutils</groupId>
             <artifactId>cron-utils</artifactId>
             <version>${cron-utils.version}</version>
@@ -132,7 +151,7 @@
             <version>${jsch.version}</version>
         </dependency>
 
-        <!-- test dependencies -->
+        <!-- Test dependencies -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -162,6 +181,24 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+                <version>${maven-scala-plugin.version}</version>
+                <configuration>
+                    <scalaVersion>${scala.version}</scalaVersion>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>scala-compile-first</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>${maven-jar-plugin.version}</version>
@@ -183,6 +220,14 @@
                     <source>${maven-compiler.source}</source>
                     <target>${maven-compiler.target}</target>
                 </configuration>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -226,6 +271,12 @@
                 <groupId>org.eluder.coveralls</groupId>
                 <artifactId>coveralls-maven-plugin</artifactId>
                 <version>${maven-coveralls-plugin.version}</version>
+                <configuration>
+                    <sourceDirectories>
+                        <sourceDirectory>${basedir}/src/main/java</sourceDirectory>
+                        <sourceDirectory>${basedir}/src/main/scala</sourceDirectory>
+                    </sourceDirectories>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>io.confluent</groupId>
@@ -241,11 +292,18 @@
                             <title>Kafka Connect FileSystem</title>
                             <documentationUrl>https://kafka-connect-fs.readthedocs.io</documentationUrl>
                             <sourceUrl>https://github.com/mmolimar/kafka-connect-fs</sourceUrl>
-                            <description>
+                            <description><![CDATA[
                                 Kafka Connect FileSystem Connector is a source connector for reading records from
                                 different sort of file formats and from different file system types and load them
                                 into Kafka.
-                            </description>
+
+                                The following file types are supported: Parquet, Avro, ORC, SequenceFile,
+                                Cobol / EBCDIC, CSV, TSV, Fixed-width, JSON, XML, YAML and Text.
+
+                                Also, the connector has built-in support for file systems such as HDFS, S3,
+                                Google Cloud Storage, Azure Blob Storage, Azure Data Lake Store, FTP, SFTP and
+                                local file system, among others.
+                            ]]></description>
                             <sourceUrl>https://github.com/mmolimar/kafka-connect-fs</sourceUrl>
 
                             <supportProviderName>Mario Molina</supportProviderName>
@@ -277,14 +335,18 @@
                                 <tag>azure</tag>
                                 <tag>sftp</tag>
                                 <tag>ftp</tag>
-                                <tag>txt</tag>
-                                <tag>csv</tag>
-                                <tag>tsv</tag>
-                                <tag>json</tag>
-                                <tag>avro</tag>
                                 <tag>parquet</tag>
+                                <tag>avro</tag>
                                 <tag>orc</tag>
                                 <tag>sequence</tag>
+                                <tag>cobol</tag>
+                                <tag>csv</tag>
+                                <tag>tsv</tag>
+                                <tag>fixed</tag>
+                                <tag>json</tag>
+                                <tag>xml</tag>
+                                <tag>yaml</tag>
+                                <tag>txt</tag>
                             </tags>
 
                             <deliveryGuarantee>
