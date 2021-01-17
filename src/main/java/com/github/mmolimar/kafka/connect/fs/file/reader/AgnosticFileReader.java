@@ -46,12 +46,13 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
         }
     }
 
+    @SuppressWarnings("unchecked")
     private AbstractFileReader<Object> readerByExtension(FileSystem fs, Path filePath, Map<String, Object> config) {
         int index = filePath.getName().lastIndexOf('.');
         String extension = index == -1 || index == filePath.getName().length() - 1 ? "" :
                 filePath.getName().substring(index + 1).toLowerCase();
 
-        Class<? extends AbstractFileReader> clz;
+        Class<? extends AbstractFileReader<?>> clz;
         if (parquetExtensions.contains(extension)) {
             clz = ParquetFileReader.class;
         } else if (avroExtensions.contains(extension)) {

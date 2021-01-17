@@ -38,6 +38,7 @@ public class SleepyPolicyTest extends PolicyTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
+    @SuppressWarnings("unchecked")
     public void invalidSleepTime(PolicyFsTestConfig fsConfig) {
         Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
         originals.put(SleepyPolicy.SLEEPY_POLICY_SLEEP_MS, "invalid");
@@ -57,6 +58,7 @@ public class SleepyPolicyTest extends PolicyTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
+    @SuppressWarnings("unchecked")
     public void invalidMaxExecs(PolicyFsTestConfig fsConfig) {
         Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
         originals.put(SleepyPolicy.SLEEPY_POLICY_MAX_EXECS, "invalid");
@@ -76,6 +78,7 @@ public class SleepyPolicyTest extends PolicyTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
+    @SuppressWarnings("unchecked")
     public void invalidSleepFraction(PolicyFsTestConfig fsConfig) {
         Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
         originals.put(SleepyPolicy.SLEEPY_POLICY_SLEEP_FRACTION, "invalid");
@@ -95,6 +98,7 @@ public class SleepyPolicyTest extends PolicyTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
+    @SuppressWarnings("unchecked")
     public void sleepExecution(PolicyFsTestConfig fsConfig) throws IOException {
         Map<String, String> tConfig = fsConfig.getSourceTaskConfig().originalsStrings();
         tConfig.put(SleepyPolicy.SLEEPY_POLICY_SLEEP_MS, "1000");
@@ -113,6 +117,7 @@ public class SleepyPolicyTest extends PolicyTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
+    @SuppressWarnings("unchecked")
     public void defaultExecutions(PolicyFsTestConfig fsConfig) throws IOException {
         Map<String, String> tConfig = fsConfig.getSourceTaskConfig().originalsStrings();
         tConfig.put(SleepyPolicy.SLEEPY_POLICY_SLEEP_MS, "1");

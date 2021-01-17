@@ -50,6 +50,7 @@ public class CronPolicyTest extends PolicyTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
+    @SuppressWarnings("unchecked")
     public void invalidCronExpression(PolicyFsTestConfig fsConfig) {
         Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
         originals.put(CronPolicy.CRON_POLICY_EXPRESSION, "invalid");
@@ -69,6 +70,7 @@ public class CronPolicyTest extends PolicyTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
+    @SuppressWarnings("unchecked")
     public void invalidEndDate(PolicyFsTestConfig fsConfig) {
         Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
         originals.put(CronPolicy.CRON_POLICY_END_DATE, "invalid");
@@ -88,6 +90,7 @@ public class CronPolicyTest extends PolicyTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
+    @SuppressWarnings("unchecked")
     public void canBeInterrupted(PolicyFsTestConfig fsConfig) throws IOException {
         try (Policy policy = ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
                         .getClass(FsSourceTaskConfig.POLICY_CLASS),

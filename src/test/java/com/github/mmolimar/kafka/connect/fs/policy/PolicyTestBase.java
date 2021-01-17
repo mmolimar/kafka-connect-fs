@@ -48,6 +48,7 @@ abstract class PolicyTestBase {
     }
 
     @BeforeEach
+    @SuppressWarnings("unchecked")
     public void initPolicy() {
         for (PolicyFsTestConfig fsConfig : TEST_FILE_SYSTEMS) {
             FsSourceTaskConfig sourceTaskConfig = buildSourceTaskConfig(fsConfig.getDirectories());
@@ -83,6 +84,7 @@ abstract class PolicyTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
+    @SuppressWarnings("unchecked")
     public void invalidConfig(PolicyFsTestConfig fsConfig) {
         assertThrows(ConfigException.class, () ->
                 ReflectionUtils.makePolicy((Class<? extends Policy>) fsConfig.getSourceTaskConfig()
@@ -92,6 +94,7 @@ abstract class PolicyTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
+    @SuppressWarnings("unchecked")
     public void invalidConfigCleanup(PolicyFsTestConfig fsConfig) {
         Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
         originals.put(FsSourceTaskConfig.POLICY_CLEANUP, "invalid");
@@ -155,6 +158,7 @@ abstract class PolicyTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
+    @SuppressWarnings("unchecked")
     public void oneFilePerFsWithMoveCleanup(PolicyFsTestConfig fsConfig) throws IOException {
         FileSystem fs = fsConfig.getFs();
 
@@ -195,6 +199,7 @@ abstract class PolicyTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
+    @SuppressWarnings("unchecked")
     public void oneFilePerFsWithDeleteCleanup(PolicyFsTestConfig fsConfig) throws IOException {
         FileSystem fs = fsConfig.getFs();
 
@@ -258,6 +263,7 @@ abstract class PolicyTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
+    @SuppressWarnings("unchecked")
     public void dynamicURIs(PolicyFsTestConfig fsConfig) throws IOException {
         Path dynamic = new Path(fsConfig.getFsUri().toString(), "${G}/${yyyy}/${MM}/${W}");
         fsConfig.getFs().create(dynamic);
@@ -287,6 +293,7 @@ abstract class PolicyTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
+    @SuppressWarnings("unchecked")
     public void invalidDynamicURIs(PolicyFsTestConfig fsConfig) throws IOException {
         Path dynamic = new Path(fsConfig.getFsUri().toString(), "${yyyy}/${MM}/${mmmmmmm}");
         fsConfig.getFs().create(dynamic);
@@ -308,6 +315,7 @@ abstract class PolicyTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
+    @SuppressWarnings("unchecked")
     public void execPolicyBatchesFiles(PolicyFsTestConfig fsConfig) throws IOException, InterruptedException {
         Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
         originals.put(FsSourceTaskConfig.POLICY_BATCH_SIZE, "1");

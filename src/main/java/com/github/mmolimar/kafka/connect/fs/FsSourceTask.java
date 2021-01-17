@@ -46,6 +46,7 @@ public class FsSourceTask extends SourceTask {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void start(Map<String, String> properties) {
         log.info("{} Starting FS source task...", this);
         try {
@@ -94,7 +95,7 @@ public class FsSourceTask extends SourceTask {
                         Struct record = reader.next();
                         // TODO change FileReader interface in the next major version
                         boolean hasNext = (reader instanceof AbstractFileReader) ?
-                                ((AbstractFileReader) reader).hasNextBatch() || reader.hasNext() : reader.hasNext();
+                                ((AbstractFileReader<?>) reader).hasNextBatch() || reader.hasNext() : reader.hasNext();
                         records.add(convert(metadata, reader.currentOffset(), !hasNext, record));
                     }
                 } catch (IOException | ConnectException e) {
