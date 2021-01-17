@@ -357,6 +357,13 @@ In order to configure custom properties for this reader, the name you must use i
   * Default: ``true``
   * Importance: medium
 
+``file_reader.cobol.reader.is_text``
+  If line ending characters will be used (LF / CRLF) as the record separator.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: medium
+
 ``file_reader.cobol.reader.ebcdic_code_page``
   Code page to be used for EBCDIC to ASCII / Unicode conversions.
 
@@ -446,6 +453,13 @@ In order to configure custom properties for this reader, the name you must use i
 
   * Type: boolean
   * Default: ``false``
+  * Importance: low
+
+``file_reader.cobol.reader.record_length``
+  Specifies the length of the record disregarding the copybook record size. Implied the file has fixed record length.
+
+  * Type: int
+  * Default: ``null``
   * Importance: low
 
 ``file_reader.cobol.reader.length_field_name``
@@ -539,11 +553,25 @@ In order to configure custom properties for this reader, the name you must use i
   * Default: ``null``
   * Importance: low
 
+``file_reader.cobol.reader.record_extractor``
+  Parser to be used to parse records.
+
+  * Type: string
+  * Default: ``null``
+  * Importance: low
+
 ``file_reader.cobol.reader.rhp_additional_info``
   Extra option to be passed to a custom record header parser.
 
   * Type: string
   * Default: ``null``
+  * Importance: low
+
+``file_reader.cobol.reader.re_additional_info``
+  A string provided for the raw record extractor.
+
+  * Type: string
+  * Default: ````
   * Importance: low
 
 ``file_reader.cobol.reader.input_file_name_column``
