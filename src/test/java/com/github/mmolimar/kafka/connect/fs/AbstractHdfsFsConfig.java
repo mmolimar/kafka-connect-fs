@@ -39,6 +39,6 @@ public abstract class AbstractHdfsFsConfig implements FsTestConfig {
     @Override
     public void close() throws IOException {
         fs.close();
-        cluster.shutdown(true);
+        cluster.shutdown(true, true);
     }
 }

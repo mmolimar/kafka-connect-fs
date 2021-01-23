@@ -118,11 +118,6 @@ public class HdfsFileWatcherPolicy extends AbstractPolicy {
         super.close();
     }
 
-    @Override
-    public String toString() {
-        return this.getClass().getSimpleName();
-    }
-
     private class EventStreamThread extends Thread {
         private final FileSystem fs;
         private final HdfsAdmin admin;
