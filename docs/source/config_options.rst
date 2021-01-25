@@ -57,8 +57,10 @@ General config properties for this connector.
   If you want to ingest data from S3, you can add credentials with:
   ``policy.fs.fs.s3a.access.key=<ACCESS_KEY>``
   and
-  ``policy.fs.fs.s3a.secret.key=<SECRET_KEY>``
-  
+  ``policy.fs.fs.s3a.secret.key=<SECRET_KEY>``.
+  Also, in case you want to configure a custom credentials provider, you should use:
+  ``policy.fs.fs.s3a.aws.credentials.provider=<class which extends from com.amazonaws.auth.AWSCredentialsProvider>``
+
 ``topic``
   Topic in which copy data to.
 
@@ -224,7 +226,7 @@ HDFS file watcher
 In order to configure custom properties for this policy, the name you must use is ``hdfs_file_watcher``.
 
 ``policy.hdfs_file_watcher.poll``
-  Time to wait until the records retrieved from the file watcher will be sent to the source task.
+  Time to wait (in milliseconds) until the records retrieved from the file watcher will be sent to the source task.
 
   * Type: long
   * Default: ``5000``
@@ -236,6 +238,52 @@ In order to configure custom properties for this policy, the name you must use i
   * Type: long
   * Default: ``20000``
   * Importance: medium
+
+.. _config_options-policies-s3events:
+
+S3 event notifications
+--------------------------------------------
+
+In order to configure custom properties for this policy, the name you must use is ``s3_event_notifications``.
+
+``policy.s3_event_notifications.queue``
+  SQS queue name to retrieve messages from.
+
+  * Type: string
+  * Importance: high
+
+``policy.s3_event_notifications.poll``
+  Time to wait (in milliseconds) until the records retrieved from the queue will be sent to the source task.
+
+  * Type: long
+  * Default: ``5000``
+  * Importance: medium
+
+``policy.s3_event_notifications.event_regex``
+  Regular expression to filter event based on their types.
+
+  * Type: string
+  * Default: ``.*``
+  * Importance: medium
+
+``policy.s3_event_notifications.delete_messages``
+  If messages from SQS should be removed after reading them.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: medium
+
+``policy.s3_event_notifications.max_messages``
+  Maximum number of messages to retrieve at a time (must be between 1 and 10).
+
+  * Type: int
+  * Importance: medium
+
+``policy.s3_event_notifications.visibility_timeout``
+  Duration (in seconds) that the received messages are hidden from subsequent retrieve requests.
+
+  * Type: int
+  * Importance: low
 
 .. _config_options-filereaders:
 
