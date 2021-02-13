@@ -160,6 +160,7 @@ The are several file readers included which can read the following file formats:
 * ORC.
 * SequenceFile.
 * Cobol / EBCDIC.
+* Other binary files.
 * CSV.
 * TSV.
 * Fixed-width.

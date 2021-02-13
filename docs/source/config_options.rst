@@ -58,8 +58,8 @@ General config properties for this connector.
   ``policy.fs.fs.s3a.access.key=<ACCESS_KEY>``
   and
   ``policy.fs.fs.s3a.secret.key=<SECRET_KEY>``.
-  Also, in case you want to configure a custom credentials provider, you should use:
-  ``policy.fs.fs.s3a.aws.credentials.provider=<class which extends from com.amazonaws.auth.AWSCredentialsProvider>``
+  Also, in case you want to configure a custom credentials provider, you should use
+  ``policy.fs.fs.s3a.aws.credentials.provider=<CLASS>`` property.
 
 ``topic``
   Topic in which copy data to.
@@ -628,6 +628,13 @@ In order to configure custom properties for this reader, the name you must use i
   * Type: string
   * Default: ````
   * Importance: low
+
+.. _config_options-filereaders-binary:
+
+Binary
+--------------------------------------------
+
+There are no extra configuration options for this file reader.
 
 .. _config_options-filereaders-csv:
 
@@ -1332,6 +1339,13 @@ To configure custom properties for this reader, the name you must use is ``agnos
 
   * Type: string[]
   * Default: ``dat``
+  * Importance: medium
+
+``file_reader.agnostic.extensions.binary``
+  A comma-separated string list with the accepted extensions for binary files.
+
+  * Type: string[]
+  * Default: ``bin``
   * Importance: medium
 
 ``file_reader.agnostic.extensions.csv``
