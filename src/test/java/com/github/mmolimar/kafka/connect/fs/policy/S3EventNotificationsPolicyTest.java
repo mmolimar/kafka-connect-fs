@@ -221,8 +221,25 @@ public class S3EventNotificationsPolicyTest extends PolicyTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    @Disabled
+    @Override
     public void oneFilePerFs(PolicyFsTestConfig fsConfig) throws IOException, InterruptedException {
+        FileSystem fs = fsConfig.getFs();
+        Path testDir = new Path(System.getProperty("java.io.tmpdir"));
+        for (Path dir : fsConfig.getDirectories()) {
+            testDir = new Path(dir.getParent().getParent(), "test");
+            fs.mkdirs(testDir);
+            fs.createNewFile(new Path(testDir, "0123456789.txt"));
+
+            // we wait till FS has registered the files
+            Thread.sleep(5000);
+        }
+        Iterator<FileMetadata> it = fsConfig.getPolicy().execute();
+        assertTrue(it.hasNext());
+        it.next();
+        assertTrue(it.hasNext());
+        it.next();
+        assertFalse(it.hasNext());
+        fs.delete(testDir, true);
     }
 
     public static class S3EventNotificationsPolicyMock extends S3EventNotificationsPolicy {
@@ -233,7 +250,8 @@ public class S3EventNotificationsPolicyTest extends PolicyTestBase {
 
         @Override
         protected String getUriPrefix() {
-            return "file:" + System.getProperty("java.io.tmpdir");
+            String prefix = "file:" + System.getProperty("java.io.tmpdir");
+            return prefix.endsWith("/") ? prefix : prefix + "/";
         }
 
         @Override
