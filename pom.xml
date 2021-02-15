@@ -309,11 +309,12 @@
                                 into Kafka.
 
                                 The following file types are supported: Parquet, Avro, ORC, SequenceFile,
-                                Cobol / EBCDIC, CSV, TSV, Fixed-width, JSON, XML, YAML and Text.
+                                Cobol / EBCDIC, other binary files, CSV, TSV, Fixed-width, JSON, XML, YAML and Text.
 
-                                Also, the connector has built-in support for file systems such as HDFS, S3,
-                                Google Cloud Storage, Azure Blob Storage, Azure Data Lake Store, FTP, SFTP and
-                                local file system, among others.
+                                Also, the connector has built-in support for file systems such as HDFS, S3 (directly
+                                or via messages from SNS/SQS queues due to S3 event notifications), Google Cloud
+                                Storage, Azure Blob Storage, Azure Data Lake Store, FTP, SFTP and local file system,
+                                among others.
                             ]]></description>
                             <sourceUrl>https://github.com/mmolimar/kafka-connect-fs</sourceUrl>
 
@@ -351,6 +352,7 @@
                                 <tag>orc</tag>
                                 <tag>sequence</tag>
                                 <tag>cobol</tag>
+                                <tag>binary</tag>
                                 <tag>csv</tag>
                                 <tag>tsv</tag>
                                 <tag>fixed</tag>
