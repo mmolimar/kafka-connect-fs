@@ -156,7 +156,7 @@ abstract class AbstractPolicy implements Policy {
 
     public Iterator<FileMetadata> listFiles(FileSystem fs) throws IOException {
         return new Iterator<FileMetadata>() {
-            RemoteIterator<LocatedFileStatus> it = fs.listFiles(fs.getWorkingDirectory(), recursive);
+            final RemoteIterator<LocatedFileStatus> it = fs.listFiles(fs.getWorkingDirectory(), recursive);
             LocatedFileStatus current = null;
 
             private TailCall<Boolean> hasNextRec() {
@@ -218,6 +218,7 @@ abstract class AbstractPolicy implements Policy {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public FileReader offer(FileMetadata metadata, Map<String, Object> offsetMap) {
         FileSystem current = fileSystems.stream()
                 .filter(fs -> metadata.getPath().startsWith(fs.getWorkingDirectory().toString()))

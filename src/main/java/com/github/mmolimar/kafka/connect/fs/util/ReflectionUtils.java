@@ -26,7 +26,7 @@ public class ReflectionUtils {
 
     private static <T> T make(Class<T> clazz, Object... args) {
         try {
-            Class[] constClasses = Arrays.stream(args).map(Object::getClass).toArray(Class[]::new);
+            Class<?>[] constClasses = Arrays.stream(args).map(Object::getClass).toArray(Class[]::new);
             Constructor<T> constructor = ConstructorUtils.getMatchingAccessibleConstructor(clazz, constClasses);
 
             return constructor.newInstance(args);

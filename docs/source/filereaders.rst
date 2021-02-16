@@ -60,6 +60,26 @@ translate it into a Kafka message with the schema.
 
 More information about properties of this file reader :ref:`here<config_options-filereaders-cobol>`.
 
+Binary
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+All other kind of binary files can be ingested using this reader.
+
+It just extracts the content plus some metadata such as: path, file owner, file group, length, access time,
+and modification time.
+
+Each message will contain the following schema:
+
+  * ``path``: File path (string).
+  * ``owner``: Owner of the file. (string).
+  * ``group``: Group associated with the file. (string).
+  * ``length``: Length of this file, in bytes. (long).
+  * ``access_time``: Access time of the file. (long).
+  * ``modification_time``: Modification time of the file (long).
+  * ``content``: Content of the file (bytes).
+
+More information about properties of this file reader :ref:`here<config_options-filereaders-binary>`.
+
 CSV
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -153,6 +173,7 @@ Default extensions for each format (configurable):
 * ORC: ``.orc``
 * SequenceFile: ``.seq``
 * Cobol / EBCDIC: ``.dat``
+* Other binary files: ``.bin``
 * CSV: ``.csv``
 * TSV: ``.tsv``
 * FixedWidth: ``.fixed``

@@ -20,7 +20,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends FileReaderTestBase {
+abstract class UnivocityFileReaderTest<T extends UnivocityFileReader<?>> extends FileReaderTestBase {
 
     protected static final String FIELD_COLUMN1 = "column_1";
     protected static final String FIELD_COLUMN2 = "column_2";
@@ -111,7 +111,7 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
         int recordCount = 0;
         while (reader.hasNext()) {
             Struct record = reader.next();
-            checkDataWithHeaders(record, recordCount, headers);
+            checkDataWithHeaders(record, headers);
             recordCount++;
         }
         assertEquals(NUM_RECORDS, recordCount, "The number of records in the file does not match");
@@ -265,6 +265,7 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     protected Class<? extends FileReader> getReaderClass() {
         return (Class<T>) ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
     }
@@ -284,7 +285,7 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader> extends Fi
         );
     }
 
-    protected void checkDataWithHeaders(Struct record, long index, String[] headers) {
+    protected void checkDataWithHeaders(Struct record, String[] headers) {
         assertAll(() -> assertEquals((byte) 2, record.get(headers[0])),
                 () -> assertEquals((short) 4, record.get(headers[1])),
                 () -> assertEquals(8, record.get(headers[2])),

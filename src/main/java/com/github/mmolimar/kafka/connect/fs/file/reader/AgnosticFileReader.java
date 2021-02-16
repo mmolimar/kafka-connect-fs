@@ -24,6 +24,7 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_SEQUENCE = FILE_READER_AGNOSTIC_EXTENSIONS + "sequence";
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_ORC = FILE_READER_AGNOSTIC_EXTENSIONS + "orc";
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_COBOL = FILE_READER_AGNOSTIC_EXTENSIONS + "dat";
+    public static final String FILE_READER_AGNOSTIC_EXTENSIONS_BINARY = FILE_READER_AGNOSTIC_EXTENSIONS + "bin";
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_JSON = FILE_READER_AGNOSTIC_EXTENSIONS + "json";
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_XML = FILE_READER_AGNOSTIC_EXTENSIONS + "xml";
     public static final String FILE_READER_AGNOSTIC_EXTENSIONS_YAML = FILE_READER_AGNOSTIC_EXTENSIONS + "yaml";
@@ -34,7 +35,8 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
 
     private final AbstractFileReader<Object> reader;
     private Set<String> parquetExtensions, avroExtensions, sequenceExtensions, orcExtensions, cobolExtensions,
-            csvExtensions, tsvExtensions, fixedExtensions, jsonExtensions, xmlExtensions, yamlExtensions;
+            binaryExtensions, csvExtensions, tsvExtensions, fixedExtensions, jsonExtensions, xmlExtensions,
+            yamlExtensions;
 
     public AgnosticFileReader(FileSystem fs, Path filePath, Map<String, Object> config) throws Exception {
         super(fs, filePath, new AgnosticAdapter(), config);
@@ -46,12 +48,13 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
         }
     }
 
+    @SuppressWarnings("unchecked")
     private AbstractFileReader<Object> readerByExtension(FileSystem fs, Path filePath, Map<String, Object> config) {
         int index = filePath.getName().lastIndexOf('.');
         String extension = index == -1 || index == filePath.getName().length() - 1 ? "" :
                 filePath.getName().substring(index + 1).toLowerCase();
 
-        Class<? extends AbstractFileReader> clz;
+        Class<? extends AbstractFileReader<?>> clz;
         if (parquetExtensions.contains(extension)) {
             clz = ParquetFileReader.class;
         } else if (avroExtensions.contains(extension)) {
@@ -62,6 +65,8 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
             clz = OrcFileReader.class;
         } else if (cobolExtensions.contains(extension)) {
             clz = CobolFileReader.class;
+        } else if (binaryExtensions.contains(extension)) {
+            clz = BinaryFileReader.class;
         } else if (csvExtensions.contains(extension)) {
             clz = CsvFileReader.class;
         } else if (tsvExtensions.contains(extension)) {
@@ -92,6 +97,8 @@ public class AgnosticFileReader extends AbstractFileReader<AgnosticFileReader.Ag
         this.orcExtensions = Arrays.stream(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_ORC, "orc")
                 .toLowerCase().split(",")).collect(Collectors.toSet());
         this.cobolExtensions = Arrays.stream(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_COBOL, "dat")
+                .toLowerCase().split(",")).collect(Collectors.toSet());
+        this.binaryExtensions = Arrays.stream(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_BINARY, "bin")
                 .toLowerCase().split(",")).collect(Collectors.toSet());
         this.csvExtensions = Arrays.stream(config.getOrDefault(FILE_READER_AGNOSTIC_EXTENSIONS_CSV, "csv")
                 .toLowerCase().split(",")).collect(Collectors.toSet());

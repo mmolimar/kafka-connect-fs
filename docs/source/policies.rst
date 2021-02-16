@@ -36,3 +36,15 @@ You can learn more about the properties of this policy :ref:`here<config_options
 .. attention:: The URIs included in the general property ``fs.uris`` will be filtered and only those
                ones which start with the prefix ``hdfs://`` will be watched. Also, this policy
                will only work for Hadoop versions 2.6.0 or higher.
+
+S3 event notifications
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+It uses S3 event notifications sent from S3 to process files which have been created or modified in S3.
+These notifications will be read from a AWS-SQS queue and they can be sent to SQS directly from S3 or via
+AWS-SNS, either as a SNS notification or a raw message in the subscription.
+
+Just use it when you have S3 URIs and the event notifications in the S3 bucket must be enabled to a SNS
+topic or a SQS queue.
+
+You can learn more about the properties of this policy :ref:`here<config_options-policies-s3events>`.

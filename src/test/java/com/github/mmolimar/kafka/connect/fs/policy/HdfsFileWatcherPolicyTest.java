@@ -81,6 +81,7 @@ public class HdfsFileWatcherPolicyTest extends PolicyTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
+    @SuppressWarnings("unchecked")
     public void notReachableFileSystem(PolicyFsTestConfig fsConfig) throws InterruptedException, IOException {
         Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
         originals.put(FsSourceTaskConfig.FS_URIS, "hdfs://localhost:65432/data");
@@ -101,6 +102,7 @@ public class HdfsFileWatcherPolicyTest extends PolicyTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
+    @SuppressWarnings("unchecked")
     public void invalidPollTime(PolicyFsTestConfig fsConfig) {
         Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
         originals.put(HdfsFileWatcherPolicy.HDFS_FILE_WATCHER_POLICY_POLL_MS, "invalid");
@@ -120,6 +122,7 @@ public class HdfsFileWatcherPolicyTest extends PolicyTestBase {
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
+    @SuppressWarnings("unchecked")
     public void invalidRetryTime(PolicyFsTestConfig fsConfig) {
         Map<String, String> originals = fsConfig.getSourceTaskConfig().originalsStrings();
         originals.put(HdfsFileWatcherPolicy.HDFS_FILE_WATCHER_POLICY_RETRY_MS, "invalid");

@@ -51,12 +51,14 @@ public class CobolFileReader extends AbstractFileReader<CobolFileReader.CobolRec
     public static final String FILE_READER_COBOL_COPYBOOK_PATH = FILE_READER_COBOL_COPYBOOK_PREFIX + "path";
 
     public static final String FILE_READER_COBOL_READER_IS_EBCDIC = FILE_READER_COBOL_READER + "is_ebcdic";
+    public static final String FILE_READER_COBOL_READER_IS_TEXT = FILE_READER_COBOL_READER + "is_text";
     public static final String FILE_READER_COBOL_READER_EBCDIC_CODE_PAGE = FILE_READER_COBOL_READER + "ebcdic_code_page";
     public static final String FILE_READER_COBOL_READER_EBCDIC_CODE_PAGE_CLASS = FILE_READER_COBOL_READER + "ebcdic_code_page_class";
     public static final String FILE_READER_COBOL_READER_ASCII_CHARSET = FILE_READER_COBOL_READER + "ascii_charset";
     public static final String FILE_READER_COBOL_READER_IS_UFT16_BIG_ENDIAN = FILE_READER_COBOL_READER + "is_uft16_big_endian";
     public static final String FILE_READER_COBOL_READER_FLOATING_POINT_FORMAT = FILE_READER_COBOL_READER + "floating_point_format";
     public static final String FILE_READER_COBOL_READER_VARIABLE_SIZE_OCCURS = FILE_READER_COBOL_READER + "variable_size_occurs";
+    public static final String FILE_READER_COBOL_READER_RECORD_LENGTH = FILE_READER_COBOL_READER + "record_length";
     public static final String FILE_READER_COBOL_READER_LENGTH_FIELD_NAME = FILE_READER_COBOL_READER + "length_field_name";
     public static final String FILE_READER_COBOL_READER_IS_RECORD_SEQUENCE = FILE_READER_COBOL_READER + "is_record_sequence";
     public static final String FILE_READER_COBOL_READER_IS_RDW_BIG_ENDIAN = FILE_READER_COBOL_READER + "is_rdw_big_endian";
@@ -77,7 +79,9 @@ public class CobolFileReader extends AbstractFileReader<CobolFileReader.CobolRec
     public static final String FILE_READER_COBOL_READER_NON_TERMINALS = FILE_READER_COBOL_READER + "non_terminals";
     public static final String FILE_READER_COBOL_READER_DEBUG_FIELDS_POLICY = FILE_READER_COBOL_READER + "debug_fields_policy";
     public static final String FILE_READER_COBOL_READER_RECORD_HEADER_PARSER = FILE_READER_COBOL_READER + "record_header_parser";
+    public static final String FILE_READER_COBOL_READER_RECORD_EXTRACTOR = FILE_READER_COBOL_READER + "record_extractor";
     public static final String FILE_READER_COBOL_READER_RHP_ADDITIONAL_INFO = FILE_READER_COBOL_READER + "rhp_additional_info";
+    public static final String FILE_READER_COBOL_READER_RE_ADDITIONAL_INFO = FILE_READER_COBOL_READER + "re_additional_info";
     public static final String FILE_READER_COBOL_READER_INPUT_FILE_NAME_COLUMN = FILE_READER_COBOL_READER + "input_file_name_column";
 
 
@@ -103,7 +107,8 @@ public class CobolFileReader extends AbstractFileReader<CobolFileReader.CobolRec
             stream.close();
         }
         stream = new FSStream(getFs(), getFilePath());
-        return asJavaIterator(reader.getRecordIterator(stream, 0, 0, 0).map(it -> seqAsJavaList(it.seq())));
+        return asJavaIterator(reader.getRecordIterator(stream, 0, 0, 0)
+                .map(it -> seqAsJavaList(it.seq())));
     }
 
     private Schema extractSchema(CobolSchema cobolSchema) {
@@ -124,7 +129,8 @@ public class CobolFileReader extends AbstractFileReader<CobolFileReader.CobolRec
         if (statement instanceof Group) {
             Group group = (Group) statement;
             SchemaBuilder childrenBuilder = SchemaBuilder.struct();
-            seqAsJavaList(group.children()).forEach(child -> childrenBuilder.field(child.name(), schemaForField(child)));
+            seqAsJavaList(group.children())
+                    .forEach(child -> childrenBuilder.field(child.name(), schemaForField(child)));
             SchemaBuilder builder;
             if (group.isArray()) {
                 builder = SchemaBuilder.array(childrenBuilder.build());
@@ -188,21 +194,23 @@ public class CobolFileReader extends AbstractFileReader<CobolFileReader.CobolRec
     private ReaderParameters getReaderParameters(Map<String, String> config) {
         return new ReaderParameters(
                 Boolean.parseBoolean(config.getOrDefault(FILE_READER_COBOL_READER_IS_EBCDIC, "true")),  // isEbcdic
+                Boolean.parseBoolean(config.getOrDefault(FILE_READER_COBOL_READER_IS_TEXT, "false")),  // isText
                 config.getOrDefault(FILE_READER_COBOL_READER_EBCDIC_CODE_PAGE, "common"),  // ebcdicCodePage
                 scala.Option.apply(config.get(FILE_READER_COBOL_READER_EBCDIC_CODE_PAGE_CLASS)),  // ebcdicCodePageClass
                 config.getOrDefault(FILE_READER_COBOL_READER_ASCII_CHARSET, ""),  // asciiCharset
                 Boolean.parseBoolean(config.getOrDefault(FILE_READER_COBOL_READER_IS_UFT16_BIG_ENDIAN, "true")),  // isUtf16BigEndian
                 FloatingPointFormat$.MODULE$.withNameOpt(config.getOrDefault(FILE_READER_COBOL_READER_FLOATING_POINT_FORMAT, "ibm")).get(),  // floatingPointFormat
                 Boolean.parseBoolean(config.getOrDefault(FILE_READER_COBOL_READER_VARIABLE_SIZE_OCCURS, "false")), // variableSizeOccurs
+                scala.Option.apply(config.get(FILE_READER_COBOL_READER_RECORD_LENGTH)).map(Integer::parseInt),  // recordLength
                 scala.Option.apply(config.get(FILE_READER_COBOL_READER_LENGTH_FIELD_NAME)),  // lengthFieldName
                 Boolean.parseBoolean(config.getOrDefault(FILE_READER_COBOL_READER_IS_RECORD_SEQUENCE, "false")), // isRecordSequence
                 Boolean.parseBoolean(config.getOrDefault(FILE_READER_COBOL_READER_IS_RDW_BIG_ENDIAN, "false")),  // isRdwBigEndian
                 Boolean.parseBoolean(config.getOrDefault(FILE_READER_COBOL_READER_IS_RDW_PART_REC_LENGTH, "false")), // isRdwPartRecLength
                 Integer.parseInt(config.getOrDefault(FILE_READER_COBOL_READER_RDW_ADJUSTMENT, "0")),  // rdwAdjustment
                 Boolean.parseBoolean(config.getOrDefault(FILE_READER_COBOL_READER_IS_INDEX_GENERATION_NEEDED, "false")),  // isIndexGenerationNeeded
-                scala.Option.apply(config.get(FILE_READER_COBOL_READER_INPUT_SPLIT_RECORDS)),  // inputSplitRecords
-                scala.Option.apply(config.get(FILE_READER_COBOL_READER_INPUT_SPLIT_SIZE_MB)),  // inputSplitSizeMB
-                scala.Option.apply(config.get(FILE_READER_COBOL_READER_HDFS_DEFAULT_BLOCK_SIZE)),  // hdfsDefaultBlockSize
+                scala.Option.apply(config.get(FILE_READER_COBOL_READER_INPUT_SPLIT_RECORDS)).map(Integer::parseInt),  // inputSplitRecords
+                scala.Option.apply(config.get(FILE_READER_COBOL_READER_INPUT_SPLIT_SIZE_MB)).map(Integer::parseInt),  // inputSplitSizeMB
+                scala.Option.apply(config.get(FILE_READER_COBOL_READER_HDFS_DEFAULT_BLOCK_SIZE)).map(Integer::parseInt),  // hdfsDefaultBlockSize
                 Integer.parseInt(config.getOrDefault(FILE_READER_COBOL_READER_START_OFFSET, "0")),  // startOffset
                 Integer.parseInt(config.getOrDefault(FILE_READER_COBOL_READER_END_OFFSET, "0")),  // endOffset
                 Integer.parseInt(config.getOrDefault(FILE_READER_COBOL_READER_FILE_START_OFFSET, "0")),  // fileStartOffset
@@ -218,7 +226,9 @@ public class CobolFileReader extends AbstractFileReader<CobolFileReader.CobolRec
                 scala.collection.immutable.Map$.MODULE$.empty(),  // occursMappings
                 DebugFieldsPolicy$.MODULE$.withNameOpt(config.getOrDefault(FILE_READER_COBOL_READER_DEBUG_FIELDS_POLICY, "none")).get(),  // debugFieldsPolicy
                 scala.Option.apply(config.get(FILE_READER_COBOL_READER_RECORD_HEADER_PARSER)),  // recordHeaderParser
+                scala.Option.apply(config.get(FILE_READER_COBOL_READER_RECORD_EXTRACTOR)),  // recordExtractor
                 scala.Option.apply(config.get(FILE_READER_COBOL_READER_RHP_ADDITIONAL_INFO)),  // rhpAdditionalInfo
+                config.getOrDefault(FILE_READER_COBOL_READER_RE_ADDITIONAL_INFO, ""),  // reAdditionalInfo
                 config.getOrDefault(FILE_READER_COBOL_READER_INPUT_FILE_NAME_COLUMN, "")  // inputFileNameColumn
         );
     }
@@ -267,16 +277,14 @@ public class CobolFileReader extends AbstractFileReader<CobolFileReader.CobolRec
 
     private static class FSStream implements SimpleStream {
 
-        private final FileSystem fs;
         private final Path file;
         private final FSDataInputStream stream;
         private final long size;
         private long offset;
 
         FSStream(FileSystem fs, Path file) throws IOException {
-            this.fs = fs;
             this.file = file;
-            this.stream = this.fs.open(file);
+            this.stream = fs.open(file);
             this.size = fs.getContentSummary(file).getLength();
             this.offset = stream.getPos();
         }
@@ -313,6 +321,7 @@ public class CobolFileReader extends AbstractFileReader<CobolFileReader.CobolRec
 
     static class CobolToStruct implements ReaderAdapter<CobolRecord> {
 
+        @SuppressWarnings("unchecked")
         public Struct apply(CobolRecord record) {
             Struct struct = new Struct(record.schema);
             record.row.stream()
@@ -324,6 +333,7 @@ public class CobolFileReader extends AbstractFileReader<CobolFileReader.CobolRec
             return struct;
         }
 
+        @SuppressWarnings("unchecked")
         private Object mapValue(Schema schema, String fieldName, Object value) {
             if (value == null) {
                 return null;
@@ -374,6 +384,7 @@ public class CobolFileReader extends AbstractFileReader<CobolFileReader.CobolRec
                     .collect(HashMap::new, (m, e) -> m.put(e.getKey(), e.getValue()), HashMap::putAll);
         }
 
+        @SuppressWarnings("unchecked")
         private Map.Entry<String, Object> transform(Statement child, Object value) {
             Object childValue;
             if (child instanceof Group && value instanceof Map) {

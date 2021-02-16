@@ -264,4 +264,25 @@ public class AgnosticFileReaderTest {
             return "dt";
         }
     }
+
+    @Nested
+    class AgnosticBinaryFileReaderTest extends BinaryFileReaderTest {
+
+        @Override
+        protected Map<String, Object> getReaderConfig() {
+            Map<String, Object> config = super.getReaderConfig();
+            config.put(AgnosticFileReader.FILE_READER_AGNOSTIC_EXTENSIONS_BINARY, getFileExtension());
+            return config;
+        }
+
+        @Override
+        public Class<? extends FileReader> getReaderClass() {
+            return AgnosticFileReader.class;
+        }
+
+        @Override
+        public String getFileExtension() {
+            return "bin";
+        }
+    }
 }

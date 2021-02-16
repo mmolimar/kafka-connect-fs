@@ -57,8 +57,10 @@ General config properties for this connector.
   If you want to ingest data from S3, you can add credentials with:
   ``policy.fs.fs.s3a.access.key=<ACCESS_KEY>``
   and
-  ``policy.fs.fs.s3a.secret.key=<SECRET_KEY>``
-  
+  ``policy.fs.fs.s3a.secret.key=<SECRET_KEY>``.
+  Also, in case you want to configure a custom credentials provider, you should use
+  ``policy.fs.fs.s3a.aws.credentials.provider=<CLASS>`` property.
+
 ``topic``
   Topic in which copy data to.
 
@@ -224,7 +226,7 @@ HDFS file watcher
 In order to configure custom properties for this policy, the name you must use is ``hdfs_file_watcher``.
 
 ``policy.hdfs_file_watcher.poll``
-  Time to wait until the records retrieved from the file watcher will be sent to the source task.
+  Time to wait (in milliseconds) until the records retrieved from the file watcher will be sent to the source task.
 
   * Type: long
   * Default: ``5000``
@@ -236,6 +238,52 @@ In order to configure custom properties for this policy, the name you must use i
   * Type: long
   * Default: ``20000``
   * Importance: medium
+
+.. _config_options-policies-s3events:
+
+S3 event notifications
+--------------------------------------------
+
+In order to configure custom properties for this policy, the name you must use is ``s3_event_notifications``.
+
+``policy.s3_event_notifications.queue``
+  SQS queue name to retrieve messages from.
+
+  * Type: string
+  * Importance: high
+
+``policy.s3_event_notifications.poll``
+  Time to wait (in milliseconds) until the records retrieved from the queue will be sent to the source task.
+
+  * Type: long
+  * Default: ``5000``
+  * Importance: medium
+
+``policy.s3_event_notifications.event_regex``
+  Regular expression to filter event based on their types.
+
+  * Type: string
+  * Default: ``.*``
+  * Importance: medium
+
+``policy.s3_event_notifications.delete_messages``
+  If messages from SQS should be removed after reading them.
+
+  * Type: boolean
+  * Default: ``true``
+  * Importance: medium
+
+``policy.s3_event_notifications.max_messages``
+  Maximum number of messages to retrieve at a time (must be between 1 and 10).
+
+  * Type: int
+  * Importance: medium
+
+``policy.s3_event_notifications.visibility_timeout``
+  Duration (in seconds) that the received messages are hidden from subsequent retrieve requests.
+
+  * Type: int
+  * Importance: low
 
 .. _config_options-filereaders:
 
@@ -357,6 +405,13 @@ In order to configure custom properties for this reader, the name you must use i
   * Default: ``true``
   * Importance: medium
 
+``file_reader.cobol.reader.is_text``
+  If line ending characters will be used (LF / CRLF) as the record separator.
+
+  * Type: boolean
+  * Default: ``false``
+  * Importance: medium
+
 ``file_reader.cobol.reader.ebcdic_code_page``
   Code page to be used for EBCDIC to ASCII / Unicode conversions.
 
@@ -446,6 +501,13 @@ In order to configure custom properties for this reader, the name you must use i
 
   * Type: boolean
   * Default: ``false``
+  * Importance: low
+
+``file_reader.cobol.reader.record_length``
+  Specifies the length of the record disregarding the copybook record size. Implied the file has fixed record length.
+
+  * Type: int
+  * Default: ``null``
   * Importance: low
 
 ``file_reader.cobol.reader.length_field_name``
@@ -539,11 +601,25 @@ In order to configure custom properties for this reader, the name you must use i
   * Default: ``null``
   * Importance: low
 
+``file_reader.cobol.reader.record_extractor``
+  Parser to be used to parse records.
+
+  * Type: string
+  * Default: ``null``
+  * Importance: low
+
 ``file_reader.cobol.reader.rhp_additional_info``
   Extra option to be passed to a custom record header parser.
 
   * Type: string
   * Default: ``null``
+  * Importance: low
+
+``file_reader.cobol.reader.re_additional_info``
+  A string provided for the raw record extractor.
+
+  * Type: string
+  * Default: ````
   * Importance: low
 
 ``file_reader.cobol.reader.input_file_name_column``
@@ -552,6 +628,13 @@ In order to configure custom properties for this reader, the name you must use i
   * Type: string
   * Default: ````
   * Importance: low
+
+.. _config_options-filereaders-binary:
+
+Binary
+--------------------------------------------
+
+There are no extra configuration options for this file reader.
 
 .. _config_options-filereaders-csv:
 
@@ -1256,6 +1339,13 @@ To configure custom properties for this reader, the name you must use is ``agnos
 
   * Type: string[]
   * Default: ``dat``
+  * Importance: medium
+
+``file_reader.agnostic.extensions.binary``
+  A comma-separated string list with the accepted extensions for binary files.
+
+  * Type: string[]
+  * Default: ``bin``
   * Importance: medium
 
 ``file_reader.agnostic.extensions.csv``
