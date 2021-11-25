@@ -64,7 +64,7 @@ abstract class UnivocityFileReaderTest<T extends UnivocityFileReader<?>> extends
 
     @ParameterizedTest
     @MethodSource("fileSystemConfigProvider")
-    public void invaliConfigArgs(ReaderFsTestConfig fsConfig) {
+    public void invalidConfigArgs(ReaderFsTestConfig fsConfig) {
         try {
             getReaderClass().getConstructor(FileSystem.class, Path.class, Map.class)
                     .newInstance(fsConfig.getFs(), fsConfig.getDataFile(), new HashMap<String, Object>());

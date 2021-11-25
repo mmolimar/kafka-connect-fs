@@ -84,6 +84,48 @@ public class CsvFileReaderTest extends UnivocityFileReaderTest<CsvFileReader> {
         assertEquals(2, recordCount, () -> "The number of records in the file does not match");
     }
 
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void readAllDataWithEmptyAndNullValueWithAllowNullsAndWithoutSchemaProvided(ReaderFsTestConfig fsConfig) throws IOException {
+        File tmp = File.createTempFile("test-", "." + getFileExtension());
+        try (FileWriter writer = new FileWriter(tmp)) {
+            String headerValue = String.join(",", FIELD_COLUMN1, FIELD_COLUMN2, FIELD_COLUMN3);
+            writer.append(headerValue + "\n");
+            writer.append("yes,\"\",\n");
+            writer.append("yes,cool,test");
+        }
+
+        Map<String, Object> defaultReadConfig = getReaderConfig();
+        defaultReadConfig.remove(CsvFileReader.FILE_READER_DELIMITED_SETTINGS_SCHEMA);
+        Map<String, Object> readerConfig = defaultReadConfig;
+        readerConfig.put(CsvFileReader.FILE_READER_DELIMITED_SETTINGS_FORMAT_DELIMITER, ",");
+        readerConfig.put(CsvFileReader.FILE_READER_DELIMITED_SETTINGS_HEADER, "true");
+        readerConfig.put(CsvFileReader.FILE_READER_DELIMITED_SETTINGS_ALLOW_NULLS, "true");
+
+        Path path = new Path(new Path(fsConfig.getFsUri()), tmp.getName());
+        fsConfig.getFs().moveFromLocalFile(new Path(tmp.getAbsolutePath()), path);
+        FileReader reader = getReader(fsConfig.getFs(), path, readerConfig);
+
+        assertTrue(reader.hasNext());
+
+        Struct record = reader.next();
+        assertAll(
+                () -> assertEquals(record.get(FIELD_COLUMN1), "yes"),
+                () -> assertNull(record.get(FIELD_COLUMN2)),
+                () -> assertNull(record.get(FIELD_COLUMN3))
+        );
+
+        assertTrue(reader.hasNext());
+        Struct record2 = reader.next();
+        assertAll(
+                () -> assertEquals(record2.get(FIELD_COLUMN1), "yes"),
+                () -> assertEquals(record2.get(FIELD_COLUMN2), "cool"),
+                () -> assertEquals(record2.get(FIELD_COLUMN3), "test")
+        );
+
+        assertFalse(reader.hasNext());
+    }
+
     @Override
     protected Map<String, Object> getReaderConfig() {
         return new HashMap<String, Object>() {{
