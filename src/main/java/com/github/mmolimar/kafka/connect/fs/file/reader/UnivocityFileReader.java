@@ -141,7 +141,7 @@ abstract class UnivocityFileReader<T extends CommonParserSettings<?>>
                     "' does not match the number of fields inferred in the file.");
         } else if (dataTypes.size() == 0) {
             return IntStream.range(0, headers.length)
-                    .mapToObj(index -> Schema.STRING_SCHEMA)
+                    .mapToObj(index -> strToSchema("string"))
                     .collect(Collectors.toList());
         }
         return dataTypes;

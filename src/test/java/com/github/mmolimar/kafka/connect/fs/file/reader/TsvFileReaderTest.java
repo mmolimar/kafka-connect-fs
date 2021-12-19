@@ -1,13 +1,19 @@
 package com.github.mmolimar.kafka.connect.fs.file.reader;
 
 import org.apache.hadoop.fs.Path;
+import org.apache.kafka.connect.data.Struct;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.IntStream;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TsvFileReaderTest extends UnivocityFileReaderTest<TsvFileReader> {
 
@@ -34,6 +40,48 @@ public class TsvFileReaderTest extends UnivocityFileReaderTest<TsvFileReader> {
         fsConfig.getFs().moveFromLocalFile(new Path(txtFile.getAbsolutePath()), path);
         return path;
     }
+
+    @ParameterizedTest
+    @MethodSource("fileSystemConfigProvider")
+    public void readAllDataWithEmptyAndNullValueWithAllowNullsAndWithoutSchemaProvided(ReaderFsTestConfig fsConfig) throws IOException {
+        File tmp = File.createTempFile("test-", "." + getFileExtension());
+        try (FileWriter writer = new FileWriter(tmp)) {
+            String headerValue = String.join("\t", FIELD_COLUMN1, FIELD_COLUMN2, FIELD_COLUMN3);
+            writer.append(headerValue + "\n");
+            writer.append("yes\t\"\"\t\n");
+            writer.append("yes\tcool\ttest");
+        }
+
+        Map<String, Object> defaultReadConfig = getReaderConfig();
+        defaultReadConfig.remove(CsvFileReader.FILE_READER_DELIMITED_SETTINGS_SCHEMA);
+        Map<String, Object> readerConfig = defaultReadConfig;
+        readerConfig.put(TsvFileReader.FILE_READER_DELIMITED_SETTINGS_HEADER, "true");
+        readerConfig.put(TsvFileReader.FILE_READER_DELIMITED_SETTINGS_ALLOW_NULLS, "true");
+
+        Path path = new Path(new Path(fsConfig.getFsUri()), tmp.getName());
+        fsConfig.getFs().moveFromLocalFile(new Path(tmp.getAbsolutePath()), path);
+        FileReader reader = getReader(fsConfig.getFs(), path, readerConfig);
+
+        assertTrue(reader.hasNext());
+
+        Struct record = reader.next();
+        assertAll(
+                () -> assertEquals(record.get(FIELD_COLUMN1), "yes"),
+                () -> assertNull(record.get(FIELD_COLUMN2)),
+                () -> assertNull(record.get(FIELD_COLUMN3))
+        );
+
+        assertTrue(reader.hasNext());
+        Struct record2 = reader.next();
+        assertAll(
+                () -> assertEquals(record2.get(FIELD_COLUMN1), "yes"),
+                () -> assertEquals(record2.get(FIELD_COLUMN2), "cool"),
+                () -> assertEquals(record2.get(FIELD_COLUMN3), "test")
+        );
+
+        assertFalse(reader.hasNext());
+    }
+
 
     @Override
     protected Map<String, Object> getReaderConfig() {
