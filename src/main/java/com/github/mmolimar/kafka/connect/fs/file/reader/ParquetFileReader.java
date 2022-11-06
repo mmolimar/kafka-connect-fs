@@ -90,7 +90,7 @@ public class ParquetFileReader extends AbstractFileReader<GenericRecord> {
             this.closed = false;
             setOffset(0);
         }
-        while (hasNext() && currentOffset() < offset) {
+        while (hasNextRecord() && currentOffset() < offset) {
             nextRecord();
         }
     }
