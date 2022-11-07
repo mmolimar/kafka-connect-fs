@@ -16,6 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -85,7 +87,13 @@ abstract class AbstractPolicy implements Policy {
                             (String) entry.getValue()));
 
             Path workingDir = new Path(convert(uri));
-            FileSystem fs = FileSystem.newInstance(workingDir.toUri(), fsConfig);
+            URI fsUri;
+            try {
+                fsUri = new URI(convert(uri));
+            } catch (URISyntaxException e) {
+                throw new IllegalArgumentException("Uri syntax is invalid, uri: " + uri, e);
+            }
+            FileSystem fs = FileSystem.newInstance(fsUri, fsConfig);
             fs.setWorkingDirectory(workingDir);
             this.fileSystems.add(fs);
         }
